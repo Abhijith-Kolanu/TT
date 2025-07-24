@@ -8,16 +8,16 @@ import Post from './Post'; // It's in the same directory
 
 const ExplorePage = () => {
     // This hook fetches the data and updates the Redux store.
-    useGetExplorePosts(); 
-    
+    useGetExplorePosts();
+
     // Get the data from the Redux store.
     const { explorePosts } = useSelector(store => store.post);
 
     // Case 1: The data is still being fetched.
-    if (explorePosts === null) {
+    if (!Array.isArray(explorePosts)) {
         return (
             <div className='flex justify-center items-center h-full'>
-                <p>Loading...</p> 
+                <p>Loading...</p>
             </div>
         );
     }

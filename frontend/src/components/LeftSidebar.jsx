@@ -10,7 +10,7 @@ import CreatePost from './CreatePost';
 import { setPosts, setSelectedPost } from '@/redux/postSlice';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Button } from './ui/button';
-import SearchComponent from './SearchComponent'; 
+import SearchComponent from './SearchComponent';
 import io from 'socket.io-client'; // 2. Import socket.io-client
 
 const LeftSidebar = () => {
@@ -18,7 +18,7 @@ const LeftSidebar = () => {
     const { user } = useSelector(store => store.auth);
     const dispatch = useDispatch();
     const [open, setOpen] = useState(false);
-    
+
     // 3. STATE TO HOLD ALL NOTIFICATIONS
     const [notifications, setNotifications] = useState([]);
 
@@ -65,8 +65,9 @@ const LeftSidebar = () => {
         else if (textType === "Create") setOpen(true);
         else if (textType === "Profile") navigate(`/profile/${user?._id}`);
         else if (textType === "Home") navigate("/");
-        else if (textType === "Explore") navigate("/explore"); 
+        else if (textType === "Explore") navigate("/explore");
         else if (textType === 'Messages') navigate("/chat");
+        else if (textType == 'Notifications') navigate("/notifications")
     };
 
     const sidebarItems = [
@@ -109,18 +110,18 @@ const LeftSidebar = () => {
                             <div onClick={() => sidebarHandler(item.text)} key={index} className='flex items-center gap-3 relative hover:bg-gray-100 cursor-pointer rounded-lg p-3 my-3'>
                                 {item.icon}
                                 <span>{item.text}</span>
-                                {item.text === "Notifications" && (
+                                {item.text === "Notifications" && notifications.length > 0 && (
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            {/* Show badge only if there are new notifications */}
-                                            {notifications.length > 0 && (
-                                                <Button size='icon' className="rounded-full h-5 w-5 bg-red-600 hover:bg-red-600 absolute bottom-6 left-6">{notifications.length}</Button>
-                                            )}
+                                            <div className="absolute bottom-6 left-6">
+                                                <Button size='icon' className="rounded-full h-5 w-5 bg-red-600 hover:bg-red-600">{notifications.length}</Button>
+                                            </div>
                                         </PopoverTrigger>
-                                        <PopoverContent>
+                                        <PopoverContent className="w-64">
                                             <div>
-                                                {/* 5. MAP OVER THE NEW NOTIFICATIONS STATE */}
-                                                {notifications.length === 0 ? (<p>No new notifications</p>) : (
+                                                {notifications.length === 0 ? (
+                                                    <p>No new notifications</p>
+                                                ) : (
                                                     notifications.map((notification) => (
                                                         <div key={notification._id} className='flex items-center gap-2 my-2'>
                                                             <Avatar>
@@ -137,6 +138,7 @@ const LeftSidebar = () => {
                                         </PopoverContent>
                                     </Popover>
                                 )}
+
                             </div>
                         );
                     })}

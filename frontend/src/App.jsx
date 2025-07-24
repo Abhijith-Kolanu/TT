@@ -13,7 +13,8 @@ import { setSocket } from './redux/socketSlice';
 import { setOnlineUsers } from './redux/chatSlice';
 import { setLikeNotification } from './redux/rtnSlice';
 import ProtectedRoutes from './components/ProtectedRoutes';
-import ExplorePage from './components/ExplorePage'; 
+import ExplorePage from './components/ExplorePage';
+import NotificationPage from './components/NotificationPage';
 
 const browserRouter = createBrowserRouter([
   {
@@ -25,11 +26,11 @@ const browserRouter = createBrowserRouter([
       // We must remove the extra <ProtectedRoutes> wrapper from them.
       {
         path: '/',
-        element: <Home /> 
+        element: <Home />
       },
       {
         path: '/explore',
-        element: <ExplorePage /> 
+        element: <ExplorePage />
       },
       {
         path: '/profile/:id',
@@ -43,6 +44,10 @@ const browserRouter = createBrowserRouter([
         path: '/chat',
         element: <ChatPage />
       },
+      {
+        path: '/notifications',
+        element: <NotificationPage />
+      },
     ]
   },
   {
@@ -53,6 +58,7 @@ const browserRouter = createBrowserRouter([
     path: '/signup',
     element: <Signup />
   },
+
 ]);
 
 function App() {
