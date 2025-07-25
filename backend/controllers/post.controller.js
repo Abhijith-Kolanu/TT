@@ -78,8 +78,8 @@ export const getExplorePosts = async (req, res) => {
         const posts = await Post.find({
             author: { $nin: [...loggedInUser.following, loggedInUserId] }
         })
-        .sort({ createdAt: -1 })
-        .populate({ path: 'author', select: 'username profilePicture' });
+            .sort({ createdAt: -1 })
+            .populate({ path: 'author', select: 'username profilePicture' });
 
         return res.status(200).json({
             posts,
@@ -119,43 +119,48 @@ export const getUserPost = async (req, res) => {
 
 export const likePost = async (req, res) => {
     try {
-        const likeKrneWalaUserKiId = req.id;
+        const userId = req.id; // the user who liked
         const postId = req.params.id;
-        const post = await Post.findById(postId);
-        if (!post) return res.status(404).json({ message: 'Post not found', success: false });
 
-        await post.updateOne({ $addToSet: { likes: likeKrneWalaUserKiId } });
-        await post.save();
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found', success: false });
+        }
+
+        // Add like to post
+        await post.updateOne({ $addToSet: { likes: userId } });
 
         const postOwnerId = post.author.toString();
-        if (postOwnerId !== likeKrneWalaUserKiId) {
+
+        // Avoid self-notifications
+        if (postOwnerId !== userId) {
+            // Create a DB notification
             const notification = await Notification.create({
-                sender: likeKrneWalaUserKiId,
+                sender: userId,
                 recipient: postOwnerId,
                 type: 'like',
                 post: postId
             });
+
+            // Populate sender info for frontend
             const populatedNotification = await Notification.findById(notification._id)
                 .populate({ path: 'sender', select: 'username profilePicture' });
 
-            // --- DEBUGGING LOGS ---
             const receiverSocketId = getReceiverSocketId(postOwnerId);
-            console.log("--- LIKE NOTIFICATION ---");
-            console.log("Post Owner ID:", postOwnerId);
-            console.log("Receiver's Socket ID:", receiverSocketId);
-            console.log("Emitting 'newNotification' with data:", populatedNotification);
-            // --- END OF DEBUGGING ---
-
             if (receiverSocketId) {
+                console.log("Emitting to socket:", receiverSocketId);
                 io.to(receiverSocketId).emit('newNotification', populatedNotification);
             }
         }
+
         return res.status(200).json({ message: 'Post liked', success: true });
+
     } catch (error) {
-        console.log("Error in likePost:", error);
+        console.error("Error in likePost:", error);
         return res.status(500).json({ message: "Internal server error", success: false });
     }
 };
+
 
 export const dislikePost = async (req, res) => {
     try {
@@ -207,7 +212,7 @@ export const addComment = async (req, res) => {
             });
             const populatedNotification = await Notification.findById(notification._id)
                 .populate({ path: 'sender', select: 'username profilePicture' });
-            
+
             // --- DEBUGGING LOGS ---
             const receiverSocketId = getReceiverSocketId(postOwnerId);
             console.log("--- COMMENT NOTIFICATION ---");

@@ -15,6 +15,8 @@ import { setLikeNotification } from './redux/rtnSlice';
 import ProtectedRoutes from './components/ProtectedRoutes';
 import ExplorePage from './components/ExplorePage';
 import NotificationPage from './components/NotificationPage';
+import { addNotification } from './redux/notificationSlice';
+
 
 const browserRouter = createBrowserRouter([
   {
@@ -74,6 +76,7 @@ function App() {
         },
         transports: ['websocket']
       });
+      console.log("Socket connected", socketio);
       dispatch(setSocket(socketio));
 
       socketio.on('getOnlineUsers', (onlineUsers) => {
@@ -83,6 +86,12 @@ function App() {
       socketio.on('notification', (notification) => {
         dispatch(setLikeNotification(notification));
       });
+      socketio.on('newNotification', (notification) => {
+        console.log("Received newNotification", notification);
+        dispatch(addNotification(notification));
+        toast(notification.sender.username + " liked your post");
+      });
+
 
       return () => {
         socketio.close();
