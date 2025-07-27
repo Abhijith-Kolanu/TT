@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDataUri from "../utils/datauri.js";
 import cloudinary from "../utils/cloudinary.js";
+import { io, getReceiverSocketId } from "../socket/socket.js";
 import { Post } from "../models/post.model.js";
+import { Notification } from "../models/notification.model.js";
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -164,56 +166,78 @@ export const getSuggestedUsers = async (req, res) => {
         console.log(error);
     }
 };
+
+// make sure these are correctly imported
+
 export const followOrUnfollow = async (req, res) => {
     try {
-        const followKrneWala = req.id; // patel
-        const jiskoFollowKrunga = req.params.id; // shivani
+        const followKrneWala = req.id;
+        const jiskoFollowKrunga = req.params.id;
+
         if (followKrneWala === jiskoFollowKrunga) {
-            return res.status(400).json({
-                message: 'You cannot follow/unfollow yourself',
-                success: false
-            });
+            return res.status(400).json({ message: 'You cannot follow/unfollow yourself', success: false });
         }
 
         const user = await User.findById(followKrneWala);
         const targetUser = await User.findById(jiskoFollowKrunga);
 
         if (!user || !targetUser) {
-            return res.status(400).json({
-                message: 'User not found',
-                success: false
-            });
+            return res.status(400).json({ message: 'User not found', success: false });
         }
-        // mai check krunga ki follow krna hai ya unfollow
+
         const isFollowing = user.following.includes(jiskoFollowKrunga);
+
         if (isFollowing) {
-            // unfollow logic ayega
             await Promise.all([
                 User.updateOne({ _id: followKrneWala }, { $pull: { following: jiskoFollowKrunga } }),
                 User.updateOne({ _id: jiskoFollowKrunga }, { $pull: { followers: followKrneWala } }),
-            ])
+            ]);
             return res.status(200).json({ message: 'Unfollowed successfully', success: true });
         } else {
-            // follow logic ayega
             await Promise.all([
                 User.updateOne({ _id: followKrneWala }, { $push: { following: jiskoFollowKrunga } }),
                 User.updateOne({ _id: jiskoFollowKrunga }, { $push: { followers: followKrneWala } }),
-            ])
+            ]);
+
+            // ✅ Create notification in DB
             const notification = await Notification.create({
-                type: 'follow',
                 sender: followKrneWala,
                 recipient: jiskoFollowKrunga,
-                post: null, // follow doesn't need a post
+                type: "follow"
             });
 
-            // ✅ Emit via shared "newNotification" socket event
-            req.io.to(jiskoFollowKrunga).emit('newNotification', notification);
-            return res.status(200).json({ message: 'followed successfully', success: true });
+            // ✅ Get sender info
+            const senderUser = await User.findById(followKrneWala).select("username profilePicture");
+
+            const unifiedNotification = {
+                _id: notification._id,
+                type: "follow",
+                message: `${senderUser.username} started following you`,
+                sender: {
+                    _id: senderUser._id,
+                    username: senderUser.username,
+                    profilePicture: senderUser.profilePicture || ""
+                },
+                recipientId: jiskoFollowKrunga,
+                read: false,
+                createdAt: notification.createdAt
+            };
+
+            // ✅ Emit to socket if recipient is online
+            const receiverSocketId = getReceiverSocketId(jiskoFollowKrunga);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("newNotification", unifiedNotification);
+            }
+
+            return res.status(200).json({ message: 'Followed successfully', success: true });
         }
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Something went wrong", success: false });
     }
-}
+};
+
+
 export const searchUsers = async (req, res) => {
     try {
         const { query } = req.params;

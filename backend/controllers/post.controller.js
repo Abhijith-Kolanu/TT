@@ -134,6 +134,9 @@ export const likePost = async (req, res) => {
 
         // Avoid self-notifications
         if (postOwnerId !== userId) {
+            // Get sender info
+            const senderUser = await User.findById(userId).select("username profilePicture");
+
             // Create a DB notification
             const notification = await Notification.create({
                 sender: userId,
@@ -142,14 +145,25 @@ export const likePost = async (req, res) => {
                 post: postId
             });
 
-            // Populate sender info for frontend
-            const populatedNotification = await Notification.findById(notification._id)
-                .populate({ path: 'sender', select: 'username profilePicture' });
+            const unifiedNotification = {
+                _id: notification._id,
+                type: "like",
+                message: `${senderUser.username} liked your post`,
+                sender: {
+                    _id: senderUser._id,
+                    username: senderUser.username,
+                    profilePicture: senderUser.profilePicture || ""
+                },
+                recipientId: postOwnerId,
+                post: postId,
+                read: false,
+                createdAt: notification.createdAt
+            };
 
             const receiverSocketId = getReceiverSocketId(postOwnerId);
             if (receiverSocketId) {
                 console.log("Emitting to socket:", receiverSocketId);
-                io.to(receiverSocketId).emit('newNotification', populatedNotification);
+                io.to(receiverSocketId).emit('newNotification', unifiedNotification);
             }
         }
 
@@ -160,6 +174,7 @@ export const likePost = async (req, res) => {
         return res.status(500).json({ message: "Internal server error", success: false });
     }
 };
+
 
 
 export const dislikePost = async (req, res) => {
