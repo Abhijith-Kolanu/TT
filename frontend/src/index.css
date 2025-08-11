@@ -1,4 +1,6 @@
+/* Required for leaflet map styling */
+@import url("leaflet/dist/leaflet.css");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-  

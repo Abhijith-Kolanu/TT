@@ -14,8 +14,10 @@ import { setOnlineUsers } from './redux/chatSlice';
 import { setLikeNotification } from './redux/rtnSlice';
 import ProtectedRoutes from './components/ProtectedRoutes';
 import ExplorePage from './components/ExplorePage';
+import Footsteps from './components/Footsteps';
 import NotificationPage from './components/NotificationPage';
 import { addNotification } from './redux/notificationSlice';
+import {toast} from 'sonner';
 
 
 const browserRouter = createBrowserRouter([
@@ -50,6 +52,10 @@ const browserRouter = createBrowserRouter([
         path: '/notifications',
         element: <NotificationPage />
       },
+      {
+        path: '/footsteps',
+        element: <Footsteps />
+      }
     ]
   },
   {

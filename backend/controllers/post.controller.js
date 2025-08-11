@@ -8,11 +8,31 @@ import { Notification } from "../models/notification.model.js";
 
 export const addNewPost = async (req, res) => {
     try {
-        const { caption } = req.body;
+        const { caption, coordinates, locationName } = req.body;
         const image = req.file;
         const authorId = req.id;
+
         if (!image) return res.status(400).json({ message: 'Image required' });
 
+        if (!coordinates) return res.status(400).json({ message: 'Location required' });
+
+        // Parse coordinates safely
+        let parsedCoords;
+        try {
+            parsedCoords = JSON.parse(coordinates);
+            if (
+                !Array.isArray(parsedCoords) ||
+                parsedCoords.length !== 2 ||
+                typeof parsedCoords[0] !== 'number' ||
+                typeof parsedCoords[1] !== 'number'
+            ) {
+                throw new Error("Invalid coordinates");
+            }
+        } catch (e) {
+            return res.status(400).json({ message: "Invalid coordinates format", success: false });
+        }
+
+        // Resize + upload image
         const optimizedImageBuffer = await sharp(image.buffer)
             .resize({ width: 800, height: 800, fit: 'inside' })
             .toFormat('jpeg', { quality: 80 })
@@ -20,11 +40,20 @@ export const addNewPost = async (req, res) => {
 
         const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString('base64')}`;
         const cloudResponse = await cloudinary.uploader.upload(fileUri);
+
+        // Create the post with location
         const post = await Post.create({
             caption,
             image: cloudResponse.secure_url,
-            author: authorId
+            author: authorId,
+            location: {
+                type: "Point",
+                coordinates: parsedCoords,
+                name: locationName || "Unknown"
+            }
         });
+
+        // Link post to user
         const user = await User.findById(authorId);
         if (user) {
             user.posts.push(post._id);
@@ -43,6 +72,7 @@ export const addNewPost = async (req, res) => {
         return res.status(500).json({ message: "Internal server error", success: false });
     }
 };
+
 
 export const getAllPost = async (req, res) => {
     try {
@@ -308,5 +338,59 @@ export const bookmarkPost = async (req, res) => {
     } catch (error) {
         console.log("Error in bookmarkPost:", error);
         return res.status(500).json({ message: "Internal server error", success: false });
+    }
+};
+
+
+// export const getFootstepsPosts = async (req, res) => {
+//     try {
+//         const posts = await Post.find({
+//             "location.coordinates": { $exists: true, $ne: [] }
+//         }).select("caption image location");
+
+//         // Transform to match frontend expectations
+//         const formatted = posts.map(post => ({
+//             _id: post._id,
+//             caption: post.caption,
+//             imageUrl: post.image, // your model uses 'image'
+//             coordinates: post.location.coordinates, // [lon, lat]
+//             locationName: post.location.name || null
+//         }));
+
+//         res.json({ posts: formatted });
+//     } catch (err) {
+//         console.error("Error fetching footsteps posts:", err);
+//         res.status(500).json({ error: "Server error" });
+//     }
+// }
+
+
+
+
+
+export const getFootstepsPosts = async (req, res) => {
+    try {
+        const posts = await Post.find({
+            "location.coordinates": {
+                $exists: true,
+                $type: "array",
+                $size: 2
+            }
+        }).select("caption image location");
+
+        const formatted = posts.map(post => ({
+            _id: post._id,
+            caption: post.caption,
+            imageUrl: post.image?.startsWith("http")
+                ? post.image
+                : `${process.env.BASE_URL || ""}/${post.image}`,
+            coordinates: post.location.coordinates, // [lon, lat]
+            locationName: post.location.name || null
+        }));
+
+        res.status(200).json({ posts: formatted });
+    } catch (err) {
+        console.error("Error fetching footsteps posts:", err);
+        res.status(500).json({ error: "Server error" });
     }
 };

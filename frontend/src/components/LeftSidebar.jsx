@@ -1,4 +1,4 @@
-import { Heart, Home, LogOut, MessageCircle, PlusSquare, Search, TrendingUp } from 'lucide-react';
+import { Heart, Home, LogOut, MessageCircle, PlusSquare, Search, TrendingUp, Footprints } from 'lucide-react';
 import React, { useState, useEffect } from 'react'; // 1. Import useEffect
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { toast } from 'sonner';
@@ -68,6 +68,7 @@ const LeftSidebar = () => {
         else if (textType === "Explore") navigate("/explore");
         else if (textType === 'Messages') navigate("/chat");
         else if (textType == 'Notifications') navigate("/notifications")
+        else if (textType == 'Footsteps') navigate("/footsteps")
     };
 
     const sidebarItems = [
@@ -78,6 +79,7 @@ const LeftSidebar = () => {
         { icon: <MessageCircle />, text: "Messages" },
         { icon: <Heart />, text: "Notifications" },
         { icon: <PlusSquare />, text: "Create" },
+        {icon: <Footprints/>, text:"Footsteps"},
         {
             icon: (
                 <Avatar className='w-6 h-6'>
