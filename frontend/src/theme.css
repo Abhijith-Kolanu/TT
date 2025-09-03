@@ -5,7 +5,8 @@
 
 /* Custom scrollbar for dark mode */
 .sidebar-scroll::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
+  background: transparent;
 }
 
 .sidebar-scroll::-webkit-scrollbar-track {
@@ -13,20 +14,20 @@
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5);
+  background: transparent;
   border-radius: 3px;
 }
 
 .dark .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.7);
+  background: transparent;
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.8);
+  background: transparent;
 }
 
 .dark .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(75, 85, 99, 0.9);
+  background: transparent;
 }
 
 /* Smooth theme transitions */

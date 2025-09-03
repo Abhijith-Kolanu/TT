@@ -162,11 +162,11 @@ const TripDetailView = () => {
 
     const getCostBadgeColor = (budgetType) => {
         const colorMap = {
-            budget: 'bg-green-100 text-green-800',
-            'mid-range': 'bg-blue-100 text-blue-800',
-            luxury: 'bg-purple-100 text-purple-800'
+            budget: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+            'mid-range': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+            luxury: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
         };
-        return colorMap[budgetType] || 'bg-gray-100 text-gray-800';
+        return colorMap[budgetType] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200';
     };
 
     if (loading) {
@@ -254,8 +254,8 @@ const TripDetailView = () => {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
                                     activeTab === tab.id
-                                        ? 'border-blue-500 text-blue-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                                 }`}
                             >
                                 {tab.icon}
@@ -271,7 +271,7 @@ const TripDetailView = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     {/* Day Selector */}
                     <div className="lg:col-span-1">
-                        <h3 className="text-lg font-semibold mb-4">Select Day</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Select Day</h3>
                         <div className="space-y-2">
                             {currentTrip.itinerary?.map((day) => (
                                 <button
@@ -279,15 +279,15 @@ const TripDetailView = () => {
                                     onClick={() => setSelectedDay(day.day)}
                                     className={`w-full text-left p-3 rounded-lg border transition-colors ${
                                         selectedDay === day.day
-                                            ? 'bg-blue-50 border-blue-200 text-blue-900'
-                                            : 'bg-white border-gray-200 hover:bg-gray-50'
+                                            ? 'bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-700 text-blue-900 dark:text-blue-200'
+                                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white'
                                     }`}
                                 >
                                     <div className="font-medium">Day {day.day}</div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">
                                         {formatDate(day.date)}
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-1">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {day.activities?.length || 0} activities
                                     </div>
                                 </button>
@@ -300,28 +300,28 @@ const TripDetailView = () => {
                         {selectedDayData ? (
                             <div>
                                 <div className="mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                                         Day {selectedDayData.day}
                                     </h2>
-                                    <p className="text-gray-600">{formatDate(selectedDayData.date)}</p>
+                                    <p className="text-gray-600 dark:text-gray-400">{formatDate(selectedDayData.date)}</p>
                                 </div>
 
                                 <div className="space-y-4">
                                     {selectedDayData.activities?.map((activity, index) => (
-                                        <div key={index} className="bg-white border border-gray-200 rounded-lg p-6">
+                                        <div key={index} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
                                             <div className="flex items-start justify-between mb-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
+                                                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full text-blue-600 dark:text-blue-300 font-medium text-sm">
                                                         {index + 1}
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <Clock size={16} className="text-gray-500" />
-                                                            <span className="font-medium text-gray-900">
+                                                            <Clock size={16} className="text-gray-500 dark:text-gray-400" />
+                                                            <span className="font-medium text-gray-900 dark:text-white">
                                                                 {formatTime(activity.time)}
                                                             </span>
                                                         </div>
-                                                        <h3 className="text-lg font-semibold text-gray-900">
+                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                                             {activity.title}
                                                         </h3>
                                                     </div>
@@ -334,9 +334,9 @@ const TripDetailView = () => {
                                                 </div>
                                             </div>
 
-                                            <p className="text-gray-600 mb-4">{activity.description}</p>
+                                            <p className="text-gray-600 dark:text-gray-400 mb-4">{activity.description}</p>
 
-                                            <div className="flex items-center justify-between text-sm text-gray-500">
+                                            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                                                 <div className="flex items-center gap-4">
                                                     <div className="flex items-center gap-1">
                                                         <MapPin size={14} />
@@ -347,7 +347,11 @@ const TripDetailView = () => {
                                                         <span>{activity.estimatedDuration} minutes</span>
                                                     </div>
                                                 </div>
-                                                <Button variant="outline" size="sm">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm"
+                                                    className="border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                >
                                                     View on Map
                                                 </Button>
                                             </div>
@@ -357,9 +361,9 @@ const TripDetailView = () => {
                             </div>
                         ) : (
                             <div className="text-center py-12">
-                                <Calendar size={48} className="text-gray-300 mx-auto mb-4" />
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">No activities for this day</h3>
-                                <p className="text-gray-600">Select a different day to view the itinerary.</p>
+                                <Calendar size={48} className="text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No activities for this day</h3>
+                                <p className="text-gray-600 dark:text-gray-400">Select a different day to view the itinerary.</p>
                             </div>
                         )}
                     </div>
@@ -419,10 +423,10 @@ const SmartRecommendationsTab = ({ trip, recommendations, onRefresh }) => {
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center gap-2">
-                    <Filter size={16} className="text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700">Filter by:</span>
+                    <Filter size={16} className="text-gray-500 dark:text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by:</span>
                 </div>
                 <div className="flex gap-2">
                     {[
@@ -439,7 +443,7 @@ const SmartRecommendationsTab = ({ trip, recommendations, onRefresh }) => {
                             className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                                 selectedCategory === category.id
                                     ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                             }`}
                         >
                             {category.label}

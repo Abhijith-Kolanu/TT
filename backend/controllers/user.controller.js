@@ -15,25 +15,47 @@ export const register = async (req, res) => {
                 success: false,
             });
         }
-        const user = await User.findOne({ email });
-        if (user) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
             return res.status(401).json({
                 message: "Try different email",
                 success: false,
             });
         };
         const hashedPassword = await bcrypt.hash(password, 10);
-        await User.create({
+        const newUser = await User.create({
             username,
             email,
             password: hashedPassword
         });
-        return res.status(201).json({
-            message: "Account created successfully.",
+
+        // Automatically log in the user after successful registration
+        const token = await jwt.sign({ userId: newUser._id }, process.env.SECRET_KEY, { expiresIn: '1d' });
+
+        // Prepare user data (same format as login)
+        const user = {
+            _id: newUser._id,
+            username: newUser.username,
+            email: newUser.email,
+            profilePicture: newUser.profilePicture,
+            bio: newUser.bio,
+            followers: newUser.followers,
+            following: newUser.following,
+            posts: newUser.posts,
+            bookmarks: newUser.bookmarks
+        };
+
+        return res.cookie('token', token, { httpOnly: true, sameSite: 'strict', maxAge: 1 * 24 * 60 * 60 * 1000 }).json({
+            message: `Welcome to TrekTales, ${user.username}!`,
             success: true,
+            user
         });
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+        });
     }
 }
 export const login = async (req, res) => {

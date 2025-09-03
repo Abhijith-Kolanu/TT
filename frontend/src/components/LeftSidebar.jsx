@@ -86,8 +86,10 @@ const LeftSidebar = () => {
         <div className='fixed top-0 z-10 left-0 border-r border-gray-300 dark:border-gray-700 w-64 h-screen bg-white dark:bg-gray-800 overflow-hidden lg:block hidden transition-colors duration-200'>
             <div className='flex flex-col h-full'>
                 <div className='flex-shrink-0 px-6 py-8 border-b border-gray-200 dark:border-gray-700'>
-                    <h1 className='font-bold text-2xl text-gray-900 dark:text-white'>TrekTales</h1>
-                    <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>Explore. Share. Connect.</p>
+                    <div className='flex items-center justify-between'>
+                        <h1 className='font-bold text-2xl text-gray-900 dark:text-white'>TrekTales</h1>
+                        <ThemeToggle />
+                    </div>
                 </div>
                 <div className='flex-1 overflow-y-auto px-6 py-4 sidebar-scroll'>
                     {sidebarItems.map((item, index) => {
@@ -163,14 +165,6 @@ const LeftSidebar = () => {
                             </div>
                         );
                     })}
-                </div>
-                
-                {/* Theme Toggle at the bottom */}
-                <div className='flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-700'>
-                    <div className='flex items-center justify-between'>
-                        <span className='text-sm text-gray-500 dark:text-gray-400'>Theme</span>
-                        <ThemeToggle />
-                    </div>
                 </div>
             </div>
             <CreatePost open={open} setOpen={setOpen} />

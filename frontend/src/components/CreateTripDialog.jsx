@@ -198,7 +198,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl text-gray-900 dark:text-white">
                         <MapPin className="text-blue-600" />
@@ -253,7 +253,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                     {/* Dates */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="startDate" className="flex items-center gap-2">
+                            <Label htmlFor="startDate" className="flex items-center gap-2 text-gray-900 dark:text-white">
                                 <Calendar size={16} />
                                 Start Date
                             </Label>
@@ -262,14 +262,14 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                                 type="date"
                                 value={formData.dates.startDate}
                                 onChange={(e) => handleNestedInputChange('dates', 'startDate', e.target.value)}
-                                className={errors['dates.startDate'] ? 'border-red-500' : ''}
+                                className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 ${errors['dates.startDate'] ? 'border-red-500' : ''}`}
                             />
                             {errors['dates.startDate'] && (
                                 <p className="text-red-500 text-sm mt-1">{errors['dates.startDate']}</p>
                             )}
                         </div>
                         <div>
-                            <Label htmlFor="endDate" className="flex items-center gap-2">
+                            <Label htmlFor="endDate" className="flex items-center gap-2 text-gray-900 dark:text-white">
                                 <Calendar size={16} />
                                 End Date
                             </Label>
@@ -278,7 +278,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                                 type="date"
                                 value={formData.dates.endDate}
                                 onChange={(e) => handleNestedInputChange('dates', 'endDate', e.target.value)}
-                                className={errors['dates.endDate'] ? 'border-red-500' : ''}
+                                className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 ${errors['dates.endDate'] ? 'border-red-500' : ''}`}
                             />
                             {errors['dates.endDate'] && (
                                 <p className="text-red-500 text-sm mt-1">{errors['dates.endDate']}</p>
@@ -289,7 +289,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                     {/* Travelers */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="adults" className="flex items-center gap-2">
+                            <Label htmlFor="adults" className="flex items-center gap-2 text-gray-900 dark:text-white">
                                 <Users size={16} />
                                 Adults
                             </Label>
@@ -299,27 +299,28 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                                 min="1"
                                 value={formData.travelers.adults}
                                 onChange={(e) => handleNestedInputChange('travelers', 'adults', parseInt(e.target.value))}
-                                className={errors['travelers.adults'] ? 'border-red-500' : ''}
+                                className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 ${errors['travelers.adults'] ? 'border-red-500' : ''}`}
                             />
                             {errors['travelers.adults'] && (
                                 <p className="text-red-500 text-sm mt-1">{errors['travelers.adults']}</p>
                             )}
                         </div>
                         <div>
-                            <Label htmlFor="children">Children</Label>
+                            <Label htmlFor="children" className="text-gray-900 dark:text-white">Children</Label>
                             <Input
                                 id="children"
                                 type="number"
                                 min="0"
                                 value={formData.travelers.children}
                                 onChange={(e) => handleNestedInputChange('travelers', 'children', parseInt(e.target.value))}
+                                className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
                             />
                         </div>
                     </div>
 
                     {/* Budget Type */}
                     <div>
-                        <Label className="flex items-center gap-2">
+                        <Label className="flex items-center gap-2 text-gray-900 dark:text-white">
                             <DollarSign size={16} />
                             Budget Type
                         </Label>
@@ -327,20 +328,20 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                             value={formData.preferences.budgetType}
                             onValueChange={(value) => handleNestedInputChange('preferences', 'budgetType', value)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="budget">Budget (Economical options)</SelectItem>
-                                <SelectItem value="mid-range">Mid-Range (Balanced experience)</SelectItem>
-                                <SelectItem value="luxury">Luxury (Premium experiences)</SelectItem>
+                            <SelectContent className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+                                <SelectItem value="budget" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Budget (Economical options)</SelectItem>
+                                <SelectItem value="mid-range" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Mid-Range (Balanced experience)</SelectItem>
+                                <SelectItem value="luxury" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Luxury (Premium experiences)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     {/* Travel Style */}
                     <div>
-                        <Label className="flex items-center gap-2">
+                        <Label className="flex items-center gap-2 text-gray-900 dark:text-white">
                             <Globe size={16} />
                             Travel Style
                         </Label>
@@ -348,40 +349,40 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                             value={formData.preferences.travelStyle}
                             onValueChange={(value) => handleNestedInputChange('preferences', 'travelStyle', value)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="solo">Solo Adventure</SelectItem>
-                                <SelectItem value="couple">Romantic Getaway</SelectItem>
-                                <SelectItem value="family">Family Trip</SelectItem>
-                                <SelectItem value="friends">Friends Trip</SelectItem>
-                                <SelectItem value="business">Business Travel</SelectItem>
+                            <SelectContent className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+                                <SelectItem value="solo" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Solo Adventure</SelectItem>
+                                <SelectItem value="couple" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Romantic Getaway</SelectItem>
+                                <SelectItem value="family" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Family Trip</SelectItem>
+                                <SelectItem value="friends" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Friends Trip</SelectItem>
+                                <SelectItem value="business" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Business Travel</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     {/* Pace */}
                     <div>
-                        <Label>Trip Pace</Label>
+                        <Label className="text-gray-900 dark:text-white">Trip Pace</Label>
                         <Select
                             value={formData.preferences.pace}
                             onValueChange={(value) => handleNestedInputChange('preferences', 'pace', value)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="relaxed">Relaxed (Plenty of downtime)</SelectItem>
-                                <SelectItem value="moderate">Moderate (Balanced schedule)</SelectItem>
-                                <SelectItem value="packed">Packed (See everything)</SelectItem>
+                            <SelectContent className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+                                <SelectItem value="relaxed" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Relaxed (Plenty of downtime)</SelectItem>
+                                <SelectItem value="moderate" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Moderate (Balanced schedule)</SelectItem>
+                                <SelectItem value="packed" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Packed (See everything)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     {/* Interests */}
                     <div>
-                        <Label className="flex items-center gap-2 mb-3">
+                        <Label className="flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
                             <Heart size={16} />
                             Your Interests
                         </Label>
@@ -394,7 +395,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                                     className={`p-2 rounded-lg border text-sm capitalize transition-colors ${
                                         formData.preferences.interests.includes(interest)
                                             ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
+                                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
                                     }`}
                                 >
                                     {interest}
