@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDataUri from "../utils/datauri.js";
 import cloudinary from "../utils/cloudinary.js";
+import { io, getReceiverSocketId } from "../socket/socket.js";
 import { Post } from "../models/post.model.js";
+import { Notification } from "../models/notification.model.js";
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -62,9 +64,9 @@ export const login = async (req, res) => {
 
         // populate each post if in the posts array
         const populatedPosts = await Promise.all(
-            user.posts.map( async (postId) => {
+            user.posts.map(async (postId) => {
                 const post = await Post.findById(postId);
-                if(post.author.equals(user._id)){
+                if (post.author.equals(user._id)) {
                     return post;
                 }
                 return null;
@@ -78,7 +80,8 @@ export const login = async (req, res) => {
             bio: user.bio,
             followers: user.followers,
             following: user.following,
-            posts: populatedPosts
+            posts: populatedPosts,
+            bookmarks: user.bookmarks
         }
         return res.cookie('token', token, { httpOnly: true, sameSite: 'strict', maxAge: 1 * 24 * 60 * 60 * 1000 }).json({
             message: `Welcome back ${user.username}`,
@@ -103,7 +106,7 @@ export const logout = async (_, res) => {
 export const getProfile = async (req, res) => {
     try {
         const userId = req.params.id;
-        let user = await User.findById(userId).populate({path:'posts', createdAt:-1}).populate('bookmarks');
+        let user = await User.findById(userId).populate({ path: 'posts', createdAt: -1 }).populate('bookmarks');
         return res.status(200).json({
             user,
             success: true
@@ -164,47 +167,78 @@ export const getSuggestedUsers = async (req, res) => {
         console.log(error);
     }
 };
+
+// make sure these are correctly imported
+
 export const followOrUnfollow = async (req, res) => {
     try {
-        const followKrneWala = req.id; // patel
-        const jiskoFollowKrunga = req.params.id; // shivani
+        const followKrneWala = req.id;
+        const jiskoFollowKrunga = req.params.id;
+
         if (followKrneWala === jiskoFollowKrunga) {
-            return res.status(400).json({
-                message: 'You cannot follow/unfollow yourself',
-                success: false
-            });
+            return res.status(400).json({ message: 'You cannot follow/unfollow yourself', success: false });
         }
 
         const user = await User.findById(followKrneWala);
         const targetUser = await User.findById(jiskoFollowKrunga);
 
         if (!user || !targetUser) {
-            return res.status(400).json({
-                message: 'User not found',
-                success: false
-            });
+            return res.status(400).json({ message: 'User not found', success: false });
         }
-        // mai check krunga ki follow krna hai ya unfollow
+
         const isFollowing = user.following.includes(jiskoFollowKrunga);
+
         if (isFollowing) {
-            // unfollow logic ayega
             await Promise.all([
                 User.updateOne({ _id: followKrneWala }, { $pull: { following: jiskoFollowKrunga } }),
                 User.updateOne({ _id: jiskoFollowKrunga }, { $pull: { followers: followKrneWala } }),
-            ])
+            ]);
             return res.status(200).json({ message: 'Unfollowed successfully', success: true });
         } else {
-            // follow logic ayega
             await Promise.all([
                 User.updateOne({ _id: followKrneWala }, { $push: { following: jiskoFollowKrunga } }),
                 User.updateOne({ _id: jiskoFollowKrunga }, { $push: { followers: followKrneWala } }),
-            ])
-            return res.status(200).json({ message: 'followed successfully', success: true });
+            ]);
+
+            // ✅ Create notification in DB
+            const notification = await Notification.create({
+                sender: followKrneWala,
+                recipient: jiskoFollowKrunga,
+                type: "follow"
+            });
+
+            // ✅ Get sender info
+            const senderUser = await User.findById(followKrneWala).select("username profilePicture");
+
+            const unifiedNotification = {
+                _id: notification._id,
+                type: "follow",
+                message: `${senderUser.username} started following you`,
+                sender: {
+                    _id: senderUser._id,
+                    username: senderUser.username,
+                    profilePicture: senderUser.profilePicture || ""
+                },
+                recipientId: jiskoFollowKrunga,
+                read: false,
+                createdAt: notification.createdAt
+            };
+
+            // ✅ Emit to socket if recipient is online
+            const receiverSocketId = getReceiverSocketId(jiskoFollowKrunga);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("newNotification", unifiedNotification);
+            }
+
+            return res.status(200).json({ message: 'Followed successfully', success: true });
         }
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Something went wrong", success: false });
     }
-}
+};
+
+
 export const searchUsers = async (req, res) => {
     try {
         const { query } = req.params;
@@ -222,5 +256,40 @@ export const searchUsers = async (req, res) => {
     } catch (error) {
         console.log("Error in searchUsers:", error);
         return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const getFollowersFollowing = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        
+        const user = await User.findById(userId)
+            .populate({
+                path: 'followers',
+                select: 'username profilePicture bio'
+            })
+            .populate({
+                path: 'following',
+                select: 'username profilePicture bio'
+            });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            followers: user.followers,
+            following: user.following
+        });
+    } catch (error) {
+        console.log("Error in getFollowersFollowing:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
 };

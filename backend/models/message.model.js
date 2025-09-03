@@ -12,6 +12,17 @@ const messageSchema = new mongoose.Schema({
     message: {
         type: String,
         required: true
+    },
+    sharedPost: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Post',
+        default: null
+    },
+    messageType: {
+        type: String,
+        enum: ['text', 'post'],
+        default: 'text'
     }
-});
+}, { timestamps: true });
+
 export const Message = mongoose.model('Message', messageSchema);

@@ -1,4 +1,4 @@
-import { Heart, Home, LogOut, MessageCircle, PlusSquare, Search, TrendingUp } from 'lucide-react';
+import { Heart, Home, LogOut, MessageCircle, PlusSquare, Search, TrendingUp, Footprints, Plane } from 'lucide-react';
 import React, { useState, useEffect } from 'react'; // 1. Import useEffect
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { toast } from 'sonner';
@@ -10,38 +10,24 @@ import CreatePost from './CreatePost';
 import { setPosts, setSelectedPost } from '@/redux/postSlice';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Button } from './ui/button';
-import SearchComponent from './SearchComponent'; 
-import io from 'socket.io-client'; // 2. Import socket.io-client
+import SearchComponent from './SearchComponent';
+import ThemeToggle from './ThemeToggle';
+import { getUserInitials } from '@/lib/utils';
+import useGetAllNotifications from '@/hooks/useGetAllNotifications';
 
 const LeftSidebar = () => {
     const navigate = useNavigate();
     const { user } = useSelector(store => store.auth);
+    const { unreadMessages } = useSelector(store => store.chat);
+    const { unreadCount: notificationUnreadCount, notifications } = useSelector(store => store.notification);
     const dispatch = useDispatch();
     const [open, setOpen] = useState(false);
     
-    // 3. STATE TO HOLD ALL NOTIFICATIONS
-    const [notifications, setNotifications] = useState([]);
-
-    // 4. ADD THE SOCKET.IO USEEFFECT HOOK
-    useEffect(() => {
-        if (user) {
-            const socket = io("http://localhost:8000", {
-                query: {
-                    userId: user._id // Send this user's ID to the backend
-                }
-            });
-
-            // Listen for the 'newNotification' event from the server
-            socket.on('newNotification', (newNotification) => {
-                setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
-                toast.info(`${newNotification.sender.username} ${newNotification.type}d your post!`);
-            });
-
-            // Clean up the socket connection when the component unmounts
-            return () => socket.close();
-        }
-    }, [user]); // Rerun this effect if the user logs in or out
-
+    // Fetch notifications
+    useGetAllNotifications();
+    
+    // Calculate total unread count from unreadMessages object
+    const unreadCount = unreadMessages ? Object.values(unreadMessages).reduce((total, count) => total + count, 0) : 0;
 
     const logoutHandler = async () => {
         // ... (your existing logoutHandler code is perfect, no changes needed)
@@ -65,8 +51,11 @@ const LeftSidebar = () => {
         else if (textType === "Create") setOpen(true);
         else if (textType === "Profile") navigate(`/profile/${user?._id}`);
         else if (textType === "Home") navigate("/");
-        else if (textType === "Explore") navigate("/explore"); 
+        else if (textType === "Explore") navigate("/explore");
         else if (textType === 'Messages') navigate("/chat");
+        else if (textType == 'Notifications') navigate("/notifications")
+        else if (textType == 'Footsteps') navigate("/footsteps")
+        else if (textType == 'Trip Planner') navigate("/planner")
     };
 
     const sidebarItems = [
@@ -74,14 +63,18 @@ const LeftSidebar = () => {
         { icon: <Home />, text: "Home" },
         { text: "Search" },
         { icon: <TrendingUp />, text: "Explore" },
+        { icon: <Plane />, text: "Trip Planner" },
         { icon: <MessageCircle />, text: "Messages" },
         { icon: <Heart />, text: "Notifications" },
         { icon: <PlusSquare />, text: "Create" },
+        {icon: <Footprints/>, text:"Footsteps"},
         {
             icon: (
                 <Avatar className='w-6 h-6'>
                     <AvatarImage src={user?.profilePicture} alt="@shadcn" />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-xs">
+                        {getUserInitials(user?.username)}
+                    </AvatarFallback>
                 </Avatar>
             ),
             text: "Profile"
@@ -90,56 +83,94 @@ const LeftSidebar = () => {
     ];
 
     return (
-        <div className='fixed top-0 z-10 left-0 px-4 border-r border-gray-300 w-[16%] h-screen'>
-            <div className='flex flex-col'>
-                <h1 className='my-8 pl-3 font-bold text-xl'>TrekTales</h1>
-                <div>
+        <div className='fixed top-0 z-10 left-0 border-r border-gray-300 dark:border-gray-700 w-64 h-screen bg-white dark:bg-gray-800 overflow-hidden lg:block hidden transition-colors duration-200'>
+            <div className='flex flex-col h-full'>
+                <div className='flex-shrink-0 px-6 py-8 border-b border-gray-200 dark:border-gray-700'>
+                    <h1 className='font-bold text-2xl text-gray-900 dark:text-white'>TrekTales</h1>
+                    <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>Explore. Share. Connect.</p>
+                </div>
+                <div className='flex-1 overflow-y-auto px-6 py-4 sidebar-scroll'>
                     {sidebarItems.map((item, index) => {
                         if (item.text === 'Search') {
-                            // ... (search component logic is perfect, no changes needed)
                             return (
-                                <div key={index} className='flex items-center gap-3 relative p-3 my-3'>
-                                    <Search />
+                                <div key={index} className='flex items-center gap-4 relative p-4 my-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200'>
                                     <SearchComponent />
                                 </div>
                             );
                         }
 
                         return (
-                            <div onClick={() => sidebarHandler(item.text)} key={index} className='flex items-center gap-3 relative hover:bg-gray-100 cursor-pointer rounded-lg p-3 my-3'>
-                                {item.icon}
-                                <span>{item.text}</span>
-                                {item.text === "Notifications" && (
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            {/* Show badge only if there are new notifications */}
-                                            {notifications.length > 0 && (
-                                                <Button size='icon' className="rounded-full h-5 w-5 bg-red-600 hover:bg-red-600 absolute bottom-6 left-6">{notifications.length}</Button>
-                                            )}
-                                        </PopoverTrigger>
-                                        <PopoverContent>
-                                            <div>
-                                                {/* 5. MAP OVER THE NEW NOTIFICATIONS STATE */}
-                                                {notifications.length === 0 ? (<p>No new notifications</p>) : (
-                                                    notifications.map((notification) => (
-                                                        <div key={notification._id} className='flex items-center gap-2 my-2'>
-                                                            <Avatar>
-                                                                <AvatarImage src={notification.sender?.profilePicture} />
-                                                                <AvatarFallback>CN</AvatarFallback>
-                                                            </Avatar>
-                                                            <p className='text-sm'>
-                                                                <span className='font-bold'>{notification.sender?.username}</span> {notification.type}d your post
-                                                            </p>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </PopoverContent>
-                                    </Popover>
-                                )}
+                            <div onClick={() => sidebarHandler(item.text)} key={index} className='flex items-center gap-4 relative hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded-lg p-4 my-2 transition-colors duration-200'>
+                                <div className='w-6 h-6 flex items-center justify-center text-gray-600 dark:text-gray-400 relative'>
+                                    {item.icon}
+                                    
+                                    {/* Messages unread counter - positioned on top-right of icon */}
+                                    {item.text === "Messages" && unreadCount > 0 && (
+                                        <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-semibold shadow-lg border-2 border-white dark:border-gray-800">
+                                            {unreadCount > 99 ? '99+' : unreadCount}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Notifications counter - positioned on top-right of icon */}
+                                    {item.text === "Notifications" && notificationUnreadCount > 0 && (
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-semibold shadow-lg border-2 border-white dark:border-gray-800 cursor-pointer">
+                                                    {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                                                </div>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-64 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                                                <div>
+                                                    {!notifications || notifications.length === 0 ? (
+                                                        <p className="text-gray-700 dark:text-gray-300">No new notifications</p>
+                                                    ) : (
+                                                        notifications.map((notification) => {
+                                                            let message = '';
+                                                            if (notification.type === 'like') {
+                                                                message = 'liked your post';
+                                                            } else if (notification.type === 'comment') {
+                                                                message = 'commented on your post';
+                                                            } else if (notification.type === 'follow') {
+                                                                message = 'started following you';
+                                                            } else if (notification.type === 'bookmark') {
+                                                                message = 'bookmarked your post';
+                                                            } else {
+                                                                message = 'interacted with your content';
+                                                            }
+                                                            
+                                                            return (
+                                                                <div key={notification._id} className='flex items-center gap-2 my-2'>
+                                                                    <Avatar>
+                                                                        <AvatarImage src={notification.sender?.profilePicture} />
+                                                                        <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
+                                                                            {getUserInitials(notification.sender?.username)}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                    <p className='text-sm text-gray-700 dark:text-gray-300'>
+                                                                        <span className='font-bold'>{notification.sender?.username}</span> {message}
+                                                                    </p>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+                                    )}
+                                </div>
+                                <span className='text-gray-700 dark:text-gray-300 font-medium text-base'>{item.text}</span>
+
                             </div>
                         );
                     })}
+                </div>
+                
+                {/* Theme Toggle at the bottom */}
+                <div className='flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-700'>
+                    <div className='flex items-center justify-between'>
+                        <span className='text-sm text-gray-500 dark:text-gray-400'>Theme</span>
+                        <ThemeToggle />
+                    </div>
                 </div>
             </div>
             <CreatePost open={open} setOpen={setOpen} />

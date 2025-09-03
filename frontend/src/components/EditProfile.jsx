@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { setAuthUser } from '@/redux/authSlice';
+import { getUserInitials } from '@/lib/utils';
 
 const EditProfile = () => {
     const imageRef = useRef();
@@ -68,37 +69,39 @@ const EditProfile = () => {
         }
     }
     return (
-        <div className='flex max-w-2xl mx-auto pl-10'>
+        <div className='flex max-w-2xl mx-auto pl-10 bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200'>
             <section className='flex flex-col gap-6 w-full my-8'>
-                <h1 className='font-bold text-xl'>Edit Profile</h1>
-                <div className='flex items-center justify-between bg-gray-100 rounded-xl p-4'>
+                <h1 className='font-bold text-xl text-gray-900 dark:text-white'>Edit Profile</h1>
+                <div className='flex items-center justify-between bg-gray-100 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700'>
                     <div className='flex items-center gap-3'>
                         <Avatar>
                             <AvatarImage src={user?.profilePicture} alt="post_image" />
-                            <AvatarFallback>CN</AvatarFallback>
+                            <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
+                                {getUserInitials(user?.username)}
+                            </AvatarFallback>
                         </Avatar>
                         <div>
-                            <h1 className='font-bold text-sm'>{user?.username}</h1>
-                            <span className='text-gray-600'>{user?.bio || 'Bio here...'}</span>
+                            <h1 className='font-bold text-sm text-gray-900 dark:text-white'>{user?.username}</h1>
+                            <span className='text-gray-600 dark:text-gray-400'>{user?.bio || 'Bio here...'}</span>
                         </div>
                     </div>
                     <input ref={imageRef} onChange={fileChangeHandler} type='file' className='hidden' />
                     <Button onClick={() => imageRef?.current.click()} className='bg-[#0095F6] h-8 hover:bg-[#318bc7]'>Change photo</Button>
                 </div>
                 <div>
-                    <h1 className='font-bold text-xl mb-2'>Bio</h1>
-                    <Textarea value={input.bio} onChange={(e) => setInput({ ...input, bio: e.target.value })} name='bio' className="focus-visible:ring-transparent" />
+                    <h1 className='font-bold text-xl mb-2 text-gray-900 dark:text-white'>Bio</h1>
+                    <Textarea value={input.bio} onChange={(e) => setInput({ ...input, bio: e.target.value })} name='bio' className="focus-visible:ring-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                 </div>
                 <div>
-                    <h1 className='font-bold mb-2'>Gender</h1>
+                    <h1 className='font-bold mb-2 text-gray-900 dark:text-white'>Gender</h1>
                     <Select defaultValue={input.gender} onValueChange={selectChangeHandler}>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                             <SelectGroup>
-                                <SelectItem value="male">Male</SelectItem>
-                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="male" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Male</SelectItem>
+                                <SelectItem value="female" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Female</SelectItem>
                             </SelectGroup>
                         </SelectContent>
                     </Select>

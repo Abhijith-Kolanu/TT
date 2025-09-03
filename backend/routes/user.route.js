@@ -8,7 +8,8 @@ import {
     login, 
     logout, 
     register, 
-    searchUsers 
+    searchUsers,
+    getFollowersFollowing
 } from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import upload from "../middlewares/multer.js";
@@ -25,5 +26,6 @@ router.route('/:id/profile').get(isAuthenticated, getProfile);
 
 // 2. THIS LINE WILL NOW WORK CORRECTLY
 router.route("/search/:query").get(isAuthenticated, searchUsers);
+router.route("/:userId/followers-following").get(isAuthenticated, getFollowersFollowing);
 
 export default router;

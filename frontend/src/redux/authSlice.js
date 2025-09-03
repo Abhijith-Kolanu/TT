@@ -21,6 +21,11 @@ const authSlice = createSlice({
         },
         setSelectedUser:(state,action) => {
             state.selectedUser = action.payload;
+        },
+        updateUserBookmarks:(state,action) => {
+            if(state.user) {
+                state.user.bookmarks = action.payload;
+            }
         }
     }
 });
@@ -29,5 +34,6 @@ export const {
     setSuggestedUsers, 
     setUserProfile,
     setSelectedUser,
+    updateUserBookmarks
 } = authSlice.actions;
 export default authSlice.reducer;

@@ -6,7 +6,7 @@ export const sendMessage = async (req,res) => {
     try {
         const senderId = req.id;
         const receiverId = req.params.id;
-        const {textMessage:message} = req.body;
+        const {textMessage: message, postId, messageType = 'text'} = req.body;
       
         let conversation = await Conversation.findOne({
             participants:{$all:[senderId, receiverId]}
@@ -17,14 +17,34 @@ export const sendMessage = async (req,res) => {
                 participants:[senderId, receiverId]
             })
         };
-        const newMessage = await Message.create({
-            senderId,
-            receiverId,
-            message
-        });
+
+        // Create message based on type
+        let newMessage;
+        if (messageType === 'post' && postId) {
+            newMessage = await Message.create({
+                senderId,
+                receiverId,
+                message: "Shared a post",
+                sharedPost: postId,
+                messageType: 'post'
+            });
+        } else {
+            newMessage = await Message.create({
+                senderId,
+                receiverId,
+                message,
+                messageType: 'text'
+            });
+        }
+
         if(newMessage) conversation.messages.push(newMessage._id);
 
-        await Promise.all([conversation.save(),newMessage.save()])
+        await Promise.all([conversation.save(), newMessage.save()]);
+
+        // Populate the shared post if it exists
+        if (messageType === 'post') {
+            await newMessage.populate('sharedPost');
+        }
 
         // implement socket io for real time data transfer
         const receiverSocketId = getReceiverSocketId(receiverId);
@@ -38,6 +58,10 @@ export const sendMessage = async (req,res) => {
         })
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to send message"
+        });
     }
 }
 export const getMessage = async (req,res) => {
@@ -46,12 +70,25 @@ export const getMessage = async (req,res) => {
         const receiverId = req.params.id;
         const conversation = await Conversation.findOne({
             participants:{$all: [senderId, receiverId]}
-        }).populate('messages');
+        }).populate({
+            path: 'messages',
+            populate: {
+                path: 'sharedPost',
+                populate: {
+                    path: 'author',
+                    select: 'username profilePicture'
+                }
+            }
+        });
         if(!conversation) return res.status(200).json({success:true, messages:[]});
 
         return res.status(200).json({success:true, messages:conversation?.messages});
         
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to get messages"
+        });
     }
 }

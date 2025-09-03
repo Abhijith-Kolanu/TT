@@ -9,6 +9,7 @@ import Comment from './Comment'
 import axios from 'axios'
 import { toast } from 'sonner'
 import { setPosts } from '@/redux/postSlice'
+import { getUserInitials } from '@/lib/utils'
 
 const CommentDialog = ({ open, setOpen }) => {
   const [text, setText] = useState("");
@@ -59,7 +60,7 @@ const CommentDialog = ({ open, setOpen }) => {
 
   return (
     <Dialog open={open}>
-      <DialogContent onInteractOutside={() => setOpen(false)} className="max-w-5xl p-0 flex flex-col">
+      <DialogContent onInteractOutside={() => setOpen(false)} className="max-w-5xl p-0 flex flex-col bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <div className='flex flex-1'>
           <div className='w-1/2'>
             <img
@@ -74,39 +75,41 @@ const CommentDialog = ({ open, setOpen }) => {
                 <Link>
                   <Avatar>
                     <AvatarImage src={selectedPost?.author?.profilePicture} />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
+                      {getUserInitials(selectedPost?.author?.username)}
+                    </AvatarFallback>
                   </Avatar>
                 </Link>
                 <div>
-                  <Link className='font-semibold text-xs'>{selectedPost?.author?.username}</Link>
+                  <Link className='font-semibold text-xs text-gray-900 dark:text-white'>{selectedPost?.author?.username}</Link>
                   {/* <span className='text-gray-600 text-sm'>Bio here...</span> */}
                 </div>
               </div>
 
               <Dialog>
                 <DialogTrigger asChild>
-                  <MoreHorizontal className='cursor-pointer' />
+                  <MoreHorizontal className='cursor-pointer text-gray-600 dark:text-gray-400' />
                 </DialogTrigger>
-                <DialogContent className="flex flex-col items-center text-sm text-center">
+                <DialogContent className="flex flex-col items-center text-sm text-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                   <div className='cursor-pointer w-full text-[#ED4956] font-bold'>
                     Unfollow
                   </div>
-                  <div className='cursor-pointer w-full'>
+                  <div className='cursor-pointer w-full text-gray-900 dark:text-white'>
                     Add to favorites
                   </div>
                 </DialogContent>
               </Dialog>
             </div>
-            <hr />
-            <div className='flex-1 overflow-y-auto max-h-96 p-4'>
+            <hr className='border-gray-200 dark:border-gray-700' />
+            <div className='flex-1 overflow-y-auto max-h-96 p-4 bg-white dark:bg-gray-800'>
               {
                 comment.map((comment) => <Comment key={comment._id} comment={comment} />)
               }
             </div>
-            <div className='p-4'>
+            <div className='p-4 border-t border-gray-200 dark:border-gray-700'>
               <div className='flex items-center gap-2'>
-                <input type="text" value={text} onChange={changeEventHandler} placeholder='Add a comment...' className='w-full outline-none border text-sm border-gray-300 p-2 rounded' />
-                <Button disabled={!text.trim()} onClick={sendMessageHandler} variant="outline">Send</Button>
+                <input type="text" value={text} onChange={changeEventHandler} placeholder='Add a comment...' className='w-full outline-none border text-sm border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400' />
+                <Button disabled={!text.trim()} onClick={sendMessageHandler} variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Send</Button>
               </div>
             </div>
           </div>

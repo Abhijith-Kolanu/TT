@@ -9,4 +9,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['react-leaflet', 'leaflet', 'react-leaflet-cluster', 'date-fns', 'leaflet-geosearch']
+  }
 })

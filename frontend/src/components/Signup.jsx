@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import ThemeToggle from './ThemeToggle';
 
 const Signup = () => {
     const [input, setInput] = useState({
@@ -54,40 +55,45 @@ const Signup = () => {
         }
     },[])
     return (
-        <div className='flex items-center w-screen h-screen justify-center'>
-            <form onSubmit={signupHandler} className='shadow-lg flex flex-col gap-5 p-8'>
+        <div className='flex items-center w-screen h-screen justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200'>
+            {/* Theme Toggle */}
+            <div className='absolute top-4 right-4'>
+                <ThemeToggle />
+            </div>
+            
+            <form onSubmit={signupHandler} className='shadow-lg flex flex-col gap-5 p-8 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700'>
                 <div className='my-4'>
-                    <h1 className='text-center font-bold text-xl'>LOGO</h1>
-                    <p className='text-sm text-center'>Signup to see photos & videos from your friends</p>
+                    <h1 className='text-center font-bold text-xl text-gray-900 dark:text-white'>TrekTales</h1>
+                    <p className='text-sm text-center text-gray-600 dark:text-gray-400'>Signup to see photos & videos from your friends</p>
                 </div>
                 <div>
-                    <span className='font-medium'>Username</span>
+                    <span className='font-medium text-gray-700 dark:text-gray-300'>Username</span>
                     <Input
                         type="text"
                         name="username"
                         value={input.username}
                         onChange={changeEventHandler}
-                        className="focus-visible:ring-transparent my-2"
+                        className="focus-visible:ring-transparent my-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
                     />
                 </div>
                 <div>
-                    <span className='font-medium'>Email</span>
+                    <span className='font-medium text-gray-700 dark:text-gray-300'>Email</span>
                     <Input
                         type="email"
                         name="email"
                         value={input.email}
                         onChange={changeEventHandler}
-                        className="focus-visible:ring-transparent my-2"
+                        className="focus-visible:ring-transparent my-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
                     />
                 </div>
                 <div>
-                    <span className='font-medium'>Password</span>
+                    <span className='font-medium text-gray-700 dark:text-gray-300'>Password</span>
                     <Input
                         type="password"
                         name="password"
                         value={input.password}
                         onChange={changeEventHandler}
-                        className="focus-visible:ring-transparent my-2"
+                        className="focus-visible:ring-transparent my-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
                     />
                 </div>
                 {
@@ -100,7 +106,7 @@ const Signup = () => {
                         <Button type='submit'>Signup</Button>
                     )
                 }
-                <span className='text-center'>Already have an account? <Link to="/login" className='text-blue-600'>Login</Link></span>
+                <span className='text-center text-gray-600 dark:text-gray-400'>Already have an account? <Link to="/login" className='text-blue-600 dark:text-blue-400'>Login</Link></span>
             </form>
         </div>
     )
