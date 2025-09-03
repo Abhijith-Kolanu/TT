@@ -6,6 +6,7 @@ import { Button } from './ui/button'
 import { FaHeart, FaRegHeart, FaBookmark, FaRegBookmark } from 'react-icons/fa'
 import CommentDialog from './CommentDialog'
 import ShareDialog from './ShareDialog'
+import LikesModal from './LikesModal'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -19,6 +20,7 @@ const Post = ({ post }) => {
     const [text, setText] = useState("");
     const [open, setOpen] = useState(false);
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
+    const [likesModalOpen, setLikesModalOpen] = useState(false);
     const { user } = useSelector(store => store.auth);
     const { posts } = useSelector(store => store.post);
     const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
@@ -203,7 +205,12 @@ const Post = ({ post }) => {
                         bookmarked ? <FaBookmark onClick={bookmarkHandler} size={'20px'} className='cursor-pointer text-gray-900 dark:text-white' /> : <FaRegBookmark onClick={bookmarkHandler} size={'20px'} className='cursor-pointer hover:text-gray-600 dark:hover:text-gray-400 text-gray-700 dark:text-gray-300' />
                     }
                 </div>
-                <span className='font-medium block mb-2 text-gray-900 dark:text-white'>{postLike} likes</span>
+                <span 
+                    className='font-medium inline-block mb-2 text-gray-900 dark:text-white cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 transition-colors w-fit'
+                    onClick={() => postLike > 0 && setLikesModalOpen(true)}
+                >
+                    {postLike} {postLike === 1 ? 'like' : 'likes'}
+                </span>
                 <p className='text-gray-800 dark:text-gray-200'>
                     <span 
                         className='font-medium mr-2 text-gray-900 dark:text-white cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
@@ -228,6 +235,11 @@ const Post = ({ post }) => {
                     open={shareDialogOpen} 
                     setOpen={setShareDialogOpen}
                     post={post}
+                />
+                <LikesModal 
+                    open={likesModalOpen}
+                    onClose={setLikesModalOpen}
+                    postId={post._id}
                 />
                 <div className='flex items-center justify-between mt-3 pt-3 border-t dark:border-gray-700'>
                     <input

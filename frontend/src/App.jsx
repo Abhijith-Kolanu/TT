@@ -22,6 +22,7 @@ import TripDetailView from './components/TripDetailView';
 import { addNotification } from './redux/notificationSlice';
 import {toast} from 'sonner';
 import { ThemeProvider } from './contexts/ThemeContext';
+import useAuthCheck from './hooks/useAuthCheck';
 
 
 const browserRouter = createBrowserRouter([
@@ -89,6 +90,9 @@ function App() {
   const { user } = useSelector(store => store.auth);
   const { socket } = useSelector(store => store.socketio);
   const dispatch = useDispatch();
+  
+  // Check authentication status on app load
+  useAuthCheck();
 
   useEffect(() => {
     if (user) {

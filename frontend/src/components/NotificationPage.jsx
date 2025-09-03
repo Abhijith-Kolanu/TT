@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { markAllNotificationsAsRead, markNotificationAsRead } from '../redux/notificationSlice';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -9,6 +10,7 @@ import axios from 'axios';
 
 const NotificationPage = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { notifications, unreadCount } = useSelector((state) => state.notification);
     
     // Fetch all notifications when component mounts
@@ -34,18 +36,32 @@ const NotificationPage = () => {
         }
     };
 
-    const handleNotificationClick = async (notificationId) => {
-        if (!notificationId) return;
+    const handleNotificationClick = async (notification) => {
+        if (!notification._id) return;
         
         try {
-            const res = await axios.post(`http://localhost:8000/api/v1/notification/read/${notificationId}`, {}, {
+            // Mark notification as read
+            const res = await axios.post(`http://localhost:8000/api/v1/notification/read/${notification._id}`, {}, {
                 withCredentials: true
             });
             if (res.data.success) {
-                dispatch(markNotificationAsRead(notificationId));
+                dispatch(markNotificationAsRead(notification._id));
             }
         } catch (error) {
             console.log('Error marking notification as read:', error);
+        }
+
+        // Navigate based on notification type
+        if (notification.type === 'like' || notification.type === 'comment') {
+            // Navigate to the post if post exists
+            if (notification.post?._id) {
+                navigate(`/post/${notification.post._id}`);
+            }
+        } else if (notification.type === 'follow') {
+            // Navigate to the sender's profile
+            if (notification.sender?._id) {
+                navigate(`/profile/${notification.sender._id}`);
+            }
         }
     };
 
@@ -85,41 +101,43 @@ const NotificationPage = () => {
                         
                         let message = '';
                         let icon = '';
+                        let actionText = '';
                         if (type === 'like') {
                             message = 'liked your post';
                             icon = '❤️';
+                            actionText = 'View post';
                         } else if (type === 'follow') {
                             message = 'started following you';
                             icon = '👤';
+                            actionText = 'View profile';
                         } else if (type === 'comment') {
                             message = 'commented on your post';
                             icon = '💬';
-                        } else if (type === 'bookmark') {
-                            message = 'bookmarked your post';
-                            icon = '🔖';
+                            actionText = 'View post';
                         } else {
                             message = 'did something';
                             icon = '🔔';
+                            actionText = 'View';
                         }
 
                         return (
                             <li
                                 key={notif._id || index}
-                                onClick={() => handleNotificationClick(notif._id)}
-                                className={`flex items-center justify-between p-3 shadow rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition border cursor-pointer ${
+                                onClick={() => handleNotificationClick(notif)}
+                                className={`flex items-center justify-between p-3 shadow rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border cursor-pointer transform hover:scale-[1.01] hover:shadow-md ${
                                     isUnread 
                                         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
                                         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                                 }`}
                             >
-                                <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-3 flex-1">
                                     <Avatar>
                                         <AvatarImage src={avatarUrl} />
                                         <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
                                             {getUserInitials(username)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div>
+                                    <div className="flex-1">
                                         <p className="text-sm text-gray-900 dark:text-white">
                                             <span className="mr-1">{icon}</span>
                                             <span className="font-semibold hover:underline cursor-pointer">
@@ -128,9 +146,14 @@ const NotificationPage = () => {
                                             {message}
                                             {isUnread && <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full inline-block"></span>}
                                         </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {formatDistanceToNow(new Date(createdAt))} ago
-                                        </p>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {formatDistanceToNow(new Date(createdAt))} ago
+                                            </p>
+                                            <span className="text-xs text-blue-500 hover:text-blue-600 font-medium">
+                                                {actionText} →
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </li>

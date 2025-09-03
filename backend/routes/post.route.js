@@ -15,6 +15,7 @@ import {
     likePost,
     getFootstepsPosts,
     getPostById,
+    getPostLikes,
 } from "../controllers/post.controller.js";
 
 const router = express.Router();
@@ -22,16 +23,15 @@ const router = express.Router();
 router.route("/addpost").post(isAuthenticated, upload.single('image'), addNewPost);
 router.route("/all").get(isAuthenticated, getAllPost);
 router.route("/userpost/all").get(isAuthenticated, getUserPost);
+router.route("/footsteps").get(isAuthenticated, getFootstepsPosts);
+router.route("/explore").get(isAuthenticated, getExplorePosts);
 router.route("/:id").get(isAuthenticated, getPostById);
+router.route("/:id/likes").get(isAuthenticated, getPostLikes);
 router.route("/delete/:id").delete(isAuthenticated, deletePost);
 router.route("/:id/like").get(isAuthenticated, likePost);
 router.route("/:id/dislike").get(isAuthenticated, dislikePost);
 router.route("/:id/comment").post(isAuthenticated, addComment);
 router.route("/:id/comment/all").post(isAuthenticated, getCommentsOfPost);
 router.route("/:id/bookmark").get(isAuthenticated, bookmarkPost);
-router.route("/footsteps").get(isAuthenticated, getFootstepsPosts);
-
-// 2. THIS LINE WILL NOW WORK CORRECTLY
-router.route("/explore").get(isAuthenticated, getExplorePosts);
 
 export default router;

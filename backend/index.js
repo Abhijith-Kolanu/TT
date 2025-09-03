@@ -28,8 +28,14 @@ app.use(urlencoded({ extended: true }));
 // }
 // app.use(cors(corsOptions));
 const corsOptions = {
-    // This MUST be the exact URL of your React frontend application
-    origin: process.env.URL,
+    // Allow multiple frontend URLs for development
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:5174', 
+        'http://localhost:5175',
+        'http://localhost:5176',
+        process.env.URL
+    ].filter(Boolean), // Remove any undefined values
     methods: ["GET", "POST", "PUT", "DELETE"], // Allow common HTTP methods
     credentials: true // This is crucial for allowing cookies
 };

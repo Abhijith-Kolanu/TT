@@ -4,7 +4,10 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import axios from "axios";
-import { Loader2 } from "lucide-react";
+import { Loader2, Globe, Lock, ExternalLink } from "lucide-react";
+import { Button } from "./ui/button";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
 // Fix default marker paths (Vite-friendly)
@@ -48,26 +51,49 @@ const FitBounds = ({ bounds }) => {
 const Footsteps = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isPublicMode, setIsPublicMode] = useState(true);
+  const { user } = useSelector(store => store.auth);
+  const navigate = useNavigate();
   const boundsRef = useRef([]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/api/v1/post/footsteps", {
+        setLoading(true);
+        const mode = isPublicMode ? 'public' : 'private';
+        console.log('🔍 Fetching footsteps - Mode:', mode, 'User:', user?.username);
+        
+        // Check if user is authenticated
+        if (!user) {
+          console.warn('⚠️ User not authenticated, cannot fetch footsteps');
+          setPosts([]);
+          setLoading(false);
+          return;
+        }
+        
+        const res = await axios.get(`http://localhost:8000/api/v1/post/footsteps?mode=${mode}`, {
           withCredentials: true,
         });
-        // Expect res.data.posts to be an array of objects like:
-        // { _id, caption, imageUrl, coordinates: [lon, lat], locationName }
+        
         const data = res.data?.posts || [];
+        console.log('📍 Received', data.length, 'footsteps posts');
+        console.log('🔍 API Response:', res.data);
         setPosts(data);
       } catch (err) {
-        console.error("Failed to load footsteps posts:", err);
+        console.error("❌ Failed to load footsteps posts:", err.response?.data || err.message);
+        
+        // Check if it's an authentication error
+        if (err.response?.status === 401) {
+          console.error("🔒 Authentication failed - user may need to log in again");
+        }
+        
+        setPosts([]);
       } finally {
         setLoading(false);
       }
     };
     fetchPosts();
-  }, []);
+  }, [isPublicMode, user]);
 
   // build bounds from returned coordinates
   boundsRef.current = posts
@@ -83,8 +109,61 @@ const Footsteps = () => {
     );
   }
 
+  // Show authentication message if user is not logged in
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Authentication Required
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Please log in to view footsteps on the map.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ width: "100vw", height: "100vh" }} className="bg-white dark:bg-gray-900 transition-colors duration-200">
+    <div className="fixed inset-0 lg:left-64 bg-white dark:bg-gray-900 transition-colors duration-200">
+      {/* Toggle Button - Bottom-left, completely safe from map controls */}
+      <div className="absolute bottom-4 left-4 z-[1000] flex flex-col gap-2">
+        <Button
+          onClick={() => {
+            console.log('🔄 Toggle clicked! Switching from', isPublicMode ? 'PUBLIC' : 'PRIVATE', 'to', isPublicMode ? 'PRIVATE' : 'PUBLIC');
+            setIsPublicMode(prev => !prev);
+          }}
+          variant={isPublicMode ? "default" : "outline"}
+          size="lg"
+          className={`flex items-center gap-2 transition-all duration-200 shadow-xl font-semibold ${
+            isPublicMode 
+              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xl border-2 border-blue-600' 
+              : 'bg-red-600 hover:bg-red-700 text-white shadow-xl border-2 border-red-600'
+          }`}
+        >
+          {isPublicMode ? (
+            <>
+              <Globe size={18} />
+              Public
+            </>
+          ) : (
+            <>
+              <Lock size={18} />
+              Private
+            </>
+          )}
+        </Button>
+        
+        {/* Posts Counter - Above toggle button */}
+        <div className="bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 order-first">
+          <span className="text-sm font-medium text-gray-900 dark:text-white">
+            {posts.length} {posts.length === 1 ? 'footstep' : 'footsteps'} 
+            {isPublicMode ? ' (Everyone)' : ' (Your posts)'}
+          </span>
+        </div>
+      </div>
+
       <MapContainer center={[20, 0]} zoom={2} style={{ width: "100%", height: "100%" }} scrollWheelZoom>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
 
@@ -96,12 +175,69 @@ const Footsteps = () => {
             const img = post.imageUrl || post.image || "";
             return (
               <Marker key={post._id} position={[lat, lon]} icon={createThumbnailIcon(img)}>
-                <Popup minWidth={220}>
-                  <div style={{ width: 220 }} className="bg-white dark:bg-gray-800 rounded-lg p-2">
-                    <img src={img} alt={post.caption || "post"} style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 8 }} />
+                <Popup minWidth={260}>
+                  <div style={{ width: 260 }} className="bg-white dark:bg-gray-800 rounded-lg p-2">
+                    <div 
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/post/${post._id}`);
+                      }}
+                    >
+                      <img 
+                        src={img} 
+                        alt={post.caption || "post"} 
+                        style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 8 }} 
+                        className="hover:scale-105 transition-transform duration-200"
+                      />
+                    </div>
                     <div style={{ marginTop: 8 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }} className="text-gray-900 dark:text-white">{post.locationName || post.location?.name || "Unknown place"}</div>
-                      {post.caption && <div style={{ fontSize: 13, marginTop: 6 }} className="text-gray-700 dark:text-gray-300">{post.caption}</div>}
+                      <div style={{ fontWeight: 700, fontSize: 13 }} className="text-gray-900 dark:text-white">
+                        {post.locationName || post.location?.name || "Unknown place"}
+                      </div>
+                      {post.caption && (
+                        <div style={{ fontSize: 13, marginTop: 6 }} className="text-gray-700 dark:text-gray-300 line-clamp-2">
+                          {post.caption}
+                        </div>
+                      )}
+                      {post.author && (
+                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #e5e7eb" }} className="flex items-center justify-between dark:border-gray-600">
+                          <div className="flex items-center gap-2">
+                            <img 
+                              src={post.author.profilePicture || "/default-avatar.png"} 
+                              alt={post.author.username}
+                              style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover" }}
+                              className="border border-gray-200 dark:border-gray-600 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all duration-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/profile/${post.author._id}`);
+                              }}
+                            />
+                            <span 
+                              style={{ fontSize: 12, fontWeight: 600 }} 
+                              className="text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/profile/${post.author._id}`);
+                              }}
+                            >
+                              {post.author.username}
+                            </span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/post/${post._id}`);
+                            }}
+                            className="h-6 px-2 text-xs flex items-center gap-1 hover:bg-blue-50 hover:border-blue-300 dark:hover:bg-blue-900/20"
+                          >
+                            <ExternalLink size={10} />
+                            View Post
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Popup>

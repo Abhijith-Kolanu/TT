@@ -14,22 +14,26 @@ export const addNewPost = async (req, res) => {
 
         if (!image) return res.status(400).json({ message: 'Image required' });
 
-        if (!coordinates) return res.status(400).json({ message: 'Location required' });
-
-        // Parse coordinates safely
-        let parsedCoords;
-        try {
-            parsedCoords = JSON.parse(coordinates);
-            if (
-                !Array.isArray(parsedCoords) ||
-                parsedCoords.length !== 2 ||
-                typeof parsedCoords[0] !== 'number' ||
-                typeof parsedCoords[1] !== 'number'
-            ) {
-                throw new Error("Invalid coordinates");
+        // Parse coordinates safely (make it optional)
+        let locationData = null;
+        if (coordinates) {
+            try {
+                const parsedCoords = JSON.parse(coordinates);
+                if (
+                    Array.isArray(parsedCoords) &&
+                    parsedCoords.length === 2 &&
+                    typeof parsedCoords[0] === 'number' &&
+                    typeof parsedCoords[1] === 'number'
+                ) {
+                    locationData = {
+                        type: "Point",
+                        coordinates: parsedCoords,
+                        name: locationName || "Unknown"
+                    };
+                }
+            } catch (e) {
+                console.log("Invalid coordinates format, creating post without location");
             }
-        } catch (e) {
-            return res.status(400).json({ message: "Invalid coordinates format", success: false });
         }
 
         // Resize + upload image
@@ -41,17 +45,18 @@ export const addNewPost = async (req, res) => {
         const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString('base64')}`;
         const cloudResponse = await cloudinary.uploader.upload(fileUri);
 
-        // Create the post with location
-        const post = await Post.create({
+        // Create the post with optional location
+        const postData = {
             caption,
             image: cloudResponse.secure_url,
             author: authorId,
-            location: {
-                type: "Point",
-                coordinates: parsedCoords,
-                name: locationName || "Unknown"
-            }
-        });
+        };
+        
+        if (locationData) {
+            postData.location = locationData;
+        }
+
+        const post = await Post.create(postData);
 
         // Link post to user
         const user = await User.findById(authorId);
@@ -371,13 +376,43 @@ export const bookmarkPost = async (req, res) => {
 
 export const getFootstepsPosts = async (req, res) => {
     try {
-        const posts = await Post.find({
+        const { mode } = req.query; // 'public' or 'private'
+        const userId = req.id; // from authentication middleware
+        
+        console.log('Footsteps API called with mode:', mode, 'by user:', userId);
+        
+        let query = {
             "location.coordinates": {
                 $exists: true,
                 $type: "array",
                 $size: 2
             }
-        }).select("caption image location");
+        };
+
+        // If private mode, only show current user's posts
+        if (mode === 'private') {
+            query.author = userId;
+            console.log('Private mode: filtering for user', userId);
+        } else {
+            console.log('Public mode: showing all posts');
+        }
+
+        console.log('Query:', JSON.stringify(query, null, 2));
+
+        const posts = await Post.find(query)
+            .populate({
+                path: 'author',
+                select: 'username profilePicture'
+            })
+            .select("caption image location author");
+
+        console.log('Found', posts.length, 'footsteps posts');
+
+        // Also check total posts with any location data for debugging
+        const totalWithLocation = await Post.countDocuments({
+            "location": { $exists: true }
+        });
+        console.log('Total posts with any location data:', totalWithLocation);
 
         const formatted = posts.map(post => ({
             _id: post._id,
@@ -386,13 +421,23 @@ export const getFootstepsPosts = async (req, res) => {
                 ? post.image
                 : `${process.env.BASE_URL || ""}/${post.image}`,
             coordinates: post.location.coordinates, // [lon, lat]
-            locationName: post.location.name || null
+            locationName: post.location.name || null,
+            author: post.author
         }));
 
-        res.status(200).json({ posts: formatted });
+        res.status(200).json({ 
+            posts: formatted,
+            mode: mode || 'public',
+            totalPosts: formatted.length,
+            debug: {
+                userId,
+                totalWithLocation,
+                query
+            }
+        });
     } catch (err) {
         console.error("Error fetching footsteps posts:", err);
-        res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Server error", details: err.message });
     }
 };
 
@@ -426,6 +471,46 @@ export const getPostById = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+};
+
+export const getPostLikes = async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const currentUserId = req.id;
+        
+        const post = await Post.findById(postId)
+            .populate({
+                path: 'likes',
+                select: 'username profilePicture bio followers'
+            });
+
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                message: 'Post not found'
+            });
+        }
+
+        // Add follow status for each user
+        const likesWithFollowStatus = post.likes.map(user => ({
+            _id: user._id,
+            username: user.username,
+            profilePicture: user.profilePicture,
+            bio: user.bio,
+            isFollowing: user.followers.includes(currentUserId)
+        }));
+
+        return res.status(200).json({
+            success: true,
+            likes: likesWithFollowStatus
+        });
+    } catch (error) {
+        console.log('Error in getPostLikes:', error);
         return res.status(500).json({
             success: false,
             message: 'Server error'
