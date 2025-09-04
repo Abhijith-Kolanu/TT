@@ -1,222 +1,206 @@
-// Currency utility functions for the TrekTales application
+// Currency utility functions for the travel app
 
-// Currency symbols mapping
-export const CURRENCY_SYMBOLS = {
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-    JPY: '¥',
-    CAD: 'C$',
-    AUD: 'A$',
-    CHF: 'CHF',
-    CNY: '¥',
-    INR: '₹',
-    KRW: '₩',
-    SGD: 'S$',
-    HKD: 'HK$',
-    THB: '฿',
-    MXN: 'MX$',
-    BRL: 'R$',
-    RUB: '₽',
-    ZAR: 'R',
-    TRY: '₺',
-    AED: 'د.إ',
-    SAR: '﷼'
+// Exchange rates (in a real app, these would come from an API)
+const EXCHANGE_RATES = {
+  USD: 1,
+  EUR: 0.85,
+  GBP: 0.73,
+  JPY: 110,
+  CAD: 1.25,
+  AUD: 1.35,
+  INR: 74.5,
+  CHF: 0.92,
+  CNY: 6.45,
+  KRW: 1180,
+  SGD: 1.35,
+  THB: 33.5,
+  MXN: 20.5,
+  BRL: 5.2,
+  ZAR: 14.8,
+  NZD: 1.42,
+  SEK: 8.6,
+  NOK: 8.8,
+  DKK: 6.3,
+  PLN: 3.9,
+  CZK: 21.8,
+  HUF: 295,
+  RUB: 73.5,
+  TRY: 8.5,
+  AED: 3.67,
+  SAR: 3.75,
+  QAR: 3.64,
+  KWD: 0.30,
+  BHD: 0.38,
+  OMR: 0.38,
+  EGP: 15.7,
+  MAD: 9.0,
+  TND: 2.8,
+  ILS: 3.2,
+  LBP: 1507,
+  JOD: 0.71
 };
 
-// Currency names mapping
-export const CURRENCY_NAMES = {
-    USD: 'US Dollar',
-    EUR: 'Euro',
-    GBP: 'British Pound',
-    JPY: 'Japanese Yen',
-    CAD: 'Canadian Dollar',
-    AUD: 'Australian Dollar',
-    CHF: 'Swiss Franc',
-    CNY: 'Chinese Yuan',
-    INR: 'Indian Rupee',
-    KRW: 'South Korean Won',
-    SGD: 'Singapore Dollar',
-    HKD: 'Hong Kong Dollar',
-    THB: 'Thai Baht',
-    MXN: 'Mexican Peso',
-    BRL: 'Brazilian Real',
-    RUB: 'Russian Ruble',
-    ZAR: 'South African Rand',
-    TRY: 'Turkish Lira',
-    AED: 'UAE Dirham',
-    SAR: 'Saudi Riyal'
+// Currency symbols
+const CURRENCY_SYMBOLS = {
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  JPY: '¥',
+  CAD: 'C$',
+  AUD: 'A$',
+  INR: '₹',
+  CHF: 'CHF',
+  CNY: '¥',
+  KRW: '₩',
+  SGD: 'S$',
+  THB: '฿',
+  MXN: '$',
+  BRL: 'R$',
+  ZAR: 'R',
+  NZD: 'NZ$',
+  SEK: 'kr',
+  NOK: 'kr',
+  DKK: 'kr',
+  PLN: 'zł',
+  CZK: 'Kč',
+  HUF: 'Ft',
+  RUB: '₽',
+  TRY: '₺',
+  AED: 'د.إ',
+  SAR: 'ر.س',
+  QAR: 'ر.ق',
+  KWD: 'د.ك',
+  BHD: 'د.ب',
+  OMR: 'ر.ع.',
+  EGP: 'ج.م',
+  MAD: 'د.م.',
+  TND: 'د.ت',
+  ILS: '₪',
+  LBP: 'ل.ل',
+  JOD: 'د.ا'
 };
 
-// Approximate exchange rates (in production, these should be fetched from a real API)
-export const EXCHANGE_RATES = {
-    USD: 1.0,      // Base currency
-    EUR: 0.85,
-    GBP: 0.73,
-    JPY: 110.0,
-    CAD: 1.25,
-    AUD: 1.35,
-    CHF: 0.92,
-    CNY: 6.45,
-    INR: 74.5,
-    KRW: 1180.0,
-    SGD: 1.35,
-    HKD: 7.8,
-    THB: 33.0,
-    MXN: 20.0,
-    BRL: 5.2,
-    RUB: 75.0,
-    ZAR: 14.5,
-    TRY: 8.5,
-    AED: 3.67,
-    SAR: 3.75
+// Get user's preferred currency from localStorage or default to USD
+export const getUserCurrency = () => {
+  return localStorage.getItem('preferredCurrency') || 'USD';
 };
 
-/**
- * Get the currency symbol for a given currency code
- * @param {string} currencyCode - The currency code (e.g., 'USD', 'EUR')
- * @returns {string} The currency symbol
- */
-export const getCurrencySymbol = (currencyCode) => {
-    return CURRENCY_SYMBOLS[currencyCode] || currencyCode;
+// Set user's preferred currency
+export const setUserCurrency = (currency) => {
+  localStorage.setItem('preferredCurrency', currency);
 };
 
-/**
- * Get the currency name for a given currency code
- * @param {string} currencyCode - The currency code (e.g., 'USD', 'EUR')
- * @returns {string} The currency name
- */
-export const getCurrencyName = (currencyCode) => {
-    return CURRENCY_NAMES[currencyCode] || currencyCode;
+// Convert amount from USD to target currency
+export const convertFromUSD = (amountInUSD, targetCurrency = null) => {
+  if (!amountInUSD || amountInUSD === 0) return 0;
+  
+  const currency = targetCurrency || getUserCurrency();
+  const rate = EXCHANGE_RATES[currency] || 1;
+  
+  return amountInUSD * rate;
 };
 
-/**
- * Convert amount from USD to target currency
- * @param {number} usdAmount - Amount in USD
- * @param {string} targetCurrency - Target currency code
- * @returns {number} Converted amount
- */
-export const convertFromUSD = (usdAmount, targetCurrency) => {
-    if (!usdAmount || !targetCurrency) return 0;
-    
-    const rate = EXCHANGE_RATES[targetCurrency];
-    if (!rate) return usdAmount;
-    
-    return usdAmount * rate;
-};
-
-/**
- * Convert amount from any currency to USD
- * @param {number} amount - Amount in source currency
- * @param {string} sourceCurrency - Source currency code
- * @returns {number} Amount in USD
- */
+// Convert amount from source currency to USD
 export const convertToUSD = (amount, sourceCurrency) => {
-    if (!amount || !sourceCurrency) return 0;
-    
-    const rate = EXCHANGE_RATES[sourceCurrency];
-    if (!rate) return amount;
-    
-    return amount / rate;
+  if (!amount || amount === 0) return 0;
+  
+  const rate = EXCHANGE_RATES[sourceCurrency] || 1;
+  return amount / rate;
 };
 
-/**
- * Convert amount between any two currencies
- * @param {number} amount - Amount in source currency
- * @param {string} fromCurrency - Source currency code
- * @param {string} toCurrency - Target currency code
- * @returns {number} Converted amount
- */
+// Convert between any two currencies
 export const convertCurrency = (amount, fromCurrency, toCurrency) => {
-    if (!amount || fromCurrency === toCurrency) return amount;
-    
-    // Convert to USD first, then to target currency
-    const usdAmount = convertToUSD(amount, fromCurrency);
-    return convertFromUSD(usdAmount, toCurrency);
+  if (!amount || amount === 0) return 0;
+  
+  // Convert to USD first, then to target currency
+  const amountInUSD = convertToUSD(amount, fromCurrency);
+  return convertFromUSD(amountInUSD, toCurrency);
 };
 
-/**
- * Format amount with currency symbol
- * @param {number} amount - Amount to format
- * @param {string} currencyCode - Currency code
- * @param {boolean} showCode - Whether to show currency code alongside symbol
- * @returns {string} Formatted currency string
- */
-export const formatCurrency = (amount, currencyCode = 'USD', showCode = false) => {
-    if (typeof amount !== 'number') return '0';
-    
-    const symbol = getCurrencySymbol(currencyCode);
-    const formattedAmount = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-    }).format(Math.round(amount));
-    
-    // Handle special formatting for different currencies
-    switch (currencyCode) {
-        case 'JPY':
-        case 'KRW':
-            // These currencies typically don't use decimal places
-            const wholeAmount = Math.round(amount);
-            return showCode ? `${symbol}${wholeAmount.toLocaleString()} ${currencyCode}` : `${symbol}${wholeAmount.toLocaleString()}`;
-        
-        case 'AED':
-        case 'SAR':
-            // Right-to-left currencies
-            return showCode ? `${formattedAmount} ${symbol} ${currencyCode}` : `${formattedAmount} ${symbol}`;
-        
-        default:
-            return showCode ? `${symbol}${formattedAmount} ${currencyCode}` : `${symbol}${formattedAmount}`;
-    }
+// Format currency with proper symbol and formatting
+export const formatCurrency = (amount, currency = null, options = {}) => {
+  const {
+    showSymbol = true,
+    showCode = false,
+    decimals = 2,
+    locale = 'en-US'
+  } = options;
+  
+  const targetCurrency = currency || getUserCurrency();
+  const symbol = CURRENCY_SYMBOLS[targetCurrency] || '$';
+  
+  // Format the number with proper decimals
+  const formattedAmount = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(amount);
+  
+  if (showCode) {
+    return `${formattedAmount} ${targetCurrency}`;
+  }
+  
+  if (showSymbol) {
+    return `${symbol}${formattedAmount}`;
+  }
+  
+  return formattedAmount;
 };
 
-/**
- * Get formatted budget breakdown for different budget types
- * @param {object} baseCosts - Base costs in USD for budget/midRange/luxury
- * @param {string} targetCurrency - Target currency code
- * @returns {object} Formatted costs in target currency
- */
-export const getFormattedBudgetBreakdown = (baseCosts, targetCurrency = 'USD') => {
-    if (!baseCosts) return null;
-    
-    const result = {};
-    
-    Object.keys(baseCosts).forEach(budgetType => {
-        if (typeof baseCosts[budgetType] === 'object') {
-            result[budgetType] = {};
-            Object.keys(baseCosts[budgetType]).forEach(category => {
-                const usdAmount = baseCosts[budgetType][category];
-                const convertedAmount = convertFromUSD(usdAmount, targetCurrency);
-                result[budgetType][category] = convertedAmount;
-            });
-        }
-    });
-    
-    return result;
+// Format price with conversion from USD
+export const formatPrice = (priceInUSD, targetCurrency = null, options = {}) => {
+  const currency = targetCurrency || getUserCurrency();
+  const convertedAmount = convertFromUSD(priceInUSD, currency);
+  return formatCurrency(convertedAmount, currency, options);
 };
 
-/**
- * Get a user-friendly currency selection list
- * @returns {Array} Array of currency options for dropdowns
- */
-export const getCurrencyOptions = () => {
-    return Object.keys(CURRENCY_SYMBOLS).map(code => ({
-        value: code,
-        label: `${code} - ${CURRENCY_NAMES[code]} (${CURRENCY_SYMBOLS[code]})`,
-        symbol: CURRENCY_SYMBOLS[code],
-        name: CURRENCY_NAMES[code]
-    }));
+// Get currency symbol
+export const getCurrencySymbol = (currency) => {
+  return CURRENCY_SYMBOLS[currency] || '$';
 };
 
+// Get all available currencies
+export const getAvailableCurrencies = () => {
+  return Object.keys(EXCHANGE_RATES).map(code => ({
+    code,
+    symbol: CURRENCY_SYMBOLS[code],
+    rate: EXCHANGE_RATES[code]
+  }));
+};
+
+// Popular currencies for quick selection
+export const getPopularCurrencies = () => {
+  const popular = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'INR', 'CHF'];
+  return popular.map(code => ({
+    code,
+    symbol: CURRENCY_SYMBOLS[code],
+    rate: EXCHANGE_RATES[code]
+  }));
+};
+
+// Update exchange rates (would typically fetch from API)
+export const updateExchangeRates = async () => {
+  try {
+    // In a real app, you would fetch from a currency API
+    // For now, we'll just use the static rates
+    console.log('Currency rates are up to date');
+    return EXCHANGE_RATES;
+  } catch (error) {
+    console.error('Failed to update exchange rates:', error);
+    return EXCHANGE_RATES;
+  }
+};
+
+// Default export for convenience
 export default {
-    getCurrencySymbol,
-    getCurrencyName,
-    convertFromUSD,
-    convertToUSD,
-    convertCurrency,
-    formatCurrency,
-    getFormattedBudgetBreakdown,
-    getCurrencyOptions,
-    CURRENCY_SYMBOLS,
-    CURRENCY_NAMES,
-    EXCHANGE_RATES
+  getUserCurrency,
+  setUserCurrency,
+  convertFromUSD,
+  convertToUSD,
+  convertCurrency,
+  formatCurrency,
+  formatPrice,
+  getCurrencySymbol,
+  getAvailableCurrencies,
+  getPopularCurrencies,
+  updateExchangeRates
 };

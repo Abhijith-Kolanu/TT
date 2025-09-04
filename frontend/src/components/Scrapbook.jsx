@@ -1,1145 +1,1378 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import { 
-    Book, 
-    ChevronLeft, 
-    ChevronRight, 
-    Plus,
-    Save,
-    Download,
-    Upload,
-    Image as ImageIcon,
-    Sticker,
-    Type,
-    Palette,
-    RotateCcw,
-    Trash2,
-    Move,
-    Star,
-    Heart,
-    Camera,
-    MapPin,
-    Plane,
-    Sun,
-    Moon,
-    Sparkles,
-    Coffee,
-    Mountain,
-    RotateCw
-} from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Card } from './ui/card';
-import { toast } from 'sonner';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { Card, CardContent } from './ui/card';
+import { Badge } from './ui/badge';
+import { 
+  BookOpen, 
+  Plus, 
+  Download, 
+  Upload, 
+  Camera, 
+  Type, 
+  Map, 
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Image as ImageIcon,
+  Trash2,
+  Edit3,
+  Check,
+  X,
+  Smile,
+  Star,
+  Sparkles,
+  Palette,
+  Layout,
+  Sticker,
+  Shapes,
+  MoreHorizontal,
+  Menu
+} from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
-// Available stickers/icons
-const availableStickers = [
-    { id: 1, icon: Star, name: 'Star', color: '#FFD700' },
-    { id: 2, icon: Heart, name: 'Heart', color: '#FF69B4' },
-    { id: 3, icon: Camera, name: 'Camera', color: '#4A90E2' },
-    { id: 4, icon: MapPin, name: 'Location', color: '#FF6B6B' },
-    { id: 5, icon: Plane, name: 'Plane', color: '#4ECDC4' },
-    { id: 6, icon: Sun, name: 'Sun', color: '#FFA500' },
-    { id: 7, icon: Moon, name: 'Moon', color: '#4B0082' },
-    { id: 8, icon: Sparkles, name: 'Sparkles', color: '#9370DB' },
-    { id: 9, icon: Coffee, name: 'Coffee', color: '#8B4513' },
-    { id: 10, icon: Mountain, name: 'Mountain', color: '#228B22' }
+// Predefined stickers and decorative elements
+const STICKERS = {
+  travel: ['✈️', '🗺️', '📍', '🧳', '🏖️', '🏔️', '🏛️', '🗽', '🎪', '🎡'],
+  emotions: ['😊', '😍', '🤩', '😎', '🥰', '😂', '🤗', '😋', '🤔', '😴'],
+  nature: ['🌸', '🌺', '🌻', '🌷', '🌹', '🌿', '🍃', '🌳', '🌲', '🌴'],
+  food: ['🍕', '🍔', '🍟', '🍦', '🧁', '🍰', '☕', '🥐', '🍜', '🍱'],
+  activities: ['📸', '🎨', '🎭', '🎪', '🎢', '🎠', '⛵', '🚗', '🚲', '🛥️'],
+  symbols: ['⭐', '💫', '✨', '💖', '💕', '🌟', '🔆', '💎', '🌈', '☀️']
+};
+
+// Default sample images for inspiration
+const DEFAULT_IMAGES = [
+  {
+    url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop',
+    title: 'Mountain Lake',
+    category: 'nature'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+    title: 'City Skyline',
+    category: 'urban'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop',
+    title: 'Beach Paradise',
+    category: 'beach'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=300&fit=crop',
+    title: 'Desert Adventure',
+    category: 'desert'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+    title: 'Forest Trail',
+    category: 'forest'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=400&h=300&fit=crop',
+    title: 'Ancient Temple',
+    category: 'culture'
+  }
 ];
 
-// Pre-made templates
-const templates = [
-    {
-        id: 1,
-        name: 'Travel Memory',
-        background: 'bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20',
-        elements: [
-            { type: 'text', content: 'My Adventure', x: 50, y: 20, fontSize: '2xl', color: '#4A5568' },
-            { type: 'sticker', stickerId: 5, x: 20, y: 60, size: 32 },
-            { type: 'sticker', stickerId: 4, x: 80, y: 60, size: 32 }
-        ]
-    },
-    {
-        id: 2,
-        name: 'Romantic Getaway',
-        background: 'bg-gradient-to-br from-pink-100 to-red-100 dark:from-pink-900/20 dark:to-red-900/20',
-        elements: [
-            { type: 'text', content: '❤️ Love Story', x: 50, y: 20, fontSize: 'xl', color: '#E53E3E' },
-            { type: 'sticker', stickerId: 2, x: 30, y: 50, size: 28 },
-            { type: 'sticker', stickerId: 2, x: 70, y: 50, size: 28 }
-        ]
-    },
-    {
-        id: 3,
-        name: 'Nature Explorer',
-        background: 'bg-gradient-to-br from-green-100 to-yellow-100 dark:from-green-900/20 dark:to-yellow-900/20',
-        elements: [
-            { type: 'text', content: 'Into the Wild', x: 50, y: 20, fontSize: 'xl', color: '#2D5F3F' },
-            { type: 'sticker', stickerId: 10, x: 40, y: 50, size: 36 },
-            { type: 'sticker', stickerId: 6, x: 20, y: 30, size: 24 }
-        ]
-    },
-    {
-        id: 4,
-        name: 'City Adventure',
-        background: 'bg-gradient-to-br from-gray-100 to-slate-200 dark:from-gray-800/20 dark:to-slate-900/20',
-        elements: [
-            { type: 'text', content: 'Urban Explorer', x: 50, y: 20, fontSize: 'xl', color: '#1A202C' },
-            { type: 'sticker', stickerId: 3, x: 30, y: 60, size: 32 },
-            { type: 'sticker', stickerId: 8, x: 70, y: 40, size: 28 }
-        ]
-    },
-    {
-        id: 5,
-        name: 'Beach Vibes',
-        background: 'bg-gradient-to-br from-cyan-100 to-blue-200 dark:from-cyan-900/20 dark:to-blue-900/20',
-        elements: [
-            { type: 'text', content: '🏖️ Beach Days', x: 50, y: 20, fontSize: 'xl', color: '#0987A0' },
-            { type: 'sticker', stickerId: 6, x: 25, y: 50, size: 40 },
-            { type: 'sticker', stickerId: 1, x: 75, y: 65, size: 24 }
-        ]
-    },
-    {
-        id: 6,
-        name: 'Mountain High',
-        background: 'bg-gradient-to-br from-emerald-100 to-teal-200 dark:from-emerald-900/20 dark:to-teal-900/20',
-        elements: [
-            { type: 'text', content: '⛰️ Peak Moments', x: 50, y: 20, fontSize: 'xl', color: '#047857' },
-            { type: 'sticker', stickerId: 10, x: 50, y: 50, size: 48 },
-            { type: 'sticker', stickerId: 1, x: 20, y: 30, size: 20 },
-            { type: 'sticker', stickerId: 1, x: 80, y: 35, size: 20 }
-        ]
-    }
+const TEMPLATES = [
+  {
+    id: 'sunset',
+    name: 'Sunset Journey',
+    background: 'travel-gradient-sunset',
+    accent: 'border-pink-300',
+    description: 'Perfect for romantic destinations'
+  },
+  {
+    id: 'ocean',
+    name: 'Ocean Adventure',
+    background: 'travel-gradient-ocean',
+    accent: 'border-blue-300',
+    description: 'For beach and coastal trips'
+  },
+  {
+    id: 'forest',
+    name: 'Forest Escape',
+    background: 'travel-gradient-forest',
+    accent: 'border-green-300',
+    description: 'Nature and wildlife journeys'
+  },
+  {
+    id: 'mountain',
+    name: 'Mountain Peak',
+    background: 'travel-gradient-mountain',
+    accent: 'border-cyan-300',
+    description: 'High altitude adventures'
+  },
+  {
+    id: 'vintage',
+    name: 'Vintage Explorer',
+    background: 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50',
+    accent: 'border-amber-300',
+    description: 'Classic travel memories'
+  }
 ];
 
-// Enhanced Sticker Component with Drag and Drop
-const StickerButton = ({ sticker, onAddToPage }) => {
-    const Icon = sticker.icon;
-
-    const handleDragStart = (e) => {
-        e.dataTransfer.setData('application/json', JSON.stringify({
-            type: 'sticker',
-            stickerId: sticker.id,
-            size: 32
-        }));
-        e.dataTransfer.effectAllowed = 'copy';
-    };
-
-    const handleClick = () => {
-        onAddToPage({
-            type: 'sticker',
-            stickerId: sticker.id,
-            x: Math.random() * 70 + 15,
-            y: Math.random() * 70 + 15,
-            size: 32
-        });
-    };
-
-    return (
-        <div
-            draggable
-            onDragStart={handleDragStart}
-            onClick={handleClick}
-            className="p-3 bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-grab active:cursor-grabbing hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-200 hover:shadow-lg hover:scale-105"
-            title={`Drag or click to add ${sticker.name}`}
-        >
-            <Icon size={24} color={sticker.color} />
-        </div>
-    );
-};
-
-// Enhanced Photo Component with Drag and Drop
-const PhotoButton = ({ photo, onAddToPage }) => {
-    const handleDragStart = (e) => {
-        e.dataTransfer.setData('application/json', JSON.stringify({
-            type: 'photo',
-            src: photo.src,
-            width: 150,
-            height: 150
-        }));
-        e.dataTransfer.effectAllowed = 'copy';
-    };
-
-    const handleClick = () => {
-        onAddToPage({
-            type: 'photo',
-            src: photo.src,
-            x: Math.random() * 60 + 20,
-            y: Math.random() * 60 + 20,
-            width: 150,
-            height: 150
-        });
-    };
-
-    return (
-        <div
-            draggable
-            onDragStart={handleDragStart}
-            onClick={handleClick}
-            className="relative w-20 h-20 rounded-lg overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-200 hover:scale-105"
-            title={`Drag or click to add ${photo.name}`}
-        >
-            <img 
-                src={photo.src} 
-                alt={photo.name}
-                className="w-full h-full object-cover pointer-events-none"
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-opacity duration-200 flex items-center justify-center">
-                <Plus className="text-white opacity-0 hover:opacity-100 transition-opacity duration-200" size={20} />
-            </div>
-        </div>
-    );
-};
-
-// Enhanced Scrapbook Page Component with Drag and Drop
-const ScrapbookPage = ({ 
-    pageData, 
-    pageIndex,
-    isActive, 
-    onAddElement, 
-    onUpdateElement, 
-    onDeleteElement,
-    onUpdateBackground 
-}) => {
-    const [selectedElement, setSelectedElement] = useState(null);
-    const [isDragMode, setIsDragMode] = useState(false);
-    const [draggedElement, setDraggedElement] = useState(null);
-    const [dragOverlay, setDragOverlay] = useState(false);
-
-    const pageRef = useRef(null);
-
-    const handleElementClick = (element, index) => {
-        setSelectedElement({ ...element, index });
-    };
-
-    const handleElementUpdate = (updates) => {
-        if (selectedElement) {
-            onUpdateElement(selectedElement.index, { ...selectedElement, ...updates });
-            setSelectedElement({ ...selectedElement, ...updates });
-        }
-    };
-
-    const handleElementDelete = () => {
-        if (selectedElement) {
-            onDeleteElement(selectedElement.index);
-            setSelectedElement(null);
-        }
-    };
-
-    // Enhanced drag functionality for existing elements
-    const handleMouseDown = (e, element, index) => {
-        if (e.button === 0) {
-            e.preventDefault();
-            setIsDragMode(true);
-            setDraggedElement({ ...element, index });
-            setSelectedElement({ ...element, index });
-            
-            // Add global mouse events
-            const handleMouseMove = (moveEvent) => {
-                if (pageRef.current) {
-                    const rect = pageRef.current.getBoundingClientRect();
-                    const x = ((moveEvent.clientX - rect.left) / rect.width) * 100;
-                    const y = ((moveEvent.clientY - rect.top) / rect.height) * 100;
-                    
-                    const boundedX = Math.max(5, Math.min(95, x));
-                    const boundedY = Math.max(5, Math.min(95, y));
-                    
-                    onUpdateElement(index, { 
-                        ...element, 
-                        x: boundedX, 
-                        y: boundedY 
-                    });
-                }
-            };
-
-            const handleMouseUp = () => {
-                setIsDragMode(false);
-                setDraggedElement(null);
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-            };
-
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-        }
-    };
-
-    // Drag and drop from sidebar
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
-        setDragOverlay(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        setDragOverlay(false);
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        setDragOverlay(false);
-        
-        try {
-            const data = JSON.parse(e.dataTransfer.getData('application/json'));
-            if (data && pageRef.current) {
-                const rect = pageRef.current.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                
-                const boundedX = Math.max(5, Math.min(95, x));
-                const boundedY = Math.max(5, Math.min(95, y));
-                
-                onAddElement({
-                    ...data,
-                    x: boundedX,
-                    y: boundedY
-                });
-            }
-        } catch (error) {
-            console.error('Error parsing drop data:', error);
-        }
-    };
-
-    return (
-        <div className="relative w-full h-full">
-            {/* Page Content */}
-            <div
-                ref={pageRef}
-                data-page-index={pageIndex}
-                className={`relative w-full h-full rounded-lg border-4 transition-all duration-200 overflow-hidden ${
-                    dragOverlay 
-                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20' 
-                        : 'border-gray-300 dark:border-gray-600'
-                } ${pageData.background || 'bg-white dark:bg-gray-800'}`}
-                onClick={() => setSelectedElement(null)}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-            >
-                {/* Drop overlay */}
-                {dragOverlay && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-blue-100/50 dark:bg-blue-900/30 border-2 border-dashed border-blue-400 rounded-lg">
-                        <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg">
-                            <p className="text-blue-600 dark:text-blue-400 font-medium">
-                                Drop here to add to page
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Page Elements */}
-                {pageData.elements?.map((element, index) => (
-                    <div
-                        key={index}
-                        className={`absolute cursor-move transition-all duration-200 select-none ${
-                            selectedElement?.index === index ? 'ring-2 ring-blue-500 ring-opacity-75 z-20' : 'z-10'
-                        } ${isDragMode && draggedElement?.index === index ? 'z-50' : ''}`}
-                        style={{
-                            left: `${element.x}%`,
-                            top: `${element.y}%`,
-                            transform: `translate(-50%, -50%) rotate(${element.rotation || 0}deg)`
-                        }}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleElementClick(element, index);
-                        }}
-                        onMouseDown={(e) => handleMouseDown(e, element, index)}
-                    >
-                        {element.type === 'sticker' && (() => {
-                            const stickerData = availableStickers.find(s => s.id === element.stickerId);
-                            if (!stickerData) return null;
-                            const Icon = stickerData.icon;
-                            return (
-                                <Icon
-                                    size={element.size || 32}
-                                    color={element.color || stickerData.color}
-                                    className="drop-shadow-sm pointer-events-none"
-                                />
-                            );
-                        })()}
-
-                        {element.type === 'photo' && (
-                            <img
-                                src={element.src}
-                                alt="Scrapbook photo"
-                                className="rounded-lg shadow-lg border-2 border-white dark:border-gray-700 pointer-events-none"
-                                style={{
-                                    width: element.width || 150,
-                                    height: element.height || 150,
-                                    objectFit: 'cover'
-                                }}
-                            />
-                        )}
-
-                        {element.type === 'text' && (
-                            <div
-                                className={`font-bold text-${element.fontSize || 'lg'} drop-shadow-sm whitespace-nowrap pointer-events-none`}
-                                style={{ color: element.color || '#333' }}
-                            >
-                                {element.content}
-                            </div>
-                        )}
-
-                        {/* Selection handles */}
-                        {selectedElement?.index === index && (
-                            <div className="absolute -inset-2 pointer-events-none">
-                                <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 rounded-full"></div>
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
-                                <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-blue-500 rounded-full"></div>
-                                <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
-                            </div>
-                        )}
-                    </div>
-                ))}
-
-                {/* Page Number */}
-                <div className="absolute bottom-4 right-4 text-gray-400 dark:text-gray-500 text-sm font-semibold z-5">
-                    Page {pageData.pageNumber}
-                </div>
-            </div>
-
-            {/* Enhanced Element Editor */}
-            {selectedElement && (
-                <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 p-4 min-w-56 z-30">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                        <Move size={16} />
-                        Edit {selectedElement.type}
-                    </h4>
-                    
-                    <div className="space-y-3">
-                        {selectedElement.type === 'sticker' && (
-                            <>
-                                <div>
-                                    <label className="text-sm text-gray-600 dark:text-gray-300 block mb-1">Size</label>
-                                    <input
-                                        type="range"
-                                        min="16"
-                                        max="64"
-                                        value={selectedElement.size || 32}
-                                        onChange={(e) => handleElementUpdate({ size: parseInt(e.target.value) })}
-                                        className="w-full"
-                                    />
-                                    <span className="text-xs text-gray-500">{selectedElement.size || 32}px</span>
-                                </div>
-                                <div>
-                                    <label className="text-sm text-gray-600 dark:text-gray-300 block mb-1">Color</label>
-                                    <input
-                                        type="color"
-                                        value={selectedElement.color || '#000000'}
-                                        onChange={(e) => handleElementUpdate({ color: e.target.value })}
-                                        className="w-full h-8 rounded border"
-                                    />
-                                </div>
-                            </>
-                        )}
-
-                        {selectedElement.type === 'photo' && (
-                            <>
-                                <div>
-                                    <label className="text-sm text-gray-600 dark:text-gray-300 block mb-1">Width</label>
-                                    <input
-                                        type="range"
-                                        min="50"
-                                        max="300"
-                                        value={selectedElement.width || 150}
-                                        onChange={(e) => handleElementUpdate({ width: parseInt(e.target.value) })}
-                                        className="w-full"
-                                    />
-                                    <span className="text-xs text-gray-500">{selectedElement.width || 150}px</span>
-                                </div>
-                                <div>
-                                    <label className="text-sm text-gray-600 dark:text-gray-300 block mb-1">Height</label>
-                                    <input
-                                        type="range"
-                                        min="50"
-                                        max="300"
-                                        value={selectedElement.height || 150}
-                                        onChange={(e) => handleElementUpdate({ height: parseInt(e.target.value) })}
-                                        className="w-full"
-                                    />
-                                    <span className="text-xs text-gray-500">{selectedElement.height || 150}px</span>
-                                </div>
-                            </>
-                        )}
-
-                        {selectedElement.type === 'text' && (
-                            <>
-                                <div>
-                                    <label className="text-sm text-gray-600 dark:text-gray-300 block mb-1">Text</label>
-                                    <input
-                                        type="text"
-                                        value={selectedElement.content || ''}
-                                        onChange={(e) => handleElementUpdate({ content: e.target.value })}
-                                        className="w-full px-2 py-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-sm text-gray-600 dark:text-gray-300 block mb-1">Font Size</label>
-                                    <select
-                                        value={selectedElement.fontSize || 'lg'}
-                                        onChange={(e) => handleElementUpdate({ fontSize: e.target.value })}
-                                        className="w-full px-2 py-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600"
-                                    >
-                                        <option value="sm">Small</option>
-                                        <option value="base">Medium</option>
-                                        <option value="lg">Large</option>
-                                        <option value="xl">Extra Large</option>
-                                        <option value="2xl">XXL</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-sm text-gray-600 dark:text-gray-300 block mb-1">Color</label>
-                                    <input
-                                        type="color"
-                                        value={selectedElement.color || '#000000'}
-                                        onChange={(e) => handleElementUpdate({ color: e.target.value })}
-                                        className="w-full h-8 rounded border"
-                                    />
-                                </div>
-                            </>
-                        )}
-
-                        <div>
-                            <label className="text-sm text-gray-600 dark:text-gray-300 block mb-1">Rotation</label>
-                            <input
-                                type="range"
-                                min="-180"
-                                max="180"
-                                value={selectedElement.rotation || 0}
-                                onChange={(e) => handleElementUpdate({ rotation: parseInt(e.target.value) })}
-                                className="w-full"
-                            />
-                            <span className="text-xs text-gray-500">{selectedElement.rotation || 0}°</span>
-                        </div>
-
-                        <div className="flex gap-2">
-                            <Button 
-                                onClick={() => handleElementUpdate({ rotation: 0 })}
-                                variant="outline" 
-                                size="sm" 
-                                className="flex-1"
-                            >
-                                <RotateCcw size={14} className="mr-1" />
-                                Reset
-                            </Button>
-                            <Button 
-                                onClick={handleElementDelete}
-                                variant="destructive" 
-                                size="sm" 
-                                className="flex-1"
-                            >
-                                <Trash2 size={14} className="mr-1" />
-                                Delete
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
-// Enhanced Main Scrapbook Component with Page Flipping Animation
 const Scrapbook = () => {
-    const [currentPage, setCurrentPage] = useState(0);
-    const [isFlipping, setIsFlipping] = useState(false);
-    const [flipDirection, setFlipDirection] = useState('');
-    const [saveStatus, setSaveStatus] = useState('');
-    const [scrapbookData, setScrapbookData] = useState({
-        title: 'My Travel Scrapbook',
-        pages: [
-            { pageNumber: 1, background: 'bg-white dark:bg-gray-800', elements: [] },
-            { pageNumber: 2, background: 'bg-white dark:bg-gray-800', elements: [] }
-        ]
+  const [pages, setPages] = useState([
+    {
+      id: 1,
+      title: 'My Travel Journey',
+      template: 'sunset',
+      items: []
+    }
+  ]);
+  
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [selectedItemId, setSelectedItemId] = useState(null);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingText, setEditingText] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [showStickers, setShowStickers] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showDefaultImages, setShowDefaultImages] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [selectedStickerCategory, setSelectedStickerCategory] = useState('travel');
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [flipDirection, setFlipDirection] = useState('');
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState('');
+  const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
+  const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0 });
+  
+  const fileInputRef = useRef(null);
+  const scrapbookRef = useRef(null);
+  const mobileMenuRef = useRef(null);
+  const pageRefs = useRef({});
+
+  // Auto-save functionality (silent)
+  useEffect(() => {
+    const autoSave = setTimeout(() => {
+      localStorage.setItem('scrapbookData', JSON.stringify(pages));
+    }, 3000);
+
+    return () => clearTimeout(autoSave);
+  }, [pages]);
+
+  // Load saved data on component mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('scrapbookData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        // Only load if it's valid data with proper structure
+        if (Array.isArray(parsedData) && parsedData.length > 0 && parsedData[0].id) {
+          setPages(parsedData);
+        }
+      } catch (error) {
+        console.log('Invalid saved data, starting fresh');
+        // Clear invalid data
+        localStorage.removeItem('scrapbookData');
+      }
+    }
+  }, []);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setShowMobileMenu(false);
+      }
+    };
+
+    if (showMobileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMobileMenu]);
+
+  const currentPage = pages[currentPageIndex];
+
+  // Navigation functions with page flip effect
+  const nextPage = () => {
+    if (currentPageIndex < pages.length - 1 && !isFlipping) {
+      setIsFlipping(true);
+      setFlipDirection('next');
+      
+      setTimeout(() => {
+        setCurrentPageIndex(currentPageIndex + 1);
+      }, 400); // Half of animation duration
+      
+      setTimeout(() => {
+        setIsFlipping(false);
+        setFlipDirection('');
+      }, 800); // Full animation duration
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPageIndex > 0 && !isFlipping) {
+      setIsFlipping(true);
+      setFlipDirection('prev');
+      
+      setTimeout(() => {
+        setCurrentPageIndex(currentPageIndex - 1);
+      }, 400);
+      
+      setTimeout(() => {
+        setIsFlipping(false);
+        setFlipDirection('');
+      }, 800);
+    }
+  };
+
+  const addNewPage = () => {
+    const newPage = {
+      id: Date.now(),
+      title: `Page ${pages.length + 1}`,
+      template: 'sunset',
+      items: []
+    };
+    setPages([...pages, newPage]);
+    setCurrentPageIndex(pages.length);
+  };
+
+  // Item management functions
+  const addTextItem = () => {
+    const newItem = {
+      id: `text-${Date.now()}`,
+      type: 'text',
+      content: 'Click to edit this text...',
+      position: { x: 100, y: 150 + (currentPage.items.length * 50) },
+      style: { 
+        fontSize: '16px', 
+        color: '#2d3748', 
+        fontFamily: 'sans-serif',
+        width: '200px',
+        minHeight: '40px'
+      }
+    };
+    
+    updateCurrentPage({
+      ...currentPage,
+      items: [...currentPage.items, newItem]
     });
-    const [activeTab, setActiveTab] = useState('stickers');
-    const [userPhotos, setUserPhotos] = useState([
-        // Sample travel photos - in real app, these would come from user's uploads or posts
-        { id: 1, src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=150&h=150&fit=crop', name: 'Beach Sunset' },
-        { id: 2, src: 'https://images.unsplash.com/photo-1454391304352-2bf4678b1a7a?w=150&h=150&fit=crop', name: 'Mountain View' },
-        { id: 3, src: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=150&h=150&fit=crop', name: 'City Skyline' },
-        { id: 4, src: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=150&h=150&fit=crop', name: 'Ocean Waves' },
-        { id: 5, src: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=150&h=150&fit=crop', name: 'Forest Path' },
-        { id: 6, src: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=150&h=150&fit=crop', name: 'Ancient Temple' },
-        { id: 7, src: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=150&h=150&fit=crop', name: 'Desert Dunes' },
-        { id: 8, src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=150&h=150&fit=crop', name: 'Tropical Paradise' }
-    ]);
+    
+    // Automatically start editing the new text item
+    setTimeout(() => {
+      setEditingItemId(newItem.id);
+      setEditingText(''); // Start with empty text for new items
+    }, 100);
+  };
 
-    const addPage = () => {
-        const newPageNumber = scrapbookData.pages.length + 1;
-        setScrapbookData(prev => ({
-            ...prev,
-            pages: [...prev.pages, {
-                pageNumber: newPageNumber,
-                background: 'bg-white dark:bg-gray-800',
-                elements: []
-            }]
-        }));
-        setCurrentPage(scrapbookData.pages.length);
+  const addStickerItem = (sticker) => {
+    const newItem = {
+      id: `sticker-${Date.now()}`,
+      type: 'sticker',
+      content: sticker,
+      position: { x: 200 + Math.random() * 200, y: 200 + Math.random() * 200 },
+      style: { 
+        width: '40px',
+        height: '40px'
+      }
     };
+    
+    updateCurrentPage({
+      ...currentPage,
+      items: [...currentPage.items, newItem]
+    });
+    setShowStickers(false);
+  };
 
-    const nextPage = () => {
-        if (currentPage < scrapbookData.pages.length - 1 && !isFlipping) {
-            setIsFlipping(true);
-            setFlipDirection('next');
-            setTimeout(() => {
-                setCurrentPage(currentPage + 1);
-                setIsFlipping(false);
-                setFlipDirection('');
-            }, 1000); // Increased to match smoother animation
-        }
+  const addDefaultImage = (imageData) => {
+    const newItem = {
+      id: `image-${Date.now()}`,
+      type: 'image',
+      content: imageData.url,
+      position: { x: 100 + Math.random() * 100, y: 150 + Math.random() * 100 },
+      style: { width: '250px', height: '180px', borderRadius: '12px', objectFit: 'cover' }
     };
+    
+    updateCurrentPage({
+      ...currentPage,
+      items: [...currentPage.items, newItem]
+    });
+    setShowDefaultImages(false);
+  };
 
-    const previousPage = () => {
-        if (currentPage > 0 && !isFlipping) {
-            setIsFlipping(true);
-            setFlipDirection('prev');
-            setTimeout(() => {
-                setCurrentPage(currentPage - 1);
-                setIsFlipping(false);
-                setFlipDirection('');
-            }, 1000); // Increased to match smoother animation
-        }
+  const changeTemplate = (templateId) => {
+    updateCurrentPage({
+      ...currentPage,
+      template: templateId
+    });
+    setShowTemplates(false);
+  };
+
+  const addImageItem = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const newItem = {
+        id: `image-${Date.now()}`,
+        type: 'image',
+        content: e.target.result,
+        position: { x: 50, y: 100 + (currentPage.items.length * 200) },
+        style: { width: '200px', height: 'auto', borderRadius: '8px' }
+      };
+      
+      updateCurrentPage({
+        ...currentPage,
+        items: [...currentPage.items, newItem]
+      });
     };
+    reader.readAsDataURL(file);
+  };
 
-    const goToPage = (pageIndex) => {
-        if (pageIndex !== currentPage && !isFlipping) {
-            setIsFlipping(true);
-            setFlipDirection(pageIndex > currentPage ? 'next' : 'prev');
-            setTimeout(() => {
-                setCurrentPage(pageIndex);
-                setIsFlipping(false);
-                setFlipDirection('');
-            }, 1000); // Increased to match smoother animation
-        }
-    };
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    files.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        addImageItem(file);
+      }
+    });
+    event.target.value = '';
+  };
 
-    const addElementToPage = (element) => {
-        setScrapbookData(prev => {
-            const newPages = [...prev.pages];
-            newPages[currentPage] = {
-                ...newPages[currentPage],
-                elements: [...newPages[currentPage].elements, { ...element, id: Date.now() }]
-            };
-            return { ...prev, pages: newPages };
-        });
-        toast.success('Added to scrapbook!');
-    };
+  const updateCurrentPage = (updatedPage) => {
+    const newPages = [...pages];
+    newPages[currentPageIndex] = updatedPage;
+    setPages(newPages);
+  };
 
-    const updateElement = (elementIndex, updatedElement) => {
-        setScrapbookData(prev => {
-            const newPages = [...prev.pages];
-            newPages[currentPage].elements[elementIndex] = updatedElement;
-            return { ...prev, pages: newPages };
-        });
-    };
+  const deleteItem = (itemId) => {
+    const updatedItems = currentPage.items.filter(item => item.id !== itemId);
+    updateCurrentPage({
+      ...currentPage,
+      items: updatedItems
+    });
+    setSelectedItemId(null);
+  };
 
-    const deleteElement = (elementIndex) => {
-        setScrapbookData(prev => {
-            const newPages = [...prev.pages];
-            newPages[currentPage].elements.splice(elementIndex, 1);
-            return { ...prev, pages: newPages };
-        });
-        toast.success('Element removed');
-    };
+  // Improved drag and drop functions
+  const handleMouseDown = (e, item) => {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    
+    setDraggedItem(item);
+    setDragOffset({ x: offsetX, y: offsetY });
+    setSelectedItemId(item.id);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+    setIsDragging(false);
+    
+    // Add smooth transition class
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+  };
 
-    const applyTemplate = (template) => {
-        setScrapbookData(prev => {
-            const newPages = [...prev.pages];
-            newPages[currentPage] = {
-                ...newPages[currentPage],
-                background: template.background,
-                elements: [...template.elements]
-            };
-            return { ...prev, pages: newPages };
-        });
-        toast.success(`Applied ${template.name} template!`);
-    };
-
-    const addTextElement = () => {
-        const newText = {
-            type: 'text',
-            content: 'Edit me!',
-            x: 50,
-            y: 50,
-            fontSize: 'lg',
-            color: '#333333'
-        };
-        addElementToPage(newText);
-    };
-
-    const handlePhotoUpload = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const newPhoto = {
-                    id: Date.now(),
-                    src: e.target.result,
-                    name: file.name
-                };
-                setUserPhotos(prev => [...prev, newPhoto]);
-                toast.success('Photo uploaded!');
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const saveScrapbook = async () => {
-        try {
-            setSaveStatus('Saving...');
-            // Save to localStorage
-            const scrapbookWithTimestamp = {
-                ...scrapbookData,
-                lastSaved: new Date().toISOString(),
-                version: '1.0'
-            };
-            
-            localStorage.setItem('scrapbook', JSON.stringify(scrapbookWithTimestamp));
-            
-            // In a real app, this would also save to backend
-            // await api.saveScrapbook(scrapbookWithTimestamp);
-            
-            setSaveStatus('Saved ✓');
-            toast.success('Scrapbook saved successfully!');
-            setTimeout(() => setSaveStatus(''), 3000);
-        } catch (error) {
-            console.error('Error saving scrapbook:', error);
-            setSaveStatus('Save failed ✗');
-            toast.error('Failed to save scrapbook');
-            setTimeout(() => setSaveStatus(''), 3000);
-        }
-    };
-
-    const exportAsPDF = async () => {
-        try {
-            toast.info('Generating PDF... Please wait');
-            
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            
-            // Add title page
-            pdf.setFontSize(24);
-            pdf.setTextColor(128, 90, 213); // Purple color
-            pdf.text(scrapbookData.title, pageWidth / 2, 30, { align: 'center' });
-            
-            pdf.setFontSize(14);
-            pdf.setTextColor(100, 100, 100);
-            pdf.text('Created with Digital Scrapbook', pageWidth / 2, 45, { align: 'center' });
-            pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
-
-            // Process each page
-            for (let i = 0; i < scrapbookData.pages.length; i++) {
-                const pageElement = document.querySelector(`[data-page-index="${i}"]`);
-                
-                if (pageElement) {
-                    // Add new page if not first page
-                    if (i > 0) pdf.addPage();
-                    
-                    // Capture page as canvas
-                    const canvas = await html2canvas(pageElement, {
-                        useCORS: true,
-                        allowTaint: true,
-                        scale: 2,
-                        width: pageElement.offsetWidth,
-                        height: pageElement.offsetHeight,
-                        backgroundColor: null
-                    });
-                    
-                    const imgData = canvas.toDataURL('image/png');
-                    
-                    // Calculate dimensions to fit page
-                    const imgWidth = pageWidth - 20;
-                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                    
-                    // Center the image on the page
-                    const x = 10;
-                    const y = (pageHeight - imgHeight) / 2;
-                    
-                    pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-                    
-                    // Add page number
-                    pdf.setFontSize(10);
-                    pdf.setTextColor(150, 150, 150);
-                    pdf.text(`Page ${i + 1}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
-                } else {
-                    // Fallback if page element not found
-                    if (i > 0) pdf.addPage();
-                    pdf.setFontSize(16);
-                    pdf.setTextColor(100, 100, 100);
-                    pdf.text(`Page ${i + 1}`, pageWidth / 2, pageHeight / 2, { align: 'center' });
-                }
+  const handleMouseMove = (e) => {
+    if (isResizing && draggedItem) {
+      const deltaX = e.clientX - resizeStartPos.x;
+      const deltaY = e.clientY - resizeStartPos.y;
+      
+      let newWidth = resizeStartSize.width;
+      let newHeight = resizeStartSize.height;
+      
+      if (resizeDirection.includes('right')) {
+        newWidth = Math.max(50, resizeStartSize.width + deltaX);
+      }
+      if (resizeDirection.includes('left')) {
+        newWidth = Math.max(50, resizeStartSize.width - deltaX);
+      }
+      if (resizeDirection.includes('bottom')) {
+        newHeight = Math.max(30, resizeStartSize.height + deltaY);
+      }
+      if (resizeDirection.includes('top')) {
+        newHeight = Math.max(30, resizeStartSize.height - deltaY);
+      }
+      
+      const updatedItems = currentPage.items.map(item => 
+        item.id === draggedItem.id 
+          ? { 
+              ...item, 
+              style: { 
+                ...item.style, 
+                width: `${newWidth}px`, 
+                height: draggedItem.type === 'text' ? 'auto' : `${newHeight}px`,
+                fontSize: draggedItem.type === 'text' ? `${Math.max(12, newWidth / 10)}px` : 
+                         draggedItem.type === 'sticker' ? undefined : item.style.fontSize
+              } 
             }
-
-            // Save the PDF
-            const fileName = `${scrapbookData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.pdf`;
-            pdf.save(fileName);
-            
-            toast.success('PDF exported successfully!');
-        } catch (error) {
-            console.error('Error exporting PDF:', error);
-            toast.error('Failed to export PDF');
-        }
-    };
-
-    const loadScrapbook = () => {
-        try {
-            const savedData = localStorage.getItem('scrapbook');
-            if (savedData) {
-                const parsedData = JSON.parse(savedData);
-                setScrapbookData(parsedData);
-                toast.success('Scrapbook loaded!');
-            } else {
-                toast.info('No saved scrapbook found');
-            }
-        } catch (error) {
-            console.error('Error loading scrapbook:', error);
-            toast.error('Failed to load scrapbook');
-        }
-    };
-
-    const exportAsJSON = () => {
-        try {
-            const dataStr = JSON.stringify(scrapbookData, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${scrapbookData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_backup.json`;
-            link.click();
-            
-            URL.revokeObjectURL(url);
-            toast.success('Scrapbook exported as JSON!');
-        } catch (error) {
-            console.error('Error exporting JSON:', error);
-            toast.error('Failed to export JSON');
-        }
-    };
-
-    const currentPageData = scrapbookData.pages[currentPage];
-
-    // Auto-load saved scrapbook on component mount
-    useEffect(() => {
-        const savedData = localStorage.getItem('scrapbook');
-        if (savedData) {
-            try {
-                const parsedData = JSON.parse(savedData);
-                setScrapbookData(parsedData);
-                toast.info('Loaded your saved scrapbook');
-            } catch (error) {
-                console.error('Error loading saved scrapbook:', error);
-            }
-        }
-    }, []);
-
-    // Auto-save every 30 seconds when there are changes
-    useEffect(() => {
-        const autoSaveInterval = setInterval(() => {
-            if (scrapbookData.pages.some(page => page.elements.length > 0)) {
-                const scrapbookWithTimestamp = {
-                    ...scrapbookData,
-                    lastAutoSaved: new Date().toISOString(),
-                    autoSave: true
-                };
-                localStorage.setItem('scrapbook_autosave', JSON.stringify(scrapbookWithTimestamp));
-            }
-        }, 30000); // Auto-save every 30 seconds
-
-        return () => clearInterval(autoSaveInterval);
-    }, [scrapbookData]);
-
-    // Keyboard navigation
-    useEffect(() => {
-        const handleKeyPress = (e) => {
-            if (e.key === 'ArrowLeft') {
-                previousPage();
-            } else if (e.key === 'ArrowRight') {
-                nextPage();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentPage, isFlipping]);
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-pink-950 transition-all duration-300">
-            <div className="max-w-7xl mx-auto p-6">
-                {/* Header */}
-                <div className="text-center mb-12 relative">
-                    <div className="flex items-center justify-center gap-4 mb-6">
-                        <Book className="text-purple-600 dark:text-purple-400" size={48} />
-                        <div className="relative flex items-center">
-                            <h1 className="text-4xl font-bold text-purple-700 dark:text-purple-300 leading-normal py-2 drop-shadow-sm">
-                                Digital Scrapbook
-                            </h1>
-                        </div>
-                        {saveStatus && (
-                            <div className="absolute top-0 right-0 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-sm font-medium border border-green-200 dark:border-green-700">
-                                {saveStatus}
-                            </div>
-                        )}
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-300 text-lg mb-4 max-w-2xl mx-auto leading-relaxed">
-                        Create beautiful memory books of your travel adventures
-                    </p>
-                    <div className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full px-4 py-2 border border-purple-200 dark:border-purple-700">
-                        <span>💡</span>
-                        <span>Drag and drop stickers/photos onto pages, use arrows to flip pages</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    {/* Sidebar - Tools and Assets */}
-                    <div className="lg:col-span-1 space-y-6">
-                        {/* Tools Tabs */}
-                        <Card className="p-6 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-purple-200/50 dark:border-purple-700/50 shadow-lg">
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                <Button
-                                    variant={activeTab === 'stickers' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setActiveTab('stickers')}
-                                >
-                                    <Sticker size={16} className="mr-1" />
-                                    Stickers
-                                </Button>
-                                <Button
-                                    variant={activeTab === 'photos' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setActiveTab('photos')}
-                                >
-                                    <ImageIcon size={16} className="mr-1" />
-                                    Photos
-                                </Button>
-                                <Button
-                                    variant={activeTab === 'templates' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setActiveTab('templates')}
-                                >
-                                    <Palette size={16} className="mr-1" />
-                                    Templates
-                                </Button>
-                            </div>
-
-                            {/* Stickers Tab */}
-                            {activeTab === 'stickers' && (
-                                <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-                                        Drag or click stickers to add to your page
-                                    </h3>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        {availableStickers.map(sticker => (
-                                            <StickerButton
-                                                key={sticker.id}
-                                                sticker={sticker}
-                                                onAddToPage={addElementToPage}
-                                            />
-                                        ))}
-                                    </div>
-                                    <Button
-                                        onClick={addTextElement}
-                                        className="w-full mt-4"
-                                        variant="outline"
-                                    >
-                                        <Type size={16} className="mr-2" />
-                                        Add Text
-                                    </Button>
-                                </div>
-                            )}
-
-                            {/* Photos Tab */}
-                            {activeTab === 'photos' && (
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                                            Your Photos
-                                        </h3>
-                                        <label className="cursor-pointer">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handlePhotoUpload}
-                                                className="hidden"
-                                            />
-                                            <Button size="sm" variant="outline">
-                                                <Upload size={16} className="mr-1" />
-                                                Upload
-                                            </Button>
-                                        </label>
-                                    </div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                                        Drag or click photos to add to your page
-                                    </p>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {userPhotos.map(photo => (
-                                            <PhotoButton
-                                                key={photo.id}
-                                                photo={photo}
-                                                onAddToPage={addElementToPage}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Templates Tab */}
-                            {activeTab === 'templates' && (
-                                <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-                                        Page Templates
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {templates.map(template => (
-                                            <div
-                                                key={template.id}
-                                                className="p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
-                                                onClick={() => applyTemplate(template)}
-                                            >
-                                                <div className={`w-full h-16 rounded ${template.background} mb-2 border border-gray-300 dark:border-gray-600`}></div>
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white text-center">
-                                                    {template.name}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </Card>
-
-                        {/* Page Actions */}
-                        <Card className="p-6 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-purple-200/50 dark:border-purple-700/50 shadow-lg">
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Page Actions</h3>
-                            <div className="space-y-2">
-                                <Button onClick={addPage} className="w-full" variant="outline">
-                                    <Plus size={16} className="mr-2" />
-                                    Add New Page
-                                </Button>
-                            </div>
-
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4 mt-6">Save & Export</h3>
-                            <div className="space-y-2">
-                                <Button onClick={saveScrapbook} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                                    <Save size={16} className="mr-2" />
-                                    Save Scrapbook
-                                </Button>
-                                <Button onClick={loadScrapbook} className="w-full" variant="outline">
-                                    <Upload size={16} className="mr-2" />
-                                    Load Saved
-                                </Button>
-                                <Button onClick={exportAsPDF} className="w-full bg-pink-600 hover:bg-pink-700 text-white">
-                                    <Download size={16} className="mr-2" />
-                                    Export as PDF
-                                </Button>
-                                <Button onClick={exportAsJSON} className="w-full" variant="outline">
-                                    <Download size={16} className="mr-2" />
-                                    Backup (JSON)
-                                </Button>
-                            </div>
-                        </Card>
-                    </div>
-
-                    {/* Main Scrapbook Area */}
-                    <div className="lg:col-span-3">
-                        <Card className="p-8 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-purple-200/50 dark:border-purple-700/50 shadow-lg">
-                            {/* Book Header */}
-                            <div className="flex items-center justify-between mb-8">
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {scrapbookData.title}
-                                </h2>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        onClick={previousPage}
-                                        disabled={currentPage === 0 || isFlipping}
-                                        variant="outline"
-                                        size="sm"
-                                        className="transition-all duration-200"
-                                    >
-                                        <ChevronLeft size={16} />
-                                        <span className="hidden sm:inline ml-1">Previous</span>
-                                    </Button>
-                                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-medium text-gray-900 dark:text-white">
-                                        {currentPage + 1} / {scrapbookData.pages.length}
-                                    </span>
-                                    <Button
-                                        onClick={nextPage}
-                                        disabled={currentPage === scrapbookData.pages.length - 1 || isFlipping}
-                                        variant="outline"
-                                        size="sm"
-                                        className="transition-all duration-200"
-                                    >
-                                        <span className="hidden sm:inline mr-1">Next</span>
-                                        <ChevronRight size={16} />
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Enhanced Scrapbook Page with Smooth Book Flip Animation */}
-                            <div className="book-container relative w-full aspect-[4/3] max-w-4xl mx-auto">
-                                <div 
-                                    className={`page-wrapper ${
-                                        isFlipping 
-                                            ? flipDirection === 'next' 
-                                                ? 'flip-next' 
-                                                : 'flip-prev'
-                                            : ''
-                                    }`}
-                                >
-                                    <div className="page-front">
-                                        <div className="book-spine"></div>
-                                        <div className="page-corner"></div>
-                                        <ScrapbookPage
-                                            pageData={currentPageData}
-                                            pageIndex={currentPage}
-                                            isActive={!isFlipping}
-                                            onAddElement={addElementToPage}
-                                            onUpdateElement={updateElement}
-                                            onDeleteElement={deleteElement}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Enhanced Page Navigation */}
-                            <div className="flex justify-center mt-6">
-                                <div className="flex gap-2">
-                                    {scrapbookData.pages.map((_, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => goToPage(index)}
-                                            disabled={isFlipping}
-                                            className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                                                currentPage === index 
-                                                    ? 'bg-purple-600 dark:bg-purple-400 scale-125' 
-                                                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-                                            } ${isFlipping ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                            title={`Go to page ${index + 1}`}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Flip Animation Status */}
-                            {isFlipping && (
-                                <div className="flex justify-center mt-6">
-                                    <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-4 py-2 rounded-full backdrop-blur-sm">
-                                        <RotateCw className="animate-spin" size={16} />
-                                        <span className="font-medium">Flipping page...</span>
-                                    </div>
-                                </div>
-                            )}
-                        </Card>
-                    </div>
-                </div>
-            </div>
-        </div>
+          : item
+      );
+      
+      updateCurrentPage({
+        ...currentPage,
+        items: updatedItems
+      });
+      return;
+    }
+    
+    if (!draggedItem || isResizing) return;
+    
+    // Only start dragging after minimum movement to prevent accidental drags
+    if (!isDragging) {
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - dragStartPos.x, 2) + 
+        Math.pow(e.clientY - dragStartPos.y, 2)
+      );
+      if (distance > 5) {
+        setIsDragging(true);
+      } else {
+        return;
+      }
+    }
+    
+    const pageRect = scrapbookRef.current.getBoundingClientRect();
+    const newX = e.clientX - pageRect.left - dragOffset.x;
+    const newY = e.clientY - pageRect.top - dragOffset.y;
+    
+    // Constrain to page boundaries with padding
+    const constrainedX = Math.max(10, Math.min(newX, pageRect.width - 100));
+    const constrainedY = Math.max(10, Math.min(newY, pageRect.height - 50));
+    
+    const updatedItems = currentPage.items.map(item => 
+      item.id === draggedItem.id 
+        ? { ...item, position: { x: constrainedX, y: constrainedY } }
+        : item
     );
+    
+    updateCurrentPage({
+      ...currentPage,
+      items: updatedItems
+    });
+  };
+
+  const handleMouseUp = () => {
+    if (draggedItem) {
+      setDraggedItem(null);
+      setDragOffset({ x: 0, y: 0 });
+      setIsDragging(false);
+      setIsResizing(false);
+      setResizeDirection('');
+      
+      // Reset body styles
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+  };
+
+  // Resize handlers
+  const handleResizeStart = (e, item, direction) => {
+    e.stopPropagation();
+    setDraggedItem(item);
+    setIsResizing(true);
+    setResizeDirection(direction);
+    setResizeStartPos({ x: e.clientX, y: e.clientY });
+    
+    // Get current size
+    const currentWidth = item.style?.width ? parseInt(item.style.width) : 
+                        (item.type === 'sticker' ? 40 : item.type === 'image' ? 200 : 200);
+    const currentHeight = item.style?.height ? parseInt(item.style.height) : 
+                         (item.type === 'sticker' ? 40 : item.type === 'image' ? 150 : 150);
+    
+    setResizeStartSize({ width: currentWidth, height: currentHeight });
+    
+    // Prevent text selection during resize
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = direction.includes('right') || direction.includes('left') ? 'ew-resize' : 'ns-resize';
+    if (direction.includes('right') && direction.includes('bottom')) document.body.style.cursor = 'nw-resize';
+    if (direction.includes('left') && direction.includes('bottom')) document.body.style.cursor = 'ne-resize';
+    if (direction.includes('right') && direction.includes('top')) document.body.style.cursor = 'ne-resize';
+    if (direction.includes('left') && direction.includes('top')) document.body.style.cursor = 'nw-resize';
+  };
+
+  // Handle page click to deselect items
+  const handlePageClick = (e) => {
+    // Don't deselect when clicking on input fields or buttons
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+    
+    // Only deselect if clicking directly on the page content area (not on an item)
+    if (e.target === e.currentTarget || 
+        (e.target.closest('.scrapbook-item') === null && 
+         e.target.closest('button') === null &&
+         e.target.closest('input') === null &&
+         e.target.closest('textarea') === null)) {
+      setSelectedItemId(null);
+    }
+  };
+
+  // Text editing functions
+  const startEditing = (item) => {
+    setEditingItemId(item.id);
+    // Clear default text when editing starts
+    const textToEdit = item.content === 'Click to edit this text...' ? '' : item.content;
+    setEditingText(textToEdit);
+  };
+
+  const saveEdit = () => {
+    const updatedItems = currentPage.items.map(item => 
+      item.id === editingItemId 
+        ? { ...item, content: editingText }
+        : item
+    );
+    
+    updateCurrentPage({
+      ...currentPage,
+      items: updatedItems
+    });
+    
+    setEditingItemId(null);
+    setEditingText('');
+  };
+
+  const cancelEdit = () => {
+    setEditingItemId(null);
+    setEditingText('');
+  };
+
+  // Export functions
+  const exportToPDF = async () => {
+    setIsExporting(true);
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = 210;
+    const pageHeight = 297;
+    
+    try {
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) pdf.addPage();
+        
+        // Set current page for rendering
+        setCurrentPageIndex(i);
+        
+        // Wait for page to render
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const pageElement = pageRefs.current[pages[i].id];
+        if (pageElement) {
+          const canvas = await html2canvas(pageElement, {
+            scale: 2,
+            useCORS: true,
+            logging: false
+          });
+          
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = pageWidth - 20;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
+          pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(imgHeight, pageHeight - 20));
+        }
+      }
+      
+      pdf.save(`travel-scrapbook-${new Date().toISOString().split('T')[0]}.pdf`);
+      setSaveStatus('PDF exported successfully!');
+    } catch (error) {
+      console.error('Export failed:', error);
+      setSaveStatus('Export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
+  };
+
+  const resetScrapbook = () => {
+    if (confirm('Are you sure you want to reset the scrapbook? This will delete all pages and content.')) {
+      const freshPages = [
+        {
+          id: Date.now(),
+          title: 'My Travel Journey',
+          template: 'sunset',
+          items: []
+        }
+      ];
+      setPages(freshPages);
+      setCurrentPageIndex(0);
+      localStorage.removeItem('scrapbookData');
+      setSaveStatus('Scrapbook reset successfully!');
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-blue-200/30 dark:border-gray-700/50">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="p-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent truncate">
+                Travel Scrapbook
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Mobile Menu Button */}
+              <div className="lg:hidden">
+                <Button
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+                >
+                  <Menu className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Primary Actions Group */}
+              <div className="hidden lg:flex items-center gap-2">
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload
+                </Button>
+                
+                <Button
+                  onClick={() => setShowDefaultImages(true)}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
+                >
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  Gallery
+                </Button>
+                
+                <Button
+                  onClick={addTextItem}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+                >
+                  <Type className="w-4 h-4 mr-2" />
+                  Text
+                </Button>
+              </div>
+
+              {/* Secondary Actions Group */}
+              <div className="hidden md:flex items-center gap-2 border-l border-gray-200 dark:border-gray-600 pl-2">
+                <Button
+                  onClick={() => setShowStickers(true)}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200"
+                >
+                  <Smile className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Stickers</span>
+                </Button>
+                
+                <Button
+                  onClick={() => setShowTemplates(true)}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                >
+                  <Palette className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Templates</span>
+                </Button>
+              </div>
+              
+              {/* File Actions Group */}
+              <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-600 pl-2">
+                <Button
+                  onClick={exportToPDF}
+                  disabled={isExporting}
+                  className="bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 hover:from-blue-600 hover:via-purple-600 hover:to-green-600 text-white font-semibold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300"
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{isExporting ? 'Exporting...' : 'Export PDF'}</span>
+                </Button>
+                
+                {/* Reset Button - Only show when there's content or multiple pages */}
+                {(pages.length > 1 || pages[0].items.length > 0) && (
+                  <Button
+                    onClick={resetScrapbook}
+                    variant="outline"
+                    size="sm"
+                    className="hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden lg:inline ml-2">Reset</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile Menu Dropdown */}
+        {showMobileMenu && (
+          <div 
+            ref={mobileMenuRef}
+            className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3"
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={() => {
+                  fileInputRef.current?.click();
+                  setShowMobileMenu(false);
+                }}
+                variant="outline"
+                size="sm"
+                className="justify-start hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Photos
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  setShowDefaultImages(true);
+                  setShowMobileMenu(false);
+                }}
+                variant="outline"
+                size="sm"
+                className="justify-start hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                Gallery
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  addTextItem();
+                  setShowMobileMenu(false);
+                }}
+                variant="outline"
+                size="sm"
+                className="justify-start hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+              >
+                <Type className="w-4 h-4 mr-2" />
+                Add Text
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  setShowStickers(true);
+                  setShowMobileMenu(false);
+                }}
+                variant="outline"
+                size="sm"
+                className="justify-start hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200"
+              >
+                <Smile className="w-4 h-4 mr-2" />
+                Stickers
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  setShowTemplates(true);
+                  setShowMobileMenu(false);
+                }}
+                variant="outline"
+                size="sm"
+                className="justify-start hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+              >
+                <Palette className="w-4 h-4 mr-2" />
+                Templates
+              </Button>
+              
+              {(pages.length > 1 || pages[0].items.length > 0) && (
+                <Button
+                  onClick={() => {
+                    resetScrapbook();
+                    setShowMobileMenu(false);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="justify-start hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Reset
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Page Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={prevPage}
+              disabled={currentPageIndex === 0 || isFlipping}
+              variant="outline"
+              size="sm"
+              className="group hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+            >
+              <ChevronLeft className="w-4 h-4 group-hover:translate-x-[-2px] transition-transform duration-200" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-medium bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Page {currentPageIndex + 1} of {pages.length}
+              </span>
+              {isFlipping && (
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"></div>
+                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              )}
+            </div>
+            
+            <Button
+              onClick={nextPage}
+              disabled={currentPageIndex === pages.length - 1 || isFlipping}
+              variant="outline"
+              size="sm"
+              className="group hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+            >
+              Next
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-[2px] transition-transform duration-200" />
+            </Button>
+            
+            <Button
+              onClick={addNewPage}
+              variant="outline"
+              size="sm"
+              className="ml-4 hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Page
+            </Button>
+          </div>
+        </div>
+
+        {/* Scrapbook Page */}
+        <div className="scrapbook-container relative max-w-5xl mx-auto">
+          {/* Book Binding Effect */}
+          <div className="absolute left-0 top-0 w-8 h-full scrapbook-binding rounded-l-lg z-10"></div>
+          
+          <Card 
+            ref={scrapbookRef}
+            className={`scrapbook-page relative w-full aspect-[4/3] max-h-[600px] ml-4 shadow-2xl border-4 dark:bg-gray-800 transition-all duration-500 transform-gpu ${
+              TEMPLATES.find(t => t.id === currentPage.template)?.background || 'bg-white'
+            } ${
+              TEMPLATES.find(t => t.id === currentPage.template)?.accent || 'border-blue-200'
+            } dark:border-gray-600 ${
+              isFlipping ? (flipDirection === 'next' ? 'page-flip-next' : 'page-flip-prev') : ''
+            }`}
+            style={{ transformStyle: 'preserve-3d' }}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onClick={handlePageClick}
+          >
+            <CardContent 
+              ref={el => pageRefs.current[currentPage.id] = el}
+              className="p-8 h-full overflow-hidden relative"
+            >
+              {/* Page Title */}
+              <div className="mb-6">
+                <Input
+                  value={currentPage.title}
+                  onChange={(e) => updateCurrentPage({ ...currentPage, title: e.target.value })}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-2xl font-bold text-center border-none bg-transparent text-gray-900 dark:text-white focus:ring-0"
+                />
+              </div>
+
+              {/* Page Items */}
+              {currentPage.items.map(item => (
+                <div
+                  key={item.id}
+                  className={`scrapbook-item absolute transition-all duration-200 ease-out ${
+                    selectedItemId === item.id ? 'ring-2 ring-blue-400 ring-opacity-60' : ''
+                  } ${
+                    draggedItem?.id === item.id ? 'z-50 scale-105 shadow-2xl cursor-grabbing' : 'z-10 cursor-grab hover:shadow-lg'
+                  } ${
+                    isDragging && draggedItem?.id === item.id ? 'transform rotate-2' : ''
+                  }`}
+                  style={{
+                    left: item.position.x,
+                    top: item.position.y,
+                    ...item.style
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e, item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedItemId(item.id);
+                  }}
+                >
+                  {item.type === 'text' ? (
+                    editingItemId === item.id ? (
+                      <div className="flex items-center gap-2">
+                        <Textarea
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          className="min-w-[200px] resize-none"
+                          autoFocus
+                          placeholder="Enter your text here..."
+                        />
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            onClick={saveEdit}
+                            size="sm"
+                            variant="outline"
+                          >
+                            <Check className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            onClick={cancelEdit}
+                            size="sm"
+                            variant="outline"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="p-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl border border-blue-200/50 dark:border-gray-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-purple-300/50 min-h-[40px] flex items-center"
+                        style={{ 
+                          width: item.style?.width || '200px',
+                          minHeight: item.style?.minHeight || '40px'
+                        }}
+                        onDoubleClick={() => startEditing(item)}
+                      >
+                        <p 
+                          style={{
+                            fontSize: item.style?.fontSize || '16px',
+                            color: item.style?.color || '#2d3748',
+                            fontFamily: item.style?.fontFamily || 'sans-serif',
+                            wordWrap: 'break-word',
+                            width: '100%'
+                          }}
+                        >
+                          {item.content}
+                        </p>
+                      </div>
+                    )
+                  ) : item.type === 'sticker' ? (
+                    <div
+                      className="select-none hover:scale-110 transition-all duration-300 cursor-move drop-shadow-lg hover:drop-shadow-xl flex items-center justify-center overflow-hidden"
+                      style={{ 
+                        width: item.style?.width || '40px',
+                        height: item.style?.height || '40px'
+                      }}
+                    >
+                      <span style={{ 
+                        fontSize: item.style?.width ? `${parseInt(item.style.width) * 0.8}px` : '32px',
+                        lineHeight: '1',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: '100%'
+                      }}>
+                        {item.content}
+                      </span>
+                    </div>
+                  ) : item.type === 'image' ? (
+                    <div className="relative" style={{ width: item.style?.width || '200px', height: item.style?.height || 'auto' }}>
+                      <img
+                        src={item.content}
+                        alt="Scrapbook item"
+                        className="rounded-lg shadow-lg border-4 border-white dark:border-gray-700 w-full h-full object-cover"
+                        style={{ 
+                          borderRadius: item.style?.borderRadius || '8px',
+                          objectFit: item.style?.objectFit || 'cover'
+                        }}
+                        draggable={false}
+                      />
+                    </div>
+                  ) : null}
+
+                  {/* Item Controls */}
+                  {selectedItemId === item.id && (
+                    <>
+                      {/* Action Buttons */}
+                      <div className="absolute -top-8 right-0 flex gap-1">
+                        {item.type === 'text' && (
+                          <Button
+                            onClick={() => startEditing(item)}
+                            size="sm"
+                            variant="outline"
+                            className="w-6 h-6 p-0"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </Button>
+                        )}
+                        <Button
+                          onClick={() => deleteItem(item.id)}
+                          size="sm"
+                          variant="outline"
+                          className="w-6 h-6 p-0 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+
+                      {/* Resize Handles */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        {/* Corner Handles */}
+                        <div 
+                          className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-nw-resize pointer-events-auto hover:bg-blue-600 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, item, 'top-left')}
+                        />
+                        <div 
+                          className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-ne-resize pointer-events-auto hover:bg-blue-600 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, item, 'top-right')}
+                        />
+                        <div 
+                          className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-ne-resize pointer-events-auto hover:bg-blue-600 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, item, 'bottom-left')}
+                        />
+                        <div 
+                          className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-nw-resize pointer-events-auto hover:bg-blue-600 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, item, 'bottom-right')}
+                        />
+                        
+                        {/* Edge Handles */}
+                        <div 
+                          className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-ns-resize pointer-events-auto hover:bg-blue-600 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, item, 'top')}
+                        />
+                        <div 
+                          className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-ns-resize pointer-events-auto hover:bg-blue-600 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, item, 'bottom')}
+                        />
+                        <div 
+                          className="absolute -left-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-ew-resize pointer-events-auto hover:bg-blue-600 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, item, 'left')}
+                        />
+                        <div 
+                          className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-ew-resize pointer-events-auto hover:bg-blue-600 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, item, 'right')}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {/* Enhanced Empty state */}
+              {currentPage.items.length === 0 && (
+                <div className="flex items-center justify-center h-full p-8">
+                  <div className="text-center max-w-2xl">
+                    {/* Hero Section */}
+                    <div className="mb-8">
+                      <div className="relative mb-6">
+                        <div className="p-6 bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 rounded-full w-24 h-24 mx-auto mb-4 flex items-center justify-center shadow-xl">
+                          <BookOpen className="w-12 h-12 text-white" />
+                        </div>
+                        <div className="absolute top-2 right-1/2 transform translate-x-16">
+                          <span className="text-2xl animate-bounce">✈️</span>
+                        </div>
+                        <div className="absolute bottom-2 left-1/2 transform -translate-x-16">
+                          <span className="text-2xl animate-pulse">📸</span>
+                        </div>
+                      </div>
+                      
+                      <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent mb-3">
+                        Create Your Travel Story
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
+                        Transform your travel memories into a beautiful digital scrapbook. Add photos, stickers, and personal notes to create something truly special.
+                      </p>
+                    </div>
+
+                    {/* Quick Start Actions */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                      <Button
+                        onClick={() => fileInputRef.current?.click()}
+                        variant="outline"
+                        className="h-20 flex-col gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 hover:scale-105"
+                      >
+                        <Upload className="w-6 h-6 text-blue-500" />
+                        <span className="text-xs font-medium">Upload Photos</span>
+                      </Button>
+                      
+                      <Button
+                        onClick={() => setShowDefaultImages(true)}
+                        variant="outline"
+                        className="h-20 flex-col gap-2 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 hover:scale-105"
+                      >
+                        <ImageIcon className="w-6 h-6 text-emerald-500" />
+                        <span className="text-xs font-medium">Browse Gallery</span>
+                      </Button>
+                      
+                      <Button
+                        onClick={addTextItem}
+                        variant="outline"
+                        className="h-20 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 hover:scale-105"
+                      >
+                        <Type className="w-6 h-6 text-purple-500" />
+                        <span className="text-xs font-medium">Add Text</span>
+                      </Button>
+                      
+                      <Button
+                        onClick={() => setShowStickers(true)}
+                        variant="outline"
+                        className="h-20 flex-col gap-2 hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-300 hover:scale-105"
+                      >
+                        <Smile className="w-6 h-6 text-yellow-500" />
+                        <span className="text-xs font-medium">Add Stickers</span>
+                      </Button>
+                    </div>
+
+                    {/* Tips Section */}
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200/50 dark:border-blue-700/50 mt-4">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2 text-sm">
+                        <Sparkles className="w-4 h-4 text-yellow-500" />
+                        Pro Tips
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-start gap-2 p-2 rounded-md hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
+                          <span className="text-blue-500 text-sm leading-none">•</span>
+                          <span className="flex-1">Drag and drop elements anywhere</span>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 rounded-md hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
+                          <span className="text-purple-500 text-sm leading-none">•</span>
+                          <span className="flex-1">Double-click text to edit</span>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 rounded-md hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
+                          <span className="text-green-500 text-sm leading-none">•</span>
+                          <span className="flex-1">Try different templates</span>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 rounded-md hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
+                          <span className="text-yellow-500 text-sm leading-none">•</span>
+                          <span className="flex-1">Export as PDF</span>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 rounded-md hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
+                          <span className="text-red-500 text-sm leading-none">•</span>
+                          <span className="flex-1">Drag handles to resize</span>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 rounded-md hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
+                          <span className="text-indigo-500 text-sm leading-none">•</span>
+                          <span className="flex-1">Click empty space to deselect</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Mobile Toolbar */}
+        <div className="sm:hidden fixed bottom-4 left-4 right-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-blue-200/30 dark:border-gray-700/50 p-3">
+          <div className="flex justify-center gap-1 overflow-x-auto">
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              size="sm"
+              className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 shrink-0"
+            >
+              <Upload className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={() => setShowDefaultImages(true)}
+              variant="outline"
+              size="sm"
+              className="hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 shrink-0"
+            >
+              <ImageIcon className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={addTextItem}
+              variant="outline"
+              size="sm"
+              className="hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 shrink-0"
+            >
+              <Type className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={() => setShowStickers(true)}
+              variant="outline"
+              size="sm"
+              className="hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200 shrink-0"
+            >
+              <Smile className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={() => setShowTemplates(true)}
+              variant="outline"
+              size="sm"
+              className="hover:bg-green-50 hover:border-green-300 transition-all duration-200 shrink-0"
+            >
+              <Palette className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={exportToPDF}
+              disabled={isExporting}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg shrink-0"
+              size="sm"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Default Images Panel */}
+      {showDefaultImages && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Travel Image Gallery</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Choose from beautiful travel photos to inspire your scrapbook</p>
+              </div>
+              <Button
+                onClick={() => setShowDefaultImages(false)}
+                variant="outline"
+                size="sm"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {/* Images Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {DEFAULT_IMAGES.map((image, index) => (
+                <div
+                  key={index}
+                  onClick={() => addDefaultImage(image)}
+                  className="group cursor-pointer rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-600 hover:border-blue-400 transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                >
+                  <div className="relative">
+                    <img
+                      src={image.url}
+                      alt={image.title}
+                      className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-2 left-2 right-2">
+                        <h4 className="text-white text-sm font-semibold truncate">{image.title}</h4>
+                        <span className="text-white/80 text-xs capitalize">{image.category}</span>
+                      </div>
+                    </div>
+                    <div className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <Plus className="w-4 h-4 text-blue-600" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+              <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                Click on any image to add it to your scrapbook page. You can resize and move it after adding.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stickers Panel */}
+      {showStickers && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Choose Stickers</h3>
+              <Button
+                onClick={() => setShowStickers(false)}
+                variant="outline"
+                size="sm"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {/* Sticker Categories */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {Object.keys(STICKERS).map(category => (
+                <Button
+                  key={category}
+                  onClick={() => setSelectedStickerCategory(category)}
+                  variant={selectedStickerCategory === category ? "default" : "outline"}
+                  size="sm"
+                  className="capitalize"
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+            
+            {/* Stickers Grid */}
+            <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">
+              {STICKERS[selectedStickerCategory].map((sticker, index) => (
+                <button
+                  key={index}
+                  onClick={() => addStickerItem(sticker)}
+                  className="w-12 h-12 text-2xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                >
+                  {sticker}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Templates Panel */}
+      {showTemplates && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Choose Template</h3>
+              <Button
+                onClick={() => setShowTemplates(false)}
+                variant="outline"
+                size="sm"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {/* Templates Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {TEMPLATES.map(template => (
+                <div
+                  key={template.id}
+                  onClick={() => changeTemplate(template.id)}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:scale-105 ${template.background} ${template.accent} ${
+                    currentPage.template === template.id ? 'ring-2 ring-orange-500' : ''
+                  }`}
+                >
+                  <div className="h-20 rounded mb-2 border border-gray-200 dark:border-gray-600"></div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">{template.name}</h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{template.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+    </div>
+  );
 };
 
 export default Scrapbook;
