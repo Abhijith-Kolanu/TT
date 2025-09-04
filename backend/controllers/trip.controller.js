@@ -82,8 +82,8 @@ export const generateItinerary = async (req, res) => {
         }
 
         // Create detailed prompt for Gemini
-        console.log('Creating prompt for Gemini API...');
-        const prompt = `Generate a detailed ${trip.dates.duration}-day travel itinerary for ${trip.destination.city}, ${trip.destination.country}.
+        console.log('Creating enhanced prompt for Gemini API...');
+        const prompt = `You are an expert travel planner with deep local knowledge and 15+ years of experience. Create an exceptional, detailed ${trip.dates.duration}-day travel itinerary for ${trip.destination.city}, ${trip.destination.country}.
 
 Trip Details:
 - Duration: ${trip.dates.duration} days
@@ -93,6 +93,20 @@ Trip Details:
 - Travel Style: ${trip.preferences.travelStyle}
 - Pace: ${trip.preferences.pace}
 
+ENHANCED PLANNING REQUIREMENTS:
+🎯 **Expert Local Insights**: Include hidden gems, local favorites, and authentic experiences only locals know
+⏰ **Smart Scheduling**: Consider opening hours, weather patterns, crowd levels, and optimal timing for each activity
+🗺️ **Practical Navigation**: Calculate realistic travel times and suggest best transportation between locations
+💰 **Budget Optimization**: Maximize value within the specified budget range with money-saving tips
+🌍 **Cultural Context**: Include local customs, etiquette, cultural significance, and language basics
+🛡️ **Safety & Backup Plans**: Emergency contacts, safety tips, and alternative plans for weather/closures
+📱 **Booking Intelligence**: Specify what needs advance booking and provide booking tips
+
+BUDGET COST GUIDELINES:
+- Budget: Accommodation $30-80/night, Meals $15-30/day, Activities $10-25 each
+- Mid-range: Accommodation $80-200/night, Meals $30-60/day, Activities $25-50 each  
+- Luxury: Accommodation $200+/night, Meals $60+/day, Activities $50+ each
+
 IMPORTANT: Respond with ONLY valid JSON. No markdown code blocks, no comments, no additional text.
 
 Please provide a JSON response with the following structure:
@@ -101,13 +115,16 @@ Please provide a JSON response with the following structure:
     {
       "day": 1,
       "date": "2025-09-09",
-      "theme": "Arrival and City Introduction",
+      "theme": "Arrival and Cultural Immersion",
+      "weather_advice": "Check forecast - indoor backup options listed",
+      "local_insight": "Insider tip about this day's plan",
       "activities": [
         {
           "time": "09:00",
-          "activity": "Airport Transfer",
-          "description": "Private transfer from airport to hotel",
-          "location": "Charles de Gaulle Airport to Paris City Center",
+          "activity": "Private Airport Transfer with Local Welcome",
+          "description": "Professional transfer with local guide introduction and city overview during ride",
+          "location": "Charles de Gaulle Airport to Le Marais District Hotel, 75004 Paris",
+          "address": "Specific hotel address with postal code",
           "category": "transport",
           "duration": "60",
           "estimatedCost": {
@@ -115,9 +132,21 @@ Please provide a JSON response with the following structure:
             "midRange": 50,
             "luxury": 100
           },
-          "tips": "Book in advance for better rates"
+          "tips": "Download offline maps beforehand, keep passport handy, ask driver for local SIM card recommendations",
+          "booking_required": true,
+          "operating_hours": "24/7",
+          "priority": "high",
+          "backup_plan": "Public RER B train if transfer is delayed",
+          "cultural_note": "French drivers appreciate a simple 'Bonjour' greeting"
         }
-      ]
+      ],
+      "daily_budget_breakdown": {
+        "budget": 85,
+        "midRange": 140,
+        "luxury": 280
+      },
+      "walking_distance": "2.5 km total",
+      "emergency_contacts": "Tourist Police: +33 1 53 71 53 71, Medical Emergency: 15"
     }
   ],
   "totalEstimatedCost": {
@@ -126,31 +155,49 @@ Please provide a JSON response with the following structure:
       "food": 300,
       "activities": 200,
       "transport": 150,
-      "total": 1150
+      "miscellaneous": 100,
+      "total": 1250
     },
     "midRange": {
       "accommodation": 1000,
       "food": 600,
       "activities": 400,
       "transport": 250,
-      "total": 2250
+      "miscellaneous": 200,
+      "total": 2450
     },
     "luxury": {
       "accommodation": 2000,
       "food": 1200,
       "activities": 800,
       "transport": 500,
-      "total": 4500
+      "miscellaneous": 400,
+      "total": 4900
     }
+  },
+  "travel_intelligence": {
+    "best_time_to_visit": "Detailed weather and crowd information",
+    "cultural_etiquette": "Essential customs and social norms",
+    "packing_essentials": "Climate-specific items and local requirements",
+    "language_basics": "10 most important phrases with pronunciation",
+    "currency_wisdom": "Best exchange methods and tipping culture",
+    "safety_insights": "Area-specific safety tips and emergency procedures",
+    "local_apps": "Essential apps for navigation, food, and transport",
+    "hidden_gems": "Secret spots only locals know about"
   }
 }
 
-IMPORTANT RULES:
+STRICT FORMATTING RULES:
 - Use ONLY these category values: 'sightseeing', 'food', 'shopping', 'adventure', 'relaxation', 'transport', 'accommodation', 'nightlife'
 - Never use 'activity' - use 'sightseeing' instead
 - Never combine categories with commas - use only one category per activity
+- All costs must be realistic numbers (no ranges)
+- Include exact times in HH:MM format
+- All locations must have specific names and full addresses
+- Priority levels: 'high', 'medium', 'low'
+- Duration in minutes as numbers only
 
-Make sure the itinerary is realistic, considers travel time between locations, includes meals, and matches the traveler preferences and budget type. Include specific location names and practical tips.
+Create an itinerary that feels like it was crafted by a local expert who genuinely cares about providing an authentic, safe, and unforgettable experience.
 
 Return ONLY the JSON object above. No additional text, explanations, or markdown formatting.`;
 
@@ -241,98 +288,168 @@ export const getSmartRecommendations = async (req, res) => {
             });
         }
 
-        const prompt = `
-Generate personalized recommendations for a trip to ${trip.destination.city}, ${trip.destination.country}.
+        // Retry logic for API calls
+        const retryWithBackoff = async (fn, maxRetries = 3) => {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    return await fn();
+                } catch (error) {
+                    if (error.status === 503 && attempt < maxRetries) {
+                        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+                        console.log(`API overloaded, retrying in ${delay}ms... (attempt ${attempt}/${maxRetries})`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+                    throw error;
+                }
+            }
+        };
 
-Trip Details:
+        const prompt = `
+You are a local expert and insider guide for ${trip.destination.city}, ${trip.destination.country}. Generate curated, personalized recommendations that go beyond typical tourist attractions.
+
+Trip Context:
 - Duration: ${trip.dates.duration} days
-- Budget Type: ${trip.budgetType}
+- Budget Type: ${trip.budgetType || trip.preferences.budgetType}
 - Interests: ${trip.preferences.interests.join(', ')}
-- Dining Style: ${trip.preferences.diningStyle}
-- Activity Level: ${trip.preferences.activityLevel}
+- Dining Style: ${trip.preferences.diningStyle || 'varied'}
+- Activity Level: ${trip.preferences.activityLevel || 'moderate'}
 - Travelers: ${trip.travelers.adults} adults, ${trip.travelers.children} children
 
-IMPORTANT: Respond with ONLY valid JSON. No markdown code blocks, no comments, no additional text.
+EXPERT CURATION REQUIREMENTS:
+🍽️ **Restaurants**: Mix of local favorites, hidden gems, and Instagram-worthy spots
+🏛️ **Attractions**: Balance iconic sights with lesser-known treasures
+🎭 **Events**: Current happenings, seasonal festivals, and unique experiences
+💎 **Hidden Gems**: Secret spots only locals know - viewpoints, neighborhoods, experiences
+🛍️ **Shopping**: From local markets to unique boutiques and souvenir spots
+
+CRITICAL JSON REQUIREMENTS:
+- Respond with ONLY valid JSON. No markdown, no code blocks, no extra text.
+- All string values MUST be enclosed in double quotes
+- Use 0 instead of "Free" for numeric fields
+- Boolean values: true/false (no quotes)
+- Numbers: no quotes around numeric values
+- All property names MUST be in double quotes
 
 Please provide recommendations in the following JSON format:
 {
   "restaurants": [
     {
-      "name": "Restaurant Name",
-      "description": "Brief description",
-      "location": "Address or area",
-      "rating": 4.5,
-      "priceRange": "budget/midRange/luxury",
-      "cuisine": "cuisine type",
-      "tags": ["tag1", "tag2", "tag3"],
-      "specialties": ["dish1", "dish2"],
-      "averageCost": number
+      "name": "Le Comptoir du Relais",
+      "description": "Quintessential Parisian bistro beloved by locals, famous for its traditional French cuisine and intimate atmosphere",
+      "location": "9 Carrefour de l'Odéon, 75006 Paris",
+      "coordinates": {"lat": 48.8512, "lng": 2.3391},
+      "rating": 4.6,
+      "priceRange": "midRange",
+      "cuisine": "French Bistro",
+      "tags": ["local favorite", "authentic", "intimate", "traditional"],
+      "specialties": ["Confit de canard", "Tarte Tatin", "Natural wines"],
+      "averageCost": 45,
+      "reservationRequired": true,
+      "openingHours": "Mon-Sat 12:00-14:30, 19:00-23:00",
+      "insider_tip": "Book weeks ahead, arrive early for bar seating without reservation",
+      "best_dishes": ["Duck confit", "Daily specials on blackboard"],
+      "ambiance": "Cozy, bustling, authentic Parisian"
     }
   ],
   "attractions": [
     {
-      "name": "Attraction Name",
-      "description": "Brief description",
-      "location": "Address or area",
-      "rating": 4.5,
-      "priceRange": "budget/midRange/luxury",
-      "category": "museum/landmark/nature/entertainment",
-      "tags": ["tag1", "tag2", "tag3"],
-      "duration": "recommended visit duration",
-      "bestTimeToVisit": "time recommendation",
-      "entranceFee": number
+      "name": "Musée Rodin Secret Gardens",
+      "description": "While tourists rush through the museum, locals know the real magic is in the hidden corners of the sculpture garden",
+      "location": "77 Rue de Varenne, 75007 Paris",
+      "coordinates": {"lat": 48.8553, "lng": 2.3159},
+      "rating": 4.7,
+      "priceRange": "budget",
+      "category": "museum",
+      "tags": ["sculpture", "gardens", "peaceful", "artistic"],
+      "duration": "2-3 hours",
+      "bestTimeToVisit": "Late afternoon for golden hour photography",
+      "entranceFee": 14,
+      "insider_tip": "Visit the Rose Garden in June for peak blooms, skip the crowds by entering through the back entrance",
+      "photography_spots": ["The Thinker at sunset", "Secret garden nooks"],
+      "nearby_combo": "Walk to Invalides after for Napoleon's Tomb"
     }
   ],
   "events": [
     {
-      "name": "Event Name",
-      "description": "Brief description",
-      "location": "Venue",
-      "rating": 4.5,
-      "priceRange": "budget/midRange/luxury",
-      "type": "cultural/music/sports/festival",
-      "tags": ["tag1", "tag2", "tag3"],
-      "schedule": "timing information",
-      "ticketPrice": number
+      "name": "Sunday Jazz at Sunset - Pont des Arts",
+      "description": "Local musicians gather every Sunday for impromptu jazz sessions with stunning Seine views",
+      "location": "Pont des Arts, 75001 Paris",
+      "coordinates": {"lat": 48.8583, "lng": 2.3370},
+      "rating": 4.8,
+      "priceRange": "budget",
+      "type": "music",
+      "tags": ["free", "jazz", "sunset", "local culture"],
+      "schedule": "Sundays 18:00-20:30 (weather permitting)",
+      "ticketPrice": 0,
+      "insider_tip": "Bring a blanket and wine from nearby shop, musicians appreciate small donations",
+      "seasonal_note": "Most active April-October",
+      "what_to_bring": ["Blanket", "Snacks", "Cash for tips"]
     }
   ],
   "hiddenGems": [
     {
-      "name": "Hidden Gem Name",
-      "description": "Brief description",
-      "location": "Address or area",
-      "rating": 4.5,
-      "priceRange": "budget/midRange/luxury",
-      "type": "viewpoint/local spot/unique experience",
-      "tags": ["tag1", "tag2", "tag3"],
-      "whySpecial": "what makes it unique",
-      "bestTimeToVisit": "time recommendation"
+      "name": "Promenade Plantée Secret Entrance",
+      "description": "Elevated garden walkway above the city - enter through the hidden staircase near Bastille for the best sunset views",
+      "location": "Near 1 Coulée Verte René-Dumont, 75012 Paris",
+      "coordinates": {"lat": 48.8476, "lng": 2.3691},
+      "rating": 4.9,
+      "priceRange": "budget",
+      "type": "viewpoint",
+      "tags": ["elevated views", "peaceful", "photography", "free"],
+      "whySpecial": "First elevated park in the world, built on old railway viaduct with incredible city views",
+      "bestTimeToVisit": "Golden hour (1 hour before sunset)",
+      "insider_tip": "Enter at Arts et Métiers viaduct for least crowds, continues for 4.7km if you want to walk",
+      "photography_gold": "Viaduct arches frame the city perfectly",
+      "local_secret": "Bench at kilometer marker 2.3 has the best skyline view"
     }
   ],
   "shopping": [
     {
-      "name": "Shopping Place Name",
-      "description": "Brief description",
-      "location": "Address or area",
+      "name": "Marché Saint-Germain Underground",
+      "description": "Hidden covered market beneath the famous square, where locals shop for gourmet foods and unique artisan goods",
+      "location": "4-8 Rue Lobineau, 75006 Paris",
+      "coordinates": {"lat": 48.8530, "lng": 2.3359},
       "rating": 4.5,
-      "priceRange": "budget/midRange/luxury",
-      "type": "market/mall/boutique/souvenir",
-      "tags": ["tag1", "tag2", "tag3"],
-      "specialties": ["item1", "item2"],
-      "openingHours": "business hours"
+      "priceRange": "midRange",
+      "type": "market",
+      "tags": ["gourmet", "artisan", "covered market", "local products"],
+      "specialties": ["Artisan chocolates", "French cheeses", "Vintage books", "Handmade jewelry"],
+      "openingHours": "Tue-Sat 08:00-20:00, Sun 08:00-14:00",
+      "insider_tip": "Visit Saturday morning for the best selection, many vendors offer tastings",
+      "local_vendors": ["Fromager Laurent for best cheese selection", "Chocolate maker Sophie for unique flavors"],
+      "bargaining_culture": "Fixed prices, but vendors appreciate genuine interest in their craft"
     }
+  ],
+  "transportation_hacks": [
+    {
+      "type": "Metro Secret",
+      "tip": "Line 1 is fully automated and has platform screen doors - safest for families",
+      "money_saver": "Weekly Navigo pass pays for itself after 14 single rides"
+    }
+  ],
+  "local_etiquette": [
+    "Always say 'Bonjour' when entering shops",
+    "Dinner reservations essential, lunch can be more spontaneous",
+    "Tipping 10% is appreciated but not mandatory"
   ]
 }
 
-Focus on recommendations that match the traveler's interests and budget type. Include 3-5 items in each category. Make sure all recommendations are real places in ${trip.destination.city}.
+Focus on recommendations that match the traveler's interests and budget type. Include 4-6 items in each category with insider knowledge that only a local expert would know. All locations must be real and currently operating in ${trip.destination.city}.
 
 Return ONLY the JSON object above. No additional text, explanations, or markdown formatting.`;
 
-        const result = await model.generateContent(prompt);
+        // Make API call with retry logic
+        const result = await retryWithBackoff(async () => {
+            return await model.generateContent(prompt);
+        });
+        
         const response = await result.response;
         let text = response.text();
 
-        // Clean the response text
+        // Enhanced cleaning of the response text
+        console.log('Raw AI response length:', text.length);
+        
         // Remove markdown code blocks
         text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
         
@@ -340,24 +457,56 @@ Return ONLY the JSON object above. No additional text, explanations, or markdown
         text = text.replace(/\/\/.*$/gm, '');
         text = text.replace(/\/\*[\s\S]*?\*\//g, '');
         
+        // Fix common JSON issues
+        // Fix unquoted values
+        text = text.replace(/:\s*([A-Za-z][A-Za-z0-9\s]*[A-Za-z0-9])\s*([,\}\]])/g, ': "$1"$2');
+        text = text.replace(/:\s*Free\s*([,\}\]])/g, ': 0$1');
+        text = text.replace(/:\s*free\s*([,\}\]])/g, ': 0$1');
+        text = text.replace(/:\s*([a-zA-Z]+)\s*([,\}\]])/g, (match, word, ending) => {
+            // Don't quote boolean values
+            if (word === 'true' || word === 'false' || word === 'null') {
+                return `: ${word}${ending}`;
+            }
+            // Don't quote numbers
+            if (!isNaN(word)) {
+                return `: ${word}${ending}`;
+            }
+            return `: "${word}"${ending}`;
+        });
+        
         // Remove trailing commas before closing brackets/braces
         text = text.replace(/,(\s*[}\]])/g, '$1');
+        
+        // Fix broken quotes
+        text = text.replace(/([^\\])\\"/g, '$1"');
+        text = text.replace(/"\s*([A-Za-z])/g, '" $1');
 
         // Parse the JSON response
         let recommendations;
         try {
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
+                console.log('Attempting to parse JSON...');
                 recommendations = JSON.parse(jsonMatch[0]);
+                console.log('Successfully parsed recommendations');
+                
+                // Clean up any keys with leading/trailing spaces
+                const cleanedRecommendations = {};
+                Object.keys(recommendations).forEach(key => {
+                    const cleanKey = key.trim();
+                    cleanedRecommendations[cleanKey] = recommendations[key];
+                });
+                recommendations = cleanedRecommendations;
+                console.log('Cleaned recommendation keys:', Object.keys(recommendations));
             } else {
                 throw new Error('No valid JSON found in response');
             }
         } catch (parseError) {
             console.error('Error parsing recommendations response:', parseError);
-            return res.status(500).json({
-                success: false,
-                message: 'Error processing AI recommendations'
-            });
+            console.error('Problematic text snippet:', text.substring(0, 500));
+            
+            // Return error instead of fallback data
+            throw new Error('Failed to parse AI recommendations response');
         }
 
         res.status(200).json({
@@ -367,9 +516,28 @@ Return ONLY the JSON object above. No additional text, explanations, or markdown
 
     } catch (error) {
         console.error('Error getting smart recommendations:', error);
+        
+        // Handle specific error cases
+        if (error.message && error.message.includes('Too Many Requests')) {
+            return res.status(429).json({
+                success: false,
+                message: 'API quota exceeded. Please try again later.',
+                error: 'QUOTA_EXCEEDED'
+            });
+        }
+
+        if (error.message && error.message.includes('quota')) {
+            return res.status(429).json({
+                success: false,
+                message: 'API usage limit reached. Please try again in 24 hours.',
+                error: 'QUOTA_EXCEEDED'
+            });
+        }
+
         res.status(500).json({
             success: false,
-            message: 'Failed to get recommendations'
+            message: 'Failed to get recommendations',
+            error: 'INTERNAL_ERROR'
         });
     }
 };

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="trekGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="50%" style="stop-color:#10B981"/>
+      <stop offset="100%" style="stop-color:#F59E0B"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main circle background -->
+  <circle cx="32" cy="32" r="30" fill="url(#trekGradient)" filter="url(#glow)"/>
+  
+  <!-- Mountain range -->
+  <path d="M5 45 L15 20 L25 30 L32 15 L40 25 L48 18 L55 28 L59 45 Z" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+  
+  <!-- Secondary mountain layer -->
+  <path d="M8 45 L18 25 L28 35 L36 22 L44 32 L52 25 L58 45 Z" fill="rgba(255,255,255,0.6)"/>
+  
+  <!-- Compass in top right -->
+  <g transform="translate(45, 15)">
+    <circle cx="0" cy="0" r="6" fill="rgba(255,255,255,0.8)" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#F59E0B" stroke-width="2"/>
+    <line x1="-4" y1="0" x2="4" y2="0" stroke="white" stroke-width="1"/>
+    <polygon points="0,-3 1.5,0 0,1 -1.5,0" fill="#F59E0B"/>
+  </g>
+  
+  <!-- Adventure trail path -->
+  <path d="M12 42 Q20 38 28 42 Q36 38 44 42 Q50 40 56 42" 
+        stroke="rgba(255,255,255,0.6)" 
+        stroke-width="2" 
+        fill="none" 
+        stroke-dasharray="3,2"/>
+  
+  <!-- Adventure elements -->
+  <!-- Sun/sunrise -->
+  <circle cx="50" cy="25" r="3" fill="rgba(245,158,11,0.8)"/>
+  <g stroke="rgba(245,158,11,0.6)" stroke-width="1">
+    <line x1="50" y1="19" x2="50" y2="21"/>
+    <line x1="54" y1="21" x2="53" y2="22"/>
+    <line x1="54" y1="29" x2="53" y2="28"/>
+    <line x1="50" y1="31" x2="50" y2="29"/>
+    <line x1="46" y1="29" x2="47" y2="28"/>
+    <line x1="46" y1="21" x2="47" y2="22"/>
+  </g>
+  
+  <!-- Stars -->
+  <circle cx="15" cy="18" r="1" fill="white" opacity="0.8"/>
+  <circle cx="52" cy="12" r="0.8" fill="white" opacity="0.7"/>
+  <circle cx="22" cy="12" r="0.6" fill="white" opacity="0.9"/>
+  
+  <!-- Small pine trees -->
+  <path d="M38 40 L40 35 L42 40 Z" fill="rgba(16,185,129,0.7)"/>
+  <path d="M21 41 L23 37 L25 41 Z" fill="rgba(16,185,129,0.6)"/>
+</svg>

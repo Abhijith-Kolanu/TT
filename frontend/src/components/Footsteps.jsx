@@ -14,6 +14,7 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -49,12 +50,27 @@ const FitBounds = ({ bounds }) => {
 };
 
 const Footsteps = () => {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isPublicMode, setIsPublicMode] = useState(true);
-  const { user } = useSelector(store => store.auth);
-  const navigate = useNavigate();
-  const boundsRef = useRef([]);
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-green-50 dark:from-gray-900 dark:via-blue-950 dark:to-green-950 p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center">
+          <Globe className="mx-auto h-16 w-16 text-blue-600 dark:text-blue-400 mb-4" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Footsteps - Interactive Map
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            This feature requires map dependencies to be installed. The Footsteps interactive map will show your travel locations and posts.
+          </p>
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+            <p className="text-yellow-800 dark:text-yellow-200">
+              📍 Map functionality temporarily unavailable while dependencies are being resolved.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
   useEffect(() => {
     const fetchPosts = async () => {

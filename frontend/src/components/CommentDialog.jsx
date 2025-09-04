@@ -35,7 +35,7 @@ const CommentDialog = ({ open, setOpen }) => {
   const sendMessageHandler = async () => {
 
     try {
-      const res = await axios.post(`http://localhost:8000/api/v1/post/${selectedPost?._id}/comment`, { text }, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/post/${selectedPost?._id}/comment`, { text }, {
         headers: {
           'Content-Type': 'application/json'
         },
@@ -56,6 +56,16 @@ const CommentDialog = ({ open, setOpen }) => {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  const handleDeleteComment = (commentId) => {
+    const updatedComments = comment.filter(c => c._id !== commentId);
+    setComment(updatedComments);
+
+    const updatedPostData = posts.map(p =>
+      p._id === selectedPost._id ? { ...p, comments: updatedComments } : p
+    );
+    dispatch(setPosts(updatedPostData));
   }
 
   return (
@@ -103,7 +113,7 @@ const CommentDialog = ({ open, setOpen }) => {
             <hr className='border-gray-200 dark:border-gray-700' />
             <div className='flex-1 overflow-y-auto max-h-96 p-4 bg-white dark:bg-gray-800'>
               {
-                comment.map((comment) => <Comment key={comment._id} comment={comment} />)
+                comment.map((comment) => <Comment key={comment._id} comment={comment} onDeleteComment={handleDeleteComment} />)
               }
             </div>
             <div className='p-4 border-t border-gray-200 dark:border-gray-700'>

@@ -20,5 +20,7 @@ const postSchema = new mongoose.Schema({
             default: 'Unknown'
         }
     }
+}, {
+    timestamps: true
 });
 export const Post = mongoose.model('Post', postSchema);

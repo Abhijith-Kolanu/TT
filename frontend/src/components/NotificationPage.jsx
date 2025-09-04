@@ -16,20 +16,14 @@ const NotificationPage = () => {
     // Fetch all notifications when component mounts
     useGetAllNotifications();
 
-    // Mark all notifications as read when page opens
-    useEffect(() => {
-        if (unreadCount > 0) {
-            handleMarkAllAsRead();
-        }
-    }, []);
-
     const handleMarkAllAsRead = async () => {
         try {
-            const res = await axios.post('http://localhost:8000/api/v1/notification/read-all', {}, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/notification/read-all`, {}, {
                 withCredentials: true
             });
             if (res.data.success) {
                 dispatch(markAllNotificationsAsRead());
+                console.log('All notifications marked as read');
             }
         } catch (error) {
             console.log('Error marking all notifications as read:', error);
@@ -41,7 +35,7 @@ const NotificationPage = () => {
         
         try {
             // Mark notification as read
-            const res = await axios.post(`http://localhost:8000/api/v1/notification/read/${notification._id}`, {}, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/notification/read/${notification._id}`, {}, {
                 withCredentials: true
             });
             if (res.data.success) {
@@ -76,9 +70,9 @@ const NotificationPage = () => {
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     Notifications {unreadCount > 0 && <span className="text-blue-500">({unreadCount} new)</span>}
                 </h1>
-                {notifications.length > 0 && (
+                {unreadCount > 0 && (
                     <button
-                        className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                        className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium"
                         onClick={handleMarkAllAsRead}
                     >
                         Mark All Read

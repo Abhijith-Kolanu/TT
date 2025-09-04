@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mountain, Compass } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAuthUser } from '@/redux/authSlice';
 import ThemeToggle from './ThemeToggle';
@@ -72,8 +72,33 @@ const Login = () => {
             
             <div className='max-w-md w-full space-y-8'>
                 <div className='text-center'>
-                    <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-2'>TrekTales</h1>
-                    <p className='text-lg text-gray-600 dark:text-gray-400'>Share your adventures & discover amazing travel stories</p>
+                    <div className='flex items-center justify-center gap-4 mb-4'>
+                        {/* Enhanced Logo */}
+                        <div className='relative'>
+                            <div className='w-16 h-16 bg-gradient-to-br from-blue-500 via-green-500 to-orange-500 rounded-3xl flex items-center justify-center shadow-2xl rotate-12 hover:rotate-0 transition-all duration-500 group'>
+                                <div className='relative'>
+                                    <Mountain className='w-8 h-8 text-white group-hover:scale-110 transition-transform duration-300' />
+                                    <Compass className='absolute -top-1 -right-1 w-4 h-4 text-orange-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-spin' style={{ animationDuration: '3s' }} />
+                                </div>
+                            </div>
+                            {/* Decorative elements */}
+                            <div className='absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-green-400 to-blue-400 rounded-full opacity-60 blur-sm animate-pulse'></div>
+                            <div className='absolute -bottom-2 -left-2 w-4 h-4 bg-gradient-to-br from-orange-400 to-yellow-400 rounded-full opacity-70 blur-sm'></div>
+                        </div>
+                        <div className='flex flex-col items-start'>
+                            <h1 className='text-5xl font-bold bg-gradient-to-r from-blue-600 via-green-600 to-orange-600 bg-clip-text text-transparent'>TrekTales</h1>
+                            <div className='flex items-center gap-2 mt-1'>
+                                <Mountain className='w-4 h-4 text-green-500' />
+                                <span className='text-sm font-medium text-gray-500 dark:text-gray-400'>Adventure Awaits</span>
+                                <div className='flex gap-1'>
+                                    <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+                                    <div className='w-2 h-2 bg-orange-500 rounded-full animate-pulse delay-100'></div>
+                                    <div className='w-2 h-2 bg-blue-500 rounded-full animate-pulse delay-200'></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p className='text-lg text-gray-600 dark:text-gray-400'>🌍 Share your adventures & discover amazing travel stories 🏔️</p>
                 </div>
                 
                 <form onSubmit={signupHandler} className='mt-8 space-y-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700'>

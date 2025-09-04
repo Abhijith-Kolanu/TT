@@ -82,6 +82,7 @@ export const addNewPost = async (req, res) => {
 export const getAllPost = async (req, res) => {
     try {
         const posts = await Post.find().sort({ createdAt: -1 })
+            .select('+createdAt +updatedAt') // Explicitly include timestamps
             .populate({ path: 'author', select: 'username profilePicture' })
             .populate({
                 path: 'comments',
@@ -91,6 +92,14 @@ export const getAllPost = async (req, res) => {
                     select: 'username profilePicture'
                 }
             });
+        
+        // Debug log to see what we're getting
+        console.log('Sample post timestamp data:', {
+            hasCreatedAt: posts[0]?.createdAt ? true : false,
+            createdAt: posts[0]?.createdAt,
+            postId: posts[0]?._id
+        });
+        
         return res.status(200).json({
             posts,
             success: true
@@ -282,6 +291,51 @@ export const addComment = async (req, res) => {
         });
     } catch (error) {
         console.log("Error in addComment:", error);
+        return res.status(500).json({ message: "Internal server error", success: false });
+    }
+};
+
+export const deleteComment = async (req, res) => {
+    try {
+        const { commentId } = req.params;
+        const userId = req.id;
+
+        // Find the comment
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found', success: false });
+        }
+
+        // Check if user is the author of the comment
+        if (comment.author.toString() !== userId) {
+            return res.status(403).json({ message: 'Unauthorized to delete this comment', success: false });
+        }
+
+        // Remove comment from the post's comments array
+        await Post.findByIdAndUpdate(comment.post, {
+            $pull: { comments: commentId }
+        });
+
+        // Delete the comment
+        await Comment.findByIdAndDelete(commentId);
+
+        // Get updated post with comments
+        const updatedPost = await Post.findById(comment.post).populate({
+            path: 'comments',
+            sort: { createdAt: -1 },
+            populate: {
+                path: 'author',
+                select: 'username profilePicture'
+            }
+        });
+
+        return res.status(200).json({
+            message: 'Comment deleted successfully',
+            post: updatedPost,
+            success: true
+        });
+    } catch (error) {
+        console.log("Error in deleteComment:", error);
         return res.status(500).json({ message: "Internal server error", success: false });
     }
 };

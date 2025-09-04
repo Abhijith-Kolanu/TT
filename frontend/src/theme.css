@@ -1,9 +1,99 @@
-/* Dark mode transition styles */
-* {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+/* TrekTales Adventure Theme */
+:root {
+  /* Adventure Color Palette */
+  --mountain-blue: #2563eb;
+  --deep-ocean: #1e40af;
+  --forest-green: #059669;
+  --sunset-orange: #ea580c;
+  --golden-sand: #f59e0b;
+  --cloud-white: #f8fafc;
+  --stone-gray: #64748b;
+  --night-dark: #0f172a;
+  
+  /* Gradients */
+  --adventure-gradient: linear-gradient(135deg, var(--mountain-blue) 0%, var(--forest-green) 100%);
+  --sunset-gradient: linear-gradient(135deg, var(--sunset-orange) 0%, var(--golden-sand) 100%);
+  --ocean-gradient: linear-gradient(135deg, var(--deep-ocean) 0%, var(--mountain-blue) 100%);
+  
+  /* Shadows */
+  --adventure-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.2);
+  --floating-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Custom scrollbar for dark mode */
+/* Dark mode transition styles */
+* {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Adventure Button Styles */
+.btn-adventure {
+  background: var(--adventure-gradient);
+  border: none;
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  box-shadow: var(--adventure-shadow);
+  transition: all 0.3s ease;
+}
+
+.btn-adventure:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px -5px rgba(37, 99, 235, 0.3);
+}
+
+/* Floating Card Styles */
+.adventure-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  box-shadow: var(--floating-shadow);
+  transition: all 0.3s ease;
+}
+
+.dark .adventure-card {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.adventure-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.15);
+}
+
+/* Organic Shapes */
+.organic-shape {
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  transition: border-radius 0.5s ease;
+}
+
+.organic-shape:hover {
+  border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+}
+
+/* Custom scrollbar for adventure theme */
+.adventure-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.adventure-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.adventure-scroll::-webkit-scrollbar-thumb {
+  background: var(--adventure-gradient);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.adventure-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--ocean-gradient);
+}
+
+/* Sidebar specific scrollbar (hidden but functional) */
 .sidebar-scroll::-webkit-scrollbar {
   width: 0px;
   background: transparent;
@@ -18,28 +108,95 @@
   border-radius: 3px;
 }
 
-.dark .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: transparent;
-}
-
-.sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: transparent;
-}
-
-.dark .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: transparent;
+/* Adventure Typography */
+.adventure-title {
+  background: var(--adventure-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 /* Smooth theme transitions */
 html {
-  transition: background-color 0.2s ease;
+  transition: background-color 0.3s ease;
 }
 
 body {
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.dark body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Adventure Navigation Dots */
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--adventure-gradient);
+  display: inline-block;
+  margin: 0 4px;
+  transition: all 0.3s ease;
+}
+
+.nav-dot.active {
+  transform: scale(1.5);
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+}
+
+/* Glass morphism effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+}
+
+.dark .glass-card {
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Adventure Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.floating-element {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-adventure {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(37, 99, 235, 0); }
+}
+
+.pulse-adventure {
+  animation: pulse-adventure 2s infinite;
 }
 
 /* Dark mode for modal backgrounds */
 .dark .modal-overlay {
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+/* Travel-themed patterns */
+.travel-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(5, 150, 105, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(234, 88, 12, 0.05) 0%, transparent 50%);
+}
+
+.dark .travel-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(5, 150, 105, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(234, 88, 12, 0.03) 0%, transparent 50%);
 }

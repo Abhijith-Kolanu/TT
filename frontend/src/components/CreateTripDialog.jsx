@@ -24,6 +24,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
         },
         preferences: {
             budgetType: 'mid-range',
+            currency: 'USD',
             interests: [],
             travelStyle: 'solo',
             pace: 'moderate'
@@ -183,6 +184,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
             },
             preferences: {
                 budgetType: 'mid-range',
+                currency: 'USD',
                 interests: [],
                 travelStyle: 'solo',
                 pace: 'moderate'
@@ -335,6 +337,44 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
                                 <SelectItem value="budget" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Budget (Economical options)</SelectItem>
                                 <SelectItem value="mid-range" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Mid-Range (Balanced experience)</SelectItem>
                                 <SelectItem value="luxury" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Luxury (Premium experiences)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Currency */}
+                    <div>
+                        <Label className="flex items-center gap-2 text-gray-900 dark:text-white">
+                            <DollarSign size={16} />
+                            Currency
+                        </Label>
+                        <Select
+                            value={formData.preferences.currency}
+                            onValueChange={(value) => handleNestedInputChange('preferences', 'currency', value)}
+                        >
+                            <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 max-h-60 overflow-y-auto">
+                                <SelectItem value="USD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">USD - US Dollar ($)</SelectItem>
+                                <SelectItem value="EUR" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">EUR - Euro (€)</SelectItem>
+                                <SelectItem value="GBP" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">GBP - British Pound (£)</SelectItem>
+                                <SelectItem value="JPY" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">JPY - Japanese Yen (¥)</SelectItem>
+                                <SelectItem value="CAD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">CAD - Canadian Dollar (C$)</SelectItem>
+                                <SelectItem value="AUD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">AUD - Australian Dollar (A$)</SelectItem>
+                                <SelectItem value="CHF" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">CHF - Swiss Franc (CHF)</SelectItem>
+                                <SelectItem value="CNY" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">CNY - Chinese Yuan (¥)</SelectItem>
+                                <SelectItem value="INR" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">INR - Indian Rupee (₹)</SelectItem>
+                                <SelectItem value="KRW" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">KRW - South Korean Won (₩)</SelectItem>
+                                <SelectItem value="SGD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">SGD - Singapore Dollar (S$)</SelectItem>
+                                <SelectItem value="HKD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">HKD - Hong Kong Dollar (HK$)</SelectItem>
+                                <SelectItem value="THB" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">THB - Thai Baht (฿)</SelectItem>
+                                <SelectItem value="MXN" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">MXN - Mexican Peso (MX$)</SelectItem>
+                                <SelectItem value="BRL" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">BRL - Brazilian Real (R$)</SelectItem>
+                                <SelectItem value="RUB" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">RUB - Russian Ruble (₽)</SelectItem>
+                                <SelectItem value="ZAR" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">ZAR - South African Rand (R)</SelectItem>
+                                <SelectItem value="TRY" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">TRY - Turkish Lira (₺)</SelectItem>
+                                <SelectItem value="AED" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">AED - UAE Dirham (د.إ)</SelectItem>
+                                <SelectItem value="SAR" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">SAR - Saudi Riyal (﷼)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

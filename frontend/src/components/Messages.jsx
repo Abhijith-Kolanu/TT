@@ -12,13 +12,36 @@ const Messages = ({ selectedUser }) => {
     const navigate = useNavigate();
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
+    const lastMessageCountRef = useRef(0);
     useGetAllMessage();
     const {messages} = useSelector(store=>store.chat);
     const {user} = useSelector(store=>store.auth);
     
     // Function to scroll to bottom
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToBottom = (behavior = 'smooth') => {
+        // Scroll the parent container that has the overflow
+        const scrollContainer = messagesContainerRef.current?.parentElement;
+        if (scrollContainer) {
+            if (behavior === 'instant') {
+                scrollContainer.scrollTop = scrollContainer.scrollHeight;
+            } else {
+                scrollContainer.scrollTo({
+                    top: scrollContainer.scrollHeight,
+                    behavior: behavior
+                });
+            }
+        }
+        // Also scroll to the bottom element
+        messagesEndRef.current?.scrollIntoView({ behavior: behavior });
+    };
+
+    // Function to check if user is near bottom of scroll
+    const isNearBottom = () => {
+        // Get the parent container that actually has the scroll (the ChatPage messages container)
+        const scrollContainer = messagesContainerRef.current?.parentElement;
+        if (!scrollContainer) return true;
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+        return scrollHeight - scrollTop - clientHeight < 100; // Within 100px of bottom
     };
 
     // Mark messages as read when this component mounts or selectedUser changes
@@ -28,29 +51,40 @@ const Messages = ({ selectedUser }) => {
         }
     }, [selectedUser?._id, dispatch]);
     
-    // Auto-scroll when messages change
+    // Smart auto-scroll when messages change
     useEffect(() => {
-        scrollToBottom();
+        if (messages && messages.length > 0) {
+            // Only auto-scroll if this is a new message and user is near bottom
+            if (messages.length > lastMessageCountRef.current && isNearBottom()) {
+                scrollToBottom();
+            }
+            lastMessageCountRef.current = messages.length;
+        }
     }, [messages]);
     
-    // Auto-scroll when component mounts
+    // Auto-scroll when component mounts or user changes - ALWAYS scroll to bottom
     useEffect(() => {
-        scrollToBottom();
-    }, []);
+        // Use instant scroll for immediate display when switching users
+        const timer = setTimeout(() => {
+            scrollToBottom('instant');
+            lastMessageCountRef.current = messages?.length || 0;
+        }, 50);
+        
+        return () => clearTimeout(timer);
+    }, [selectedUser?._id]);
+    
+    // Also scroll to bottom when messages first load for a user
+    useEffect(() => {
+        if (messages && messages.length > 0 && lastMessageCountRef.current === 0) {
+            const timer = setTimeout(() => {
+                scrollToBottom('instant');
+            }, 50);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [messages]);
     return (    
-        <div ref={messagesContainerRef} className='overflow-y-auto flex-1 p-4 bg-white dark:bg-gray-900 transition-colors duration-200 hide-scrollbar'>
-            <div className='flex justify-center'>
-                <div className='flex flex-col items-center justify-center'>
-                    <Avatar className="h-20 w-20">
-                        <AvatarImage src={selectedUser?.profilePicture} alt='profile' />
-                        <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-xl">
-                            {getUserInitials(selectedUser?.username)}
-                        </AvatarFallback>
-                    </Avatar>
-                    <span className='text-gray-900 dark:text-white font-medium'>{selectedUser?.username}</span>
-                    <Link to={`/profile/${selectedUser?._id}`}><Button className="h-8 my-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700" variant="secondary">View profile</Button></Link>
-                </div>
-            </div>
+        <div ref={messagesContainerRef} className='min-h-full p-4 bg-transparent'>
             <div className='flex flex-col gap-3'>
                 {
                    messages && messages.map((msg) => {

@@ -7,6 +7,7 @@ import {
     addNewPost,
     bookmarkPost,
     deletePost,
+    deleteComment,
     dislikePost,
     getAllPost,
     getCommentsOfPost,
@@ -31,6 +32,7 @@ router.route("/delete/:id").delete(isAuthenticated, deletePost);
 router.route("/:id/like").get(isAuthenticated, likePost);
 router.route("/:id/dislike").get(isAuthenticated, dislikePost);
 router.route("/:id/comment").post(isAuthenticated, addComment);
+router.route("/comment/:commentId").delete(isAuthenticated, deleteComment);
 router.route("/:id/comment/all").post(isAuthenticated, getCommentsOfPost);
 router.route("/:id/bookmark").get(isAuthenticated, bookmarkPost);
 

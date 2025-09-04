@@ -4,10 +4,15 @@ import { useSelector } from 'react-redux'
 
 const Posts = () => {
   const {posts} = useSelector(store=>store.post);
+
   return (
-    <div className="transition-colors duration-200">
+    <div className="w-full space-y-8 transition-colors duration-200">
         {
-            posts.map((post) => <Post key={post._id} post={post}/>)
+            posts.map((post) => (
+              <div key={post._id} className="w-full">
+                <Post post={post}/>
+              </div>
+            ))
         }
     </div>
   )

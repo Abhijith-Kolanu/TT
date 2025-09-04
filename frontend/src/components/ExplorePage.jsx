@@ -25,21 +25,29 @@ const ExplorePage = () => {
     // Case 2: The fetch is complete, but there are no posts.
     if (explorePosts.length === 0) {
         return (
-            <div className='bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200 p-6'>
-                <h1 className="text-2xl font-bold mb-4 text-center text-gray-900 dark:text-white">Explore</h1>
-                <p className="text-center text-gray-600 dark:text-gray-400">No new posts to discover right now!</p>
+            <div className='bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200'>
+                <div className='flex flex-col items-center justify-center h-screen'>
+                    <div className='text-center px-6'>
+                        <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Explore</h1>
+                        <p className="text-gray-600 dark:text-gray-400">No new posts to discover right now!</p>
+                    </div>
+                </div>
             </div>
         );
     }
 
     // Case 3: We have posts to display.
     return (
-        <div className='bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200 p-6'>
-            <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Explore</h1>
-            <div className="flex flex-col items-center gap-4">
-                {explorePosts.map((post) => (
-                    <Post key={post._id} post={post} />
-                ))}
+        <div className='bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200'>
+            <div className='flex flex-col items-center justify-start py-8'>
+                <div className='w-full max-w-lg px-6'>
+                    <h1 className="text-2xl font-bold mb-8 text-center text-gray-900 dark:text-white">Explore</h1>
+                    <div className="space-y-8">
+                        {explorePosts.map((post) => (
+                            <Post key={post._id} post={post} />
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );

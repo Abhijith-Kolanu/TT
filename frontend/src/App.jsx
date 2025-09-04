@@ -19,6 +19,7 @@ import Footsteps from './components/Footsteps';
 import NotificationPage from './components/NotificationPage';
 import TripPlanner from './components/TripPlanner';
 import TripDetailView from './components/TripDetailView';
+import Scrapbook from './components/Scrapbook';
 import { addNotification } from './redux/notificationSlice';
 import {toast} from 'sonner';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -68,6 +69,10 @@ const browserRouter = createBrowserRouter([
       {
         path: '/planner',
         element: <TripPlanner />
+      },
+      {
+        path: '/scrapbook',
+        element: <Scrapbook />
       },
       {
         path: '/trip/:tripId',

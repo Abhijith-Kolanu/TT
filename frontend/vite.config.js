@@ -10,6 +10,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react-leaflet', 'leaflet', 'react-leaflet-cluster', 'date-fns', 'leaflet-geosearch']
+    include: ['html2canvas', 'jspdf']
   }
 })
