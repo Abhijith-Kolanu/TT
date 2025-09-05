@@ -7,6 +7,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Enhanced Theme Transitions for All Components */
+:root {
+  --theme-transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+html,
+body,
+#root {
+  transition: var(--theme-transition);
+}
+
+/* Scrapbook specific theme transitions */
+.scrapbook-page,
+.scrapbook-container,
+.scrapbook-header,
+.scrapbook-navigation {
+  transition: var(--theme-transition);
+}
+
 /* 3D Flip Animation Styles for Scrapbook */
 @layer utilities {
   .perspective-1000 {
@@ -27,6 +46,17 @@
   
   .backface-hidden {
     backface-visibility: hidden;
+  }
+
+  /* Hide scrollbar utility classes */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    scroll-behavior: smooth;  /* Smooth scrolling */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
   }
 }
 

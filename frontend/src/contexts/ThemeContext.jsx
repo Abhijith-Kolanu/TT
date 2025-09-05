@@ -29,6 +29,10 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const root = document.documentElement;
     
+    // Ensure all elements use the same transition timing
+    root.style.setProperty('--theme-transition', 'all 0.3s cubic-bezier(0.23, 1, 0.32, 1)');
+    
+    // Apply the theme change immediately and synchronously
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {

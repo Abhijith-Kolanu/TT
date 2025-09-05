@@ -20,6 +20,7 @@ import NotificationPage from './components/NotificationPage';
 import TripPlanner from './components/TripPlanner';
 import TripDetailView from './components/TripDetailView';
 import Scrapbook from './components/Scrapbook';
+import PrivateJournal from './components/PrivateJournal';
 import { addNotification } from './redux/notificationSlice';
 import {toast} from 'sonner';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -73,6 +74,10 @@ const browserRouter = createBrowserRouter([
       {
         path: '/scrapbook',
         element: <Scrapbook />
+      },
+      {
+        path: '/journal',
+        element: <PrivateJournal />
       },
       {
         path: '/trip/:tripId',

@@ -21,9 +21,45 @@
   --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Dark mode transition styles */
+/* Synchronized Theme Transitions - All elements change simultaneously */
+:root {
+  --theme-transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Enhanced Theme Transitions */
+html {
+  transition: var(--theme-transition);
+}
+
+body {
+  transition: var(--theme-transition);
+}
+
+/* Synchronized transitions for theme-aware elements */
 * {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: var(--theme-transition);
+}
+
+/* Enhanced transitions for interactive elements */
+button,
+input,
+textarea,
+select,
+.card,
+.modal,
+.dropdown,
+a {
+  transition: var(--theme-transition);
+}
+
+/* Specific theme-related elements */
+[class*="bg-"],
+[class*="border-"],
+[class*="text-"],
+.dark [class*="bg-"],
+.dark [class*="border-"],
+.dark [class*="text-"] {
+  transition: var(--theme-transition);
 }
 
 /* Adventure Button Styles */
@@ -35,7 +71,7 @@
   font-weight: 600;
   padding: 12px 24px;
   box-shadow: var(--adventure-shadow);
-  transition: all 0.3s ease;
+  transition: var(--theme-transition);
 }
 
 .btn-adventure:hover {
@@ -50,7 +86,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 24px;
   box-shadow: var(--floating-shadow);
-  transition: all 0.3s ease;
+  transition: var(--theme-transition);
 }
 
 .dark .adventure-card {
@@ -66,7 +102,7 @@
 /* Organic Shapes */
 .organic-shape {
   border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  transition: border-radius 0.5s ease;
+  transition: var(--theme-transition);
 }
 
 .organic-shape:hover {
@@ -86,7 +122,7 @@
 .adventure-scroll::-webkit-scrollbar-thumb {
   background: var(--adventure-gradient);
   border-radius: 10px;
-  transition: all 0.3s ease;
+  transition: var(--theme-transition);
 }
 
 .adventure-scroll::-webkit-scrollbar-thumb:hover {
@@ -118,18 +154,37 @@
   letter-spacing: -0.02em;
 }
 
-/* Smooth theme transitions */
+/* Enhanced synchronized theme transitions */
 html {
-  transition: background-color 0.3s ease;
+  transition: var(--theme-transition);
 }
 
 body {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: var(--theme-transition);
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
 .dark body {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Add transition for dark class changes */
+.dark {
+  transition: var(--theme-transition);
+}
+
+/* Ensure theme toggle button has smooth transitions */
+.theme-toggle {
+  transition: var(--theme-transition);
+}
+
+/* Smooth transitions for common UI elements */
+.sidebar,
+.navbar,
+.header,
+.footer,
+.main-content {
+  transition: var(--theme-transition);
 }
 
 /* Adventure Navigation Dots */
@@ -140,7 +195,7 @@ body {
   background: var(--adventure-gradient);
   display: inline-block;
   margin: 0 4px;
-  transition: all 0.3s ease;
+  transition: var(--theme-transition);
 }
 
 .nav-dot.active {

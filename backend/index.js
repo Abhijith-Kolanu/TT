@@ -7,14 +7,25 @@ import userRoute from "./routes/user.route.js";
 import postRoute from "./routes/post.route.js";
 import messageRoute from "./routes/message.route.js";
 import tripRoute from "./routes/trip.route.js";
+// import journalRoute from "./routes/journal.route.js";
 import notificationRoute from "./routes/notification.route.js";
+import isAuthenticated from "./middlewares/isAuthenticated.js";
+import upload from "./middlewares/multer.js";
+import { 
+    createJournal, 
+    getUserJournals, 
+    getJournalById, 
+    updateJournal, 
+    deleteJournal, 
+    getJournalStats 
+} from "./controllers/journal.controller.js";
 import { app, server } from "./socket/socket.js";
 import path from "path";
 
 dotenv.config();
 
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8001;
 
 const __dirname = path.resolve();
 
@@ -46,8 +57,19 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/post", postRoute);
 app.use("/api/v1/message", messageRoute);
 app.use("/api/v1/trip", tripRoute);
+// app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/notification", notificationRoute);
 
+// Journal routes (added directly due to import issues)
+app.get("/api/v1/journal/test", (req, res) => {
+    res.json({ message: "Journal API is working!", success: true });
+});
+app.post("/api/v1/journal/create", isAuthenticated, upload.array('images', 10), createJournal);
+app.get("/api/v1/journal", isAuthenticated, getUserJournals);
+app.get("/api/v1/journal/stats", isAuthenticated, getJournalStats);
+app.get("/api/v1/journal/:id", isAuthenticated, getJournalById);
+app.put("/api/v1/journal/:id", isAuthenticated, upload.array('images', 10), updateJournal);
+app.delete("/api/v1/journal/:id", isAuthenticated, deleteJournal);
 
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 app.get("*", (req, res) => {

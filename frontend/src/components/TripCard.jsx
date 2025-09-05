@@ -17,7 +17,7 @@ import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { removeTrip } from '@/redux/tripSlice';
-import { formatCurrency, convertFromUSD } from '@/utils/currency';
+import { formatCurrency } from '@/utils/currency';
 
 const TripCard = ({ trip }) => {
     const navigate = useNavigate();

@@ -1,4 +1,4 @@
-import { Heart, Home, LogOut, MessageCircle, PlusSquare, Search, TrendingUp, Footprints, Plane, Mountain, Compass, BookOpen } from 'lucide-react';
+import { Heart, Home, LogOut, MessageCircle, PlusSquare, Search, TrendingUp, Footprints, Plane, Mountain, Compass, BookOpen, Lock } from 'lucide-react';
 import React, { useState, useEffect } from 'react'; // 1. Import useEffect
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { toast } from 'sonner';
@@ -41,6 +41,8 @@ const LeftSidebar = () => {
                 return currentPath === '/explore';
             case 'Trip Planner':
                 return currentPath === '/planner';
+            case 'Private Journal':
+                return currentPath === '/journal';
             case 'Scrapbook':
                 return currentPath === '/scrapbook';
             case 'Messages':
@@ -80,6 +82,7 @@ const LeftSidebar = () => {
         else if (textType === "Home") navigate("/");
         else if (textType === "Explore") navigate("/explore");
         else if (textType === 'Messages') navigate("/chat");
+        else if (textType === 'Private Journal') navigate("/journal");
         else if (textType == 'Notifications') navigate("/notifications")
         else if (textType == 'Footsteps') navigate("/footsteps")
         else if (textType == 'Trip Planner') navigate("/planner")
@@ -92,6 +95,7 @@ const LeftSidebar = () => {
         { text: "Search" },
         { icon: <TrendingUp />, text: "Explore" },
         { icon: <Plane />, text: "Trip Planner" },
+        { icon: <Lock />, text: "Private Journal" },
         { icon: <BookOpen />, text: "Scrapbook" },
         { icon: <MessageCircle />, text: "Messages" },
         { icon: <Heart />, text: "Notifications" },

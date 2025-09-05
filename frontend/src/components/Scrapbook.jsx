@@ -622,7 +622,7 @@ const Scrapbook = () => {
                   onClick={() => setShowMobileMenu(!showMobileMenu)}
                   variant="outline"
                   size="sm"
-                  className="hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+                  className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200"
                 >
                   <Menu className="w-4 h-4" />
                 </Button>
@@ -634,7 +634,7 @@ const Scrapbook = () => {
                   onClick={() => fileInputRef.current?.click()}
                   variant="outline"
                   size="sm"
-                  className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                  className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Upload
@@ -644,7 +644,7 @@ const Scrapbook = () => {
                   onClick={() => setShowDefaultImages(true)}
                   variant="outline"
                   size="sm"
-                  className="hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
+                  className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-500 transition-all duration-200"
                 >
                   <ImageIcon className="w-4 h-4 mr-2" />
                   Gallery
@@ -654,7 +654,7 @@ const Scrapbook = () => {
                   onClick={addTextItem}
                   variant="outline"
                   size="sm"
-                  className="hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+                  className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-200"
                 >
                   <Type className="w-4 h-4 mr-2" />
                   Text
@@ -667,7 +667,7 @@ const Scrapbook = () => {
                   onClick={() => setShowStickers(true)}
                   variant="outline"
                   size="sm"
-                  className="hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200"
+                  className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-300 dark:hover:border-yellow-500 transition-all duration-200"
                 >
                   <Smile className="w-4 h-4 md:mr-2" />
                   <span className="hidden md:inline">Stickers</span>
@@ -677,7 +677,7 @@ const Scrapbook = () => {
                   onClick={() => setShowTemplates(true)}
                   variant="outline"
                   size="sm"
-                  className="hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                  className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-500 transition-all duration-200"
                 >
                   <Palette className="w-4 h-4 md:mr-2" />
                   <span className="hidden md:inline">Templates</span>
@@ -702,7 +702,7 @@ const Scrapbook = () => {
                     onClick={resetScrapbook}
                     variant="outline"
                     size="sm"
-                    className="hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
+                    className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-500 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span className="hidden lg:inline ml-2">Reset</span>
@@ -727,7 +727,7 @@ const Scrapbook = () => {
                 }}
                 variant="outline"
                 size="sm"
-                className="justify-start hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                className="justify-start text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Photos
@@ -740,7 +740,7 @@ const Scrapbook = () => {
                 }}
                 variant="outline"
                 size="sm"
-                className="justify-start hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
+                className="justify-start text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-500 transition-all duration-200"
               >
                 <ImageIcon className="w-4 h-4 mr-2" />
                 Gallery
@@ -793,7 +793,7 @@ const Scrapbook = () => {
                   }}
                   variant="outline"
                   size="sm"
-                  className="justify-start hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
+                  className="justify-start text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-500 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Reset
@@ -852,6 +852,25 @@ const Scrapbook = () => {
             >
               <Plus className="w-4 h-4 mr-2" />
               New Page
+            </Button>
+            <Button
+              onClick={() => {
+                if (pages.length === 1) {
+                  alert('You must have at least one page in your scrapbook.');
+                  return;
+                }
+                if (window.confirm('Are you sure you want to delete this page? This cannot be undone.')) {
+                  const newPages = pages.filter((_, idx) => idx !== currentPageIndex);
+                  setPages(newPages);
+                  setCurrentPageIndex(Math.max(0, currentPageIndex - 1));
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="ml-2 hover:bg-red-50 hover:border-red-300 text-red-600 border-red-300 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:border-red-500 transition-all duration-200"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Page
             </Button>
           </div>
         </div>
@@ -919,7 +938,7 @@ const Scrapbook = () => {
                           value={editingText}
                           onChange={(e) => setEditingText(e.target.value)}
                           onFocus={(e) => e.target.select()}
-                          className="min-w-[200px] resize-none"
+                          className="min-w-[200px] resize-none text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                           autoFocus
                           placeholder="Enter your text here..."
                         />
@@ -1105,7 +1124,7 @@ const Scrapbook = () => {
                       <Button
                         onClick={() => setShowDefaultImages(true)}
                         variant="outline"
-                        className="h-20 flex-col gap-2 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 hover:scale-105"
+                        className="h-20 flex-col gap-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-500 transition-all duration-300 hover:scale-105"
                       >
                         <ImageIcon className="w-6 h-6 text-emerald-500" />
                         <span className="text-xs font-medium">Browse Gallery</span>
@@ -1185,7 +1204,7 @@ const Scrapbook = () => {
               onClick={() => setShowDefaultImages(true)}
               variant="outline"
               size="sm"
-              className="hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 shrink-0"
+              className="hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-500 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 transition-all duration-200 shrink-0"
             >
               <ImageIcon className="w-4 h-4" />
             </Button>

@@ -11,6 +11,7 @@ const MainLayout = () => {
   const isTripDetailPage = location.pathname.startsWith('/trip/');
   const isProfilePage = location.pathname.startsWith('/profile/');
   const isScrapbookPage = location.pathname === '/scrapbook';
+  const isJournalPage = location.pathname === '/journal';
   const isHomePage = location.pathname === '/';
   const isExplorePage = location.pathname === '/explore';
   
@@ -18,7 +19,7 @@ const MainLayout = () => {
   const isTripRelatedPage = isTripPlannerPage || isTripDetailPage;
   
   // Pages that should not have padding (they handle their own layout)
-  const isFullLayoutPage = isFootstepsPage || isHomePage || isExplorePage || isScrapbookPage;
+  const isFullLayoutPage = isFootstepsPage || isHomePage || isExplorePage || isScrapbookPage || isJournalPage;
 
   return (
     // Use Flexbox to create a row layout with proper overflow handling
@@ -31,9 +32,9 @@ const MainLayout = () => {
 
       {/* 
         The RightSidebar is also using 'fixed' positioning and is static
-        Hide it on the Messages page, Footsteps page, Profile pages, Scrapbook page, and all Trip-related pages for better experience
+        Hide it on the Messages page, Footsteps page, Profile pages, Scrapbook page, Journal page, and all Trip-related pages for better experience
       */}
-      {!isMessagesPage && !isFootstepsPage && !isProfilePage && !isScrapbookPage && !isTripRelatedPage && <RightSidebar />}
+      {!isMessagesPage && !isFootstepsPage && !isProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage && <RightSidebar />}
 
       {/* 
         This is the main content area that will hold our pages.
@@ -41,13 +42,13 @@ const MainLayout = () => {
         and right margin for the right sidebar (w-72) to prevent overlapping.
         On Messages page, Footsteps page, Profile pages, Scrapbook page, and all Trip-related pages, we don't add right margin since RightSidebar is hidden
       */}
-      <main className={`flex-1 lg:ml-64 ${!isMessagesPage && !isFootstepsPage && !isProfilePage && !isScrapbookPage && !isTripRelatedPage ? 'xl:mr-72' : ''} overflow-y-auto`}>  
+      <main className={`flex-1 lg:ml-64 ${!isMessagesPage && !isFootstepsPage && !isProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage ? 'xl:mr-72' : ''} overflow-y-auto`}>  
         {/* 
           lg:ml-64 adds left margin only on large screens when LeftSidebar is visible (w-64).
           xl:mr-72 adds right margin only on extra large screens when RightSidebar is visible (w-72).
           The 'flex-1' tells this element to take up the remaining available space.
           overflow-y-auto makes the main content independently scrollable.
-          RightSidebar is hidden on Messages, Footsteps, Profile, Scrapbook, and Trip-related pages.
+          RightSidebar is hidden on Messages, Footsteps, Profile, Scrapbook, Journal, and Trip-related pages.
         */}
         <div className={`${isFullLayoutPage ? '' : 'p-4'} min-h-full`}> {/* Remove padding for pages that handle their own layout */}
           <Outlet />
