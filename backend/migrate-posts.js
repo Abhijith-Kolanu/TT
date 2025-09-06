@@ -1,8 +1,12 @@
+
 import mongoose from "mongoose";
 import { Post } from "./models/post.model.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-// Use the same URI as the main app
-const MONGO_URI = "mongodb+srv://sowmya7648:trektales@cluster0.onm0frl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// Use environment variable for MongoDB URI
+// Add MONGO_URI=your_mongodb_uri to your .env file (never commit .env!)
+const MONGO_URI = process.env.MONGO_URI;
 
 const connectDB = async () => {
     try {
