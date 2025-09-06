@@ -288,13 +288,13 @@ const PrivateJournal = () => {
         // Date range filter
         if (dateRange.start || dateRange.end) {
             filtered = filtered.filter(journal => {
-                // Convert all to date-only (ignore time)
                 const journalDate = new Date(journal.createdAt);
-                journalDate.setHours(0, 0, 0, 0);
                 const startDate = dateRange.start ? new Date(dateRange.start) : null;
-                if (startDate) startDate.setHours(0, 0, 0, 0);
                 let endDate = dateRange.end ? new Date(dateRange.end) : null;
-                if (endDate) endDate.setHours(0, 0, 0, 0);
+                // Make endDate inclusive for the whole day
+                if (endDate) {
+                    endDate.setHours(23, 59, 59, 999);
+                }
                 if (startDate && endDate) {
                     return journalDate >= startDate && journalDate <= endDate;
                 } else if (startDate) {
@@ -1042,7 +1042,7 @@ const JournalCard = ({ journal, viewMode, onView, getMoodConfig, getWordCount, g
                                 </h3>
                                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                     <Clock className="h-4 w-4" />
-                                    {format(new Date(journal.createdAt), 'dd MMM yyyy')}
+                                    {format(new Date(journal.createdAt), 'dd/MM/yyyy')}
                                 </div>
                             </div>
                             
@@ -1119,7 +1119,7 @@ const JournalCard = ({ journal, viewMode, onView, getMoodConfig, getWordCount, g
                     <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
                         <div className="flex items-center">
                             <Clock className="h-4 w-4 mr-1" />
-                            {format(new Date(journal.createdAt), 'dd MMM')}
+                            {format(new Date(journal.createdAt), 'dd/MM')}
                         </div>
                         <span>{getWordCount(journal.content)} words</span>
                     </div>
@@ -1217,7 +1217,7 @@ const JournalDetail = ({ journal, onClose, onDelete, getMoodConfig, getWordCount
                         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                             <div className="flex items-center">
                                 <Clock className="h-4 w-4 mr-1" />
-                                {format(new Date(journal.createdAt), 'dd MMMM yyyy • h:mm a')}
+                                {format(new Date(journal.createdAt), 'dd/MM/yyyy • h:mm a')}
                             </div>
                             <div>{getWordCount(journal.content)} words</div>
                             <div>{getReadingTime(journal.content)} min read</div>
