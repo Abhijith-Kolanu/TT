@@ -659,7 +659,7 @@ const CreatePost = ({ open, setOpen }) => {
     <>
       {/* Main Post Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+  <DialogContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-y-auto max-h-[80vh] scrollbar-hide">
           <DialogHeader className='text-center font-semibold text-gray-900 dark:text-white'>Create New Post</DialogHeader>
 
           <div className='flex gap-3 items-center'>
@@ -722,7 +722,7 @@ const CreatePost = ({ open, setOpen }) => {
 
       {/* Location Picker Modal */}
       <Dialog open={locationModalOpen} onOpenChange={setLocationModalOpen}>
-        <DialogContent className="max-w-3xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+  <DialogContent className="max-w-3xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-y-auto max-h-[80vh] scrollbar-hide">
           <DialogHeader className="text-center font-semibold text-gray-900 dark:text-white">Select Location</DialogHeader>
           <div className="h-[500px]">
             <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%' }}>
