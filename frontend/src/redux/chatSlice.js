@@ -19,6 +19,7 @@ const chatSlice = createSlice({
             const { newMessage, currentUserId } = action.payload;
             state.messages.push(newMessage);
             console.log('[Redux] addNewMessage:', { newMessage, currentUserId });
+            console.log('[Redux] currentUserId:', currentUserId, '| newMessage.senderId:', newMessage.senderId);
             // If this is a message received from someone else, increment unread count
             if (newMessage.senderId !== currentUserId) {
                 const senderId = newMessage.senderId;
