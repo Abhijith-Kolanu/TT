@@ -87,9 +87,11 @@ const Messages = ({ selectedUser }) => {
         <div ref={messagesContainerRef} className='min-h-full p-4 bg-transparent'>
             <div className='flex flex-col gap-3'>
                 {
-                   messages && messages.map((msg) => {
+                   messages && messages.map((msg, idx) => {
+                        // Use msg._id if available, otherwise fallback to index (should not happen in production)
+                        const key = msg._id || `msg-${idx}`;
                         return (
-                            <div key={msg._id} className={`flex ${msg.senderId === user?._id ? 'justify-end' : 'justify-start'}`}>
+                            <div key={key} className={`flex ${msg.senderId === user?._id ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`p-2 rounded-lg ${msg.messageType === 'post' ? 'max-w-sm' : 'max-w-xs'} break-words ${msg.senderId === user?._id ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-black dark:text-white'}`}>
                                     {msg.messageType === 'post' && msg.sharedPost ? (
                                         <div className="flex flex-col space-y-2">

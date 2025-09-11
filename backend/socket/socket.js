@@ -7,11 +7,17 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-    cors:{
-        origin:process.env.URL,
-        methods:['GET','POST']
+    cors: {
+        origin: [
+            "http://localhost:5173", // local frontend
+            "http://localhost:3000", // alt local frontend
+            "https://trektales.vercel.app", // deployed frontend
+            "https://trektales-af14.onrender.com" // deployed backend (self-origin)
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
     }
-})
+});
 
 const userSocketMap = {} ; // this map stores socket id corresponding the user id; userId -> socketId
 

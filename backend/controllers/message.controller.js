@@ -48,8 +48,14 @@ export const sendMessage = async (req,res) => {
 
         // implement socket io for real time data transfer
         const receiverSocketId = getReceiverSocketId(receiverId);
-        if(receiverSocketId){
+        const senderSocketId = getReceiverSocketId(senderId);
+        if (receiverSocketId) {
             io.to(receiverSocketId).emit('newMessage', newMessage);
+            console.log(`[Socket] Emitted newMessage to receiver (${receiverId}):`, newMessage);
+        }
+        if (senderSocketId && senderSocketId !== receiverSocketId) {
+            io.to(senderSocketId).emit('newMessage', newMessage);
+            console.log(`[Socket] Emitted newMessage to sender (${senderId}):`, newMessage);
         }
 
         return res.status(201).json({

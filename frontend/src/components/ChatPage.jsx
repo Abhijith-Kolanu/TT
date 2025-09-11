@@ -33,6 +33,7 @@ const ChatPage = () => {
         });
         // Listen for newMessage event
         socket.on('newMessage', (newMessage) => {
+            console.log('[Socket] Received newMessage:', newMessage);
             dispatch(addNewMessage({ newMessage, currentUserId: user._id }));
         });
         // Cleanup on unmount

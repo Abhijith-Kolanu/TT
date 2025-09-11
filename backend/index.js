@@ -81,11 +81,14 @@ app.get("/api/v1/journal/:id", isAuthenticated, getJournalById);
 app.put("/api/v1/journal/:id", isAuthenticated, upload.array('images', 10), updateJournal);
 app.delete("/api/v1/journal/:id", isAuthenticated, deleteJournal);
 
+
+
+
+// Serve static files and catch-all route AFTER all API routes
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
-})
-
+});
 
 server.listen(PORT, () => {
     connectDB();
