@@ -36,6 +36,7 @@ const ChatPage = () => {
         // Listen for newMessage event
         socket.on('newMessage', (newMessage) => {
             console.log('[Socket] Received newMessage:', newMessage);
+            // Only increment unread if this client is the receiver
             dispatch(addNewMessage({ newMessage, currentUserId: user._id }));
         });
         // Cleanup on unmount

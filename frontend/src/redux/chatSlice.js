@@ -18,18 +18,13 @@ const chatSlice = createSlice({
         addNewMessage:(state,action) => {
             const { newMessage, currentUserId } = action.payload;
             state.messages.push(newMessage);
-            console.log('[Redux] addNewMessage:', { newMessage, currentUserId });
-            console.log('[Redux] currentUserId:', currentUserId, '| newMessage.senderId:', newMessage.senderId);
-            // If this is a message received from someone else, increment unread count
-            if (newMessage.senderId !== currentUserId) {
+            // Only increment unread if this client is the receiver and the chat is not open
+            if (newMessage.isReceiver && newMessage.senderId !== currentUserId) {
                 const senderId = newMessage.senderId;
                 if (!state.unreadMessages) {
                     state.unreadMessages = {};
                 }
                 state.unreadMessages[senderId] = (state.unreadMessages[senderId] || 0) + 1;
-                console.log(`[Redux] Incremented unread for senderId ${senderId}:`, state.unreadMessages[senderId]);
-            } else {
-                console.log('[Redux] Message sent by current user, not incrementing unread.');
             }
         },
         markMessagesAsRead:(state,action) => {

@@ -50,11 +50,11 @@ export const sendMessage = async (req,res) => {
         const receiverSocketId = getReceiverSocketId(receiverId);
         const senderSocketId = getReceiverSocketId(senderId);
         if (receiverSocketId) {
-            io.to(receiverSocketId).emit('newMessage', newMessage);
+            io.to(receiverSocketId).emit('newMessage', { ...newMessage.toObject(), isReceiver: true });
             console.log(`[Socket] Emitted newMessage to receiver (${receiverId}):`, newMessage);
         }
-        if (senderSocketId && senderSocketId !== receiverSocketId) {
-            io.to(senderSocketId).emit('newMessage', newMessage);
+        if (senderSocketId) {
+            io.to(senderSocketId).emit('newMessage', { ...newMessage.toObject(), isReceiver: false });
             console.log(`[Socket] Emitted newMessage to sender (${senderId}):`, newMessage);
         }
 
