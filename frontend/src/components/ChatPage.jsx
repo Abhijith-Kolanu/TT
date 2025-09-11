@@ -230,7 +230,6 @@ const ChatPage = () => {
                                 {sendError && (
                                     <div className="text-red-500 text-xs mt-2">{sendError}</div>
                                 )}
-                                </div>
                             </div>
                         </div>
                     </section>
