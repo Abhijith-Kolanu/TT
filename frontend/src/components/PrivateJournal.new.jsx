@@ -56,7 +56,7 @@ const PrivateJournal = () => {
     const fetchJournals = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:8000/api/v1/journal', {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/journal`, {
                 withCredentials: true
             });
             

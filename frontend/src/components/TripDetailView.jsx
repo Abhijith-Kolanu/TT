@@ -99,7 +99,7 @@ const TripDetailView = () => {
     const fetchTripDetails = async () => {
         try {
             dispatch(setLoading(true));
-            const response = await axios.get(`http://localhost:8000/api/v1/trip/${tripId}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}`, {
                 withCredentials: true
             });
             
@@ -121,7 +121,7 @@ const TripDetailView = () => {
     const fetchSmartRecommendations = async () => {
         try {
             console.log('Fetching smart recommendations for trip:', tripId);
-            const response = await axios.get(`http://localhost:8000/api/v1/trip/${tripId}/recommendations`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/recommendations`, {
                 withCredentials: true
             });
             
@@ -147,7 +147,7 @@ const TripDetailView = () => {
     const fetchRealTimeInfo = async () => {
         try {
             console.log('Attempting to fetch real-time info for trip:', tripId);
-            const response = await axios.get(`http://localhost:8000/api/v1/trip/${tripId}/realtime`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/realtime`, {
                 withCredentials: true
             });
             
@@ -183,7 +183,7 @@ const TripDetailView = () => {
 
     const optimizeRoute = async (selectedDay, customLocations = []) => {
         try {
-            const response = await axios.post(`http://localhost:8000/api/v1/trip/${tripId}/optimize-route`, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/optimize-route`, {
                 selectedDay,
                 customLocations
             }, {
@@ -218,7 +218,7 @@ const TripDetailView = () => {
     // Activity Management Functions
     const addActivity = async (dayNumber, activityData) => {
         try {
-            const response = await axios.post(`http://localhost:8000/api/v1/trip/${tripId}/activity`, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/activity`, {
                 dayNumber,
                 activity: activityData
             }, { withCredentials: true });
@@ -236,7 +236,7 @@ const TripDetailView = () => {
 
     const updateActivity = async (dayNumber, activityIndex, updatedData) => {
         try {
-            const response = await axios.put(`http://localhost:8000/api/v1/trip/${tripId}/activity`, {
+            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/activity`, {
                 dayNumber,
                 activityIndex,
                 activity: updatedData
@@ -258,7 +258,7 @@ const TripDetailView = () => {
         if (!window.confirm('Are you sure you want to delete this activity?')) return;
 
         try {
-            const response = await axios.delete(`http://localhost:8000/api/v1/trip/${tripId}/activity`, {
+            const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/activity`, {
                 data: { dayNumber, activityIndex },
                 withCredentials: true
             });
@@ -275,7 +275,7 @@ const TripDetailView = () => {
 
     const reorderActivities = async (dayNumber, newOrder) => {
         try {
-            const response = await axios.put(`http://localhost:8000/api/v1/trip/${tripId}/reorder`, {
+            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/reorder`, {
                 dayNumber,
                 newOrder
             }, { withCredentials: true });
@@ -322,7 +322,7 @@ const TripDetailView = () => {
 
         try {
             toast.loading('Regenerating itinerary with AI...');
-            const response = await axios.post(`http://localhost:8000/api/v1/trip/${tripId}/regenerate`, {}, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/regenerate`, {}, {
                 withCredentials: true
             });
 
@@ -341,7 +341,7 @@ const TripDetailView = () => {
     const exportItinerary = async (format = 'pdf') => {
         try {
             toast.loading('Generating export...');
-            const response = await axios.get(`http://localhost:8000/api/v1/trip/${tripId}/export/${format}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/export/${format}`, {
                 withCredentials: true,
                 responseType: 'blob'
             });
@@ -366,7 +366,7 @@ const TripDetailView = () => {
 
     const shareItinerary = async () => {
         try {
-            const response = await axios.post(`http://localhost:8000/api/v1/trip/${tripId}/share`, {}, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/share`, {}, {
                 withCredentials: true
             });
 

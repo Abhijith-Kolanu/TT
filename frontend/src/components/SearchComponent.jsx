@@ -34,7 +34,7 @@ const SearchComponent = () => {
                 setIsLoading(true);
                 const fetchResults = async () => {
                     try {
-                        const res = await axios.get(`http://localhost:8000/api/v1/user/search/${query}`, { withCredentials: true });
+                        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/user/search/${query}`, { withCredentials: true });
                         setResults(res.data);
                         setIsOpen(true);
                     } catch (error) {

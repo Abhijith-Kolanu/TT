@@ -90,7 +90,7 @@ const TripCard = ({ trip }) => {
             toast.loading('Generating your personalized itinerary...');
             
             const response = await axios.post(
-                `http://localhost:8000/api/v1/trip/${trip._id}/generate`,
+                `${import.meta.env.VITE_API_URL}/api/v1/trip/${trip._id}/generate`,
                 {},
                 { withCredentials: true }
             );
@@ -120,7 +120,7 @@ const TripCard = ({ trip }) => {
 
         try {
             const response = await axios.delete(
-                `http://localhost:8000/api/v1/trip/${trip._id}`,
+                `${import.meta.env.VITE_API_URL}/api/v1/trip/${trip._id}`,
                 { withCredentials: true }
             );
 

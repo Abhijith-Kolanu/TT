@@ -10,7 +10,7 @@ const useGetExplorePosts = () => {
         const fetchExplorePosts = async () => {
             try {
                 // The API call to your backend
-                const res = await axios.get('http://localhost:8000/api/v1/post/explore', { 
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/post/explore`, { 
                     withCredentials: true 
                 });
                 

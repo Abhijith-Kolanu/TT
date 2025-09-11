@@ -55,7 +55,7 @@ const TripPlanner = () => {
     const fetchUserTrips = async () => {
         try {
             dispatch(setLoading(true));
-            const response = await axios.get('http://localhost:8000/api/v1/trip/my-trips', {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/trip/my-trips`, {
                 withCredentials: true
             });
             
@@ -74,7 +74,7 @@ const TripPlanner = () => {
     const handleCreateTrip = async (tripData) => {
         try {
             dispatch(setLoading(true));
-            const response = await axios.post('http://localhost:8000/api/v1/trip/create', tripData, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/create`, tripData, {
                 withCredentials: true
             });
             

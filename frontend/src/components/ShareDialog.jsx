@@ -45,7 +45,7 @@ const ShareDialog = ({ open, setOpen, post }) => {
         try {
             setLoading(true);
             // Get followers/following users
-            const suggestedRes = await axios.get('http://localhost:8000/api/v1/user/suggested', {
+            const suggestedRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/user/suggested`, {
                 withCredentials: true
             });
             
@@ -86,7 +86,7 @@ const ShareDialog = ({ open, setOpen, post }) => {
             // Send post to each selected user
             const sharePromises = selectedUsers.map(async (selectedUser) => {
                 const response = await axios.post(
-                    `http://localhost:8000/api/v1/message/send/${selectedUser._id}`,
+                    `${import.meta.env.VITE_API_URL}/api/v1/message/send/${selectedUser._id}`,
                     {
                         messageType: 'post',
                         postId: post._id,
