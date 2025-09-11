@@ -1,4 +1,4 @@
-import { setMessages } from "@/redux/chatSlice";
+import { setMessages, markMessagesAsRead } from "@/redux/chatSlice";
 import { setPosts } from "@/redux/postSlice";
 import axios from "axios";
 import { useEffect } from "react";
@@ -13,6 +13,9 @@ const useGetAllMessage = () => {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/message/all/${selectedUser?._id}`, { withCredentials: true });
                 if (res.data.success) {  
                     dispatch(setMessages(res.data.messages));
+                    if (selectedUser?._id) {
+                        dispatch(markMessagesAsRead(selectedUser._id));
+                    }
                 }
             } catch (error) {
                 console.log(error);
