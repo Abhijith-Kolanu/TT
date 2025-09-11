@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from './ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Link } from 'react-router-dom'
 import { MoreHorizontal } from 'lucide-react'
@@ -71,6 +71,8 @@ const CommentDialog = ({ open, setOpen }) => {
   return (
     <Dialog open={open}>
       <DialogContent onInteractOutside={() => setOpen(false)} className="max-w-5xl p-0 flex flex-col bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <DialogTitle className="sr-only">Comments</DialogTitle>
+        <DialogDescription className="sr-only">View and add comments to this post.</DialogDescription>
         <div className='flex flex-1'>
           <div className='w-1/2'>
             <img
