@@ -70,7 +70,7 @@ const ChatPage = () => {
             });
             if (res.data.success) {
                 // Replace optimistic message with real one
-                dispatch(setMessages((messages) =>
+                dispatch(setMessages(
                     messages.map(msg =>
                         msg._id === optimisticMessage._id ? res.data.newMessage : msg
                     )
