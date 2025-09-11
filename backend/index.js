@@ -40,11 +40,27 @@ app.use(urlencoded({ extended: true }));
 // app.use(cors(corsOptions));
 const corsOptions = {
     // Allow multiple frontend URLs for development
-     origin: ["https://trek-tales.vercel.app"],
+     origin: ["https://trek-tales.vercel.app", "http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "DELETE"], // Allow common HTTP methods
     credentials: true // This is crucial for allowing cookies
 };
 app.use(cors(corsOptions));
+
+// Set custom CORS headers for preflight and credentials
+app.use((req, res, next) => {
+    const allowedOrigins = [
+        "https://trek-tales.vercel.app",
+        "http://localhost:5173"
+    ];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.header("Access-Control-Allow-Origin", origin);
+    }
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    next();
+});
 
 // yha pr apni api ayengi
 app.use("/api/v1/user", userRoute);

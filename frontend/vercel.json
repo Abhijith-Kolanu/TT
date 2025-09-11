@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://trektales-af14.onrender.com/api/$1" }
+  ],
+  "redirects": [
+    { "source": "/backend/(.*)", "destination": "/", "permanent": true }
+  ]
+}
