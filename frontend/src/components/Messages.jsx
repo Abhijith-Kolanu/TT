@@ -44,12 +44,6 @@ const Messages = ({ selectedUser }) => {
         return scrollHeight - scrollTop - clientHeight < 100; // Within 100px of bottom
     };
 
-    // Mark messages as read when this component mounts or selectedUser changes
-    useEffect(() => {
-        if (selectedUser?._id) {
-            dispatch(markMessagesAsRead(selectedUser._id));
-        }
-    }, [selectedUser?._id, dispatch]);
     
     // Smart auto-scroll when messages change
     useEffect(() => {
