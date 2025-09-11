@@ -65,7 +65,7 @@ const PrivateJournal = () => {
     const fetchJournals = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:8000/api/v1/journal', {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/journal`, {
                 withCredentials: true
             });
             
@@ -361,7 +361,7 @@ const PrivateJournal = () => {
                 }
             });
 
-            const res = await axios.post('http://localhost:8000/api/v1/journal/create', formData, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/journal/create`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -1136,7 +1136,7 @@ const JournalDetail = ({ journal, onClose, onDelete, getMoodConfig, getWordCount
         if (!window.confirm('Are you sure you want to delete this journal entry? This cannot be undone.')) return;
         setDeleting(true);
         try {
-            const res = await axios.delete(`http://localhost:8000/api/v1/journal/${journal._id}`,
+            const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/journal/${journal._id}`,
                 { withCredentials: true });
             if (res.data.success) {
                 toast.success('Journal entry deleted successfully!');

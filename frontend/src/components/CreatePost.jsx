@@ -126,7 +126,7 @@
 
 //     try {
 //       setLoading(true);
-//       const res = await axios.post('http://localhost:8000/api/v1/post/addpost', formData, {
+//       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/post/addpost`, formData, {
 //         headers: { 'Content-Type': 'multipart/form-data' },
 //         withCredentials: true
 //       });
@@ -369,7 +369,7 @@
 //     formData.append("locationName", placeName);
 //     try {
 //       setLoading(true);
-//       const res = await axios.post('http://localhost:8000/api/v1/post/addpost', formData, {
+//       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/post/addpost`, formData, {
 //         headers: { 'Content-Type': 'multipart/form-data' },
 //         withCredentials: true
 //       });
@@ -634,7 +634,7 @@ const CreatePost = ({ open, setOpen }) => {
     formData.append("locationName", placeName);
     try {
       setLoading(true);
-      const res = await axios.post('http://localhost:8000/api/v1/post/addpost', formData, {
+  const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/post/addpost`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       });

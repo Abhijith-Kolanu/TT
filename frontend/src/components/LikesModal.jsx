@@ -23,7 +23,7 @@ const LikesModal = ({ open, onClose, postId }) => {
     const fetchLikes = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`http://localhost:8000/api/v1/post/${postId}/likes`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/post/${postId}/likes`, {
                 withCredentials: true
             });
             
@@ -46,7 +46,7 @@ const LikesModal = ({ open, onClose, postId }) => {
     const handleFollowToggle = async (userId, isFollowing) => {
         try {
             const response = await axios.post(
-                `http://localhost:8000/api/v1/user/followorunfollow/${userId}`,
+                `${import.meta.env.VITE_API_URL}/api/v1/user/followorunfollow/${userId}`,
                 {},
                 { withCredentials: true }
             );

@@ -20,7 +20,7 @@ const PostDetail = () => {
         const fetchPost = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`http://localhost:8000/api/v1/post/${postId}`, {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/post/${postId}`, {
                     withCredentials: true
                 });
                 

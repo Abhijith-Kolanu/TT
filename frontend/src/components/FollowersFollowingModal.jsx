@@ -30,7 +30,7 @@ const FollowersFollowingModal = ({ open, setOpen, userId, activeTab = 'followers
         try {
             setLoading(true);
             const response = await axios.get(
-                `http://localhost:8000/api/v1/user/${userId}/followers-following`,
+                `${import.meta.env.VITE_API_URL}/api/v1/user/${userId}/followers-following`,
                 { withCredentials: true }
             );
             
@@ -49,7 +49,7 @@ const FollowersFollowingModal = ({ open, setOpen, userId, activeTab = 'followers
     const handleFollow = async (targetUserId) => {
         try {
             const response = await axios.post(
-                `http://localhost:8000/api/v1/user/followorunfollow/${targetUserId}`,
+                `${import.meta.env.VITE_API_URL}/api/v1/user/followorunfollow/${targetUserId}`,
                 {},
                 { withCredentials: true }
             );

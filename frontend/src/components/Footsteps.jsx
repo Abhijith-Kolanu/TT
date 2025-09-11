@@ -71,7 +71,7 @@ const Footsteps = () => {
           return;
         }
         
-        const res = await axios.get(`http://localhost:8000/api/v1/post/footsteps?mode=${mode}`, {
+  const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/post/footsteps?mode=${mode}`, {
           withCredentials: true,
         });
         

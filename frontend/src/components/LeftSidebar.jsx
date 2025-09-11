@@ -61,7 +61,7 @@ const LeftSidebar = () => {
     const logoutHandler = async () => {
         // ... (your existing logoutHandler code is perfect, no changes needed)
         try {
-            const res = await axios.get('http://localhost:8000/api/v1/user/logout', { withCredentials: true });
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/user/logout`, { withCredentials: true });
             if (res.data.success) {
                 dispatch(setAuthUser(null));
                 dispatch(setSelectedPost(null));
