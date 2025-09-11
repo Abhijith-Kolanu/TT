@@ -10,6 +10,10 @@ import Messages from './Messages';
 import axios from 'axios';
 import { setMessages, markMessagesAsRead, addNewMessage } from '@/redux/chatSlice';
 import { getUserInitials } from '@/lib/utils';
+import { io as socketIOClient } from 'socket.io-client';
+
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `${import.meta.env.VITE_API_URL}`.replace(/^http/, 'ws');
+let socket;
 
 const ChatPage = () => {
     const [textMessage, setTextMessage] = useState("");
@@ -18,6 +22,24 @@ const ChatPage = () => {
     const dispatch = useDispatch();
     const location = useLocation();
     const navigate = useNavigate();
+
+    // --- SOCKET.IO SETUP ---
+    useEffect(() => {
+        if (!user?._id) return;
+        // Connect to socket server
+        socket = socketIOClient(`${import.meta.env.VITE_API_URL.replace(/^http/, 'ws')}`, {
+            query: { userId: user._id },
+            transports: ['websocket']
+        });
+        // Listen for newMessage event
+        socket.on('newMessage', (newMessage) => {
+            dispatch(addNewMessage({ newMessage, currentUserId: user._id }));
+        });
+        // Cleanup on unmount
+        return () => {
+            if (socket) socket.disconnect();
+        };
+    }, [user?._id, dispatch]);
 
     const sendMessageHandler = async (receiverId) => {
         try {
