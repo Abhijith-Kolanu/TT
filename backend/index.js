@@ -39,10 +39,9 @@ app.use(urlencoded({ extended: true }));
 // }
 // app.use(cors(corsOptions));
 const corsOptions = {
-    // Allow multiple frontend URLs for development and production
+    // Allow only the correct production frontend and localhost for dev
     origin: [
-        "https://trektales.vercel.app", // production (no dash)
-        "https://trek-tales.vercel.app", // production (with dash, just in case)
+        "https://trek-tales.vercel.app", // production (with dash)
         "http://localhost:5173"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -53,7 +52,6 @@ app.use(cors(corsOptions));
 // Set custom CORS headers for preflight and credentials
 app.use((req, res, next) => {
     const allowedOrigins = [
-        "https://trektales.vercel.app",
         "https://trek-tales.vercel.app",
         "http://localhost:5173"
     ];

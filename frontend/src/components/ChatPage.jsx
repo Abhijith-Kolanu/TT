@@ -17,6 +17,8 @@ let socket;
 
 const ChatPage = () => {
     const [textMessage, setTextMessage] = useState("");
+    const [sending, setSending] = useState(false);
+    const [sendError, setSendError] = useState("");
     const { user, suggestedUsers, selectedUser } = useSelector(store => store.auth);
     const { onlineUsers, messages, unreadMessages } = useSelector(store => store.chat);
     const dispatch = useDispatch();
@@ -43,6 +45,22 @@ const ChatPage = () => {
     }, [user?._id, dispatch]);
 
     const sendMessageHandler = async (receiverId) => {
+        if (!textMessage.trim() || sending) return;
+        setSending(true);
+        setSendError("");
+        // Optimistic UI: show message instantly
+        const optimisticMessage = {
+            _id: `optimistic-${Date.now()}`,
+            senderId: user?._id,
+            receiverId,
+            message: textMessage,
+            messageType: 'text',
+            sharedPost: null,
+            createdAt: new Date().toISOString(),
+            optimistic: true
+        };
+        dispatch(addNewMessage({ newMessage: optimisticMessage, currentUserId: user?._id }));
+        setTextMessage("");
         try {
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/message/send/${receiverId}`, { textMessage }, {
                 headers: {
@@ -51,15 +69,20 @@ const ChatPage = () => {
                 withCredentials: true
             });
             if (res.data.success) {
-                // For sent messages, add directly to messages without affecting unread count
-                dispatch(addNewMessage({ 
-                    newMessage: res.data.newMessage, 
-                    currentUserId: user?._id 
-                }));
-                setTextMessage("");
+                // Replace optimistic message with real one
+                dispatch(setMessages((messages) =>
+                    messages.map(msg =>
+                        msg._id === optimisticMessage._id ? res.data.newMessage : msg
+                    )
+                ));
+            } else {
+                setSendError("Failed to send message.");
             }
         } catch (error) {
+            setSendError("Failed to send message. Please try again.");
             console.log(error);
+        } finally {
+            setSending(false);
         }
     }
 
@@ -188,13 +211,25 @@ const ChatPage = () => {
                                         type="text" 
                                         className='flex-1 h-12 rounded-2xl border-blue-200/50 dark:border-blue-700/50 focus:border-blue-400 dark:focus:border-blue-500 focus-visible:ring-blue-200 dark:focus-visible:ring-blue-800 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400' 
                                         placeholder="Type your message..." 
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                sendMessageHandler(selectedUser?._id);
+                                            }
+                                        }}
+                                        disabled={sending}
                                     />
                                     <Button 
                                         onClick={() => sendMessageHandler(selectedUser?._id)}
                                         className="btn-adventure h-12 px-6 rounded-2xl"
+                                        disabled={sending || !textMessage.trim()}
                                     >
-                                        Send
+                                        {sending ? 'Sending...' : 'Send'}
                                     </Button>
+                                </div>
+                                {sendError && (
+                                    <div className="text-red-500 text-xs mt-2">{sendError}</div>
+                                )}
                                 </div>
                             </div>
                         </div>
