@@ -85,22 +85,24 @@ const LeftSidebar = () => {
         else if (textType === 'Private Journal') navigate("/journal");
         else if (textType == 'Notifications') navigate("/notifications")
         else if (textType == 'Footsteps') navigate("/footsteps")
-        else if (textType == 'Trip Planner') navigate("/planner")
-        else if (textType == 'Scrapbook') navigate("/scrapbook")
+    else if (textType == 'Trip Planner') navigate("/planner")
+    else if (textType == 'Scrapbook') navigate("/scrapbook")
+    else if (textType == 'Guide Connect') navigate("/guides")
     };
 
     const sidebarItems = [
         // ... (your existing sidebarItems array is perfect, no changes needed)
-        { icon: <Home />, text: "Home" },
-        { text: "Search" },
-        { icon: <TrendingUp />, text: "Explore" },
-        { icon: <Plane />, text: "Trip Planner" },
-        { icon: <Lock />, text: "Private Journal" },
-        { icon: <BookOpen />, text: "Scrapbook" },
-        { icon: <MessageCircle />, text: "Messages" },
-        { icon: <Heart />, text: "Notifications" },
-        { icon: <PlusSquare />, text: "Create" },
-        {icon: <Footprints/>, text:"Footsteps"},
+    { icon: <Home />, text: "Home" },
+    { text: "Search" },
+    { icon: <TrendingUp />, text: "Explore" },
+    { icon: <Plane />, text: "Trip Planner" },
+    { icon: <Compass />, text: "Guide Connect" },
+    { icon: <Lock />, text: "Private Journal" },
+    { icon: <BookOpen />, text: "Scrapbook" },
+    { icon: <MessageCircle />, text: "Messages" },
+    { icon: <Heart />, text: "Notifications" },
+    { icon: <PlusSquare />, text: "Create" },
+    {icon: <Footprints/>, text:"Footsteps"},
         {
             icon: (
                 <Avatar className='w-6 h-6'>

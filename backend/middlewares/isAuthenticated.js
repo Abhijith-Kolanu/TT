@@ -19,7 +19,7 @@ const isAuthenticated = async (req,res,next)=>{
             });
         }
         console.log('User authenticated with ID:', decode.userId);
-        req.id = decode.userId;
+    req.user = { _id: decode.userId };
         next();
     } catch (error) {
         console.log('Authentication error:', error.message);

@@ -9,8 +9,10 @@ import messageRoute from "./routes/message.route.js";
 import tripRoute from "./routes/trip.route.js";
 // import journalRoute from "./routes/journal.route.js";
 import notificationRoute from "./routes/notification.route.js";
+import guideRoute from "./routes/guide.route.js";
 import isAuthenticated from "./middlewares/isAuthenticated.js";
 import upload from "./middlewares/multer.js";
+import bookingRoute from "./routes/booking.route.js";
 import { 
     createJournal, 
     getUserJournals, 
@@ -72,6 +74,8 @@ app.use("/api/v1/message", messageRoute);
 app.use("/api/v1/trip", tripRoute);
 // app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/notification", notificationRoute);
+app.use("/api/v1/guide", guideRoute);
+app.use("/api/v1/booking", bookingRoute);
 
 // Journal routes (added directly due to import issues)
 app.get("/api/v1/journal/test", (req, res) => {

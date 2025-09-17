@@ -3,11 +3,13 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import useGetUserProfile from '@/hooks/useGetUserProfile';
+import { useState as useReactState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { AtSign, Heart, MessageCircle } from 'lucide-react';
+import GuideBookingRequests from './GuideBookingRequests';
 import { getUserInitials } from '@/lib/utils';
 import FollowersFollowingModal from './FollowersFollowingModal';
 
@@ -19,9 +21,29 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [followersModalOpen, setFollowersModalOpen] = useState(false);
   const [followersModalTab, setFollowersModalTab] = useState('followers');
-  const { userProfile, user } = useSelector(store => store.auth);
+  const { userProfile: rawUserProfile, user } = useSelector(store => store.auth);
+  const [userProfile, setUserProfile] = useReactState(rawUserProfile);
+
+  // Check if user is a guide by fetching their guide profile
+  useEffect(() => {
+    const checkGuide = async () => {
+      if (!rawUserProfile?._id) return;
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/guide/${rawUserProfile._id}`);
+        if (res.data.success && res.data.profile) {
+          setUserProfile({ ...rawUserProfile, isGuide: true });
+        } else {
+          setUserProfile({ ...rawUserProfile, isGuide: false });
+        }
+      } catch {
+        setUserProfile({ ...rawUserProfile, isGuide: false });
+      }
+    };
+    checkGuide();
+  }, [rawUserProfile]);
 
   const isLoggedInUserProfile = user?._id === userProfile?._id;
+  // Assume userProfile.isGuide is true if user is a guide (add this property if needed)
 
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -76,6 +98,7 @@ const Profile = () => {
   return (
     <div className='flex max-w-5xl justify-center mx-auto pl-10 transition-colors duration-200'>
       <div className='flex flex-col gap-20 p-8'>
+        {/* GuideBookingRequests removed from Profile; now shown in Guide Connect section only */}
         <div className='grid grid-cols-2'>
           <section className='flex items-center justify-center'>
             <Avatar className='h-32 w-32'>

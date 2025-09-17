@@ -6,6 +6,7 @@ import RightSidebar from './RightSidebar';
 const MainLayout = () => {
   const location = useLocation();
   const isMessagesPage = location.pathname === '/chat';
+  const isGuideConnectPage = location.pathname === '/guides';
   const isFootstepsPage = location.pathname === '/footsteps';
   const isTripPlannerPage = location.pathname === '/planner';
   const isTripDetailPage = location.pathname.startsWith('/trip/');
@@ -34,7 +35,7 @@ const MainLayout = () => {
         The RightSidebar is also using 'fixed' positioning and is static
         Hide it on the Messages page, Footsteps page, Profile pages, Scrapbook page, Journal page, and all Trip-related pages for better experience
       */}
-      {!isMessagesPage && !isFootstepsPage && !isProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage && <RightSidebar />}
+  {!isMessagesPage && !isFootstepsPage && !isProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage && !isGuideConnectPage && <RightSidebar />}
 
       {/* 
         This is the main content area that will hold our pages.

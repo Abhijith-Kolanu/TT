@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import cloudinary from "../utils/cloudinary.js";
 import { Post } from "../models/post.model.js";
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 import { Comment } from "../models/comment.model.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
 import { Notification } from "../models/notification.model.js";
@@ -163,7 +163,7 @@ export const getUserPost = async (req, res) => {
 
 export const likePost = async (req, res) => {
     try {
-        const userId = req.id; // the user who liked
+    const userId = req.user?._id; // the user who liked
         const postId = req.params.id;
 
         const post = await Post.findById(postId);
@@ -223,7 +223,7 @@ export const likePost = async (req, res) => {
 
 export const dislikePost = async (req, res) => {
     try {
-        const likeKrneWalaUserKiId = req.id;
+    const likeKrneWalaUserKiId = req.user?._id;
         const postId = req.params.id;
         const post = await Post.findById(postId);
         if (!post) return res.status(404).json({ message: 'Post not found', success: false });

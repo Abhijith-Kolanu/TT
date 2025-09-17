@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Trip } from '../models/trip.model.js';
-import { User } from '../models/user.model.js';
+import User from '../models/user.model.js';
 
 // Initialize Gemini AI
 const apiKey = process.env.GEMINI_API_KEY;
