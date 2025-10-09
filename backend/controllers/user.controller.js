@@ -145,7 +145,7 @@ export const getProfile = async (req, res) => {
 
 export const getCurrentUser = async (req, res) => {
     try {
-        const userId = req.id; // from authentication middleware
+        const userId = req.user._id; // from authentication middleware
         const user = await User.findById(userId).select("-password");
         
         if (!user) {
@@ -170,7 +170,7 @@ export const getCurrentUser = async (req, res) => {
 
 export const editProfile = async (req, res) => {
     try {
-        const userId = req.id;
+        const userId = req.user._id;
         const { bio, gender } = req.body;
         const profilePicture = req.file;
         let cloudResponse;
@@ -205,7 +205,7 @@ export const editProfile = async (req, res) => {
 };
 export const getSuggestedUsers = async (req, res) => {
     try {
-        const suggestedUsers = await User.find({ _id: { $ne: req.id } }).select("-password");
+        const suggestedUsers = await User.find({ _id: { $ne: req.user._id } }).select("-password");
         if (!suggestedUsers) {
             return res.status(400).json({
                 message: 'Currently do not have any users',
@@ -224,7 +224,7 @@ export const getSuggestedUsers = async (req, res) => {
 
 export const followOrUnfollow = async (req, res) => {
     try {
-        const followKrneWala = req.id;
+        const followKrneWala = req.user._id;
         const jiskoFollowKrunga = req.params.id;
 
         if (followKrneWala === jiskoFollowKrunga) {

@@ -10,7 +10,7 @@ export const addNewPost = async (req, res) => {
     try {
         const { caption, coordinates, locationName } = req.body;
         const image = req.file;
-        const authorId = req.id;
+        const authorId = req.user._id;
 
         if (!image) return res.status(400).json({ message: 'Image required' });
 
@@ -112,7 +112,7 @@ export const getAllPost = async (req, res) => {
 
 export const getExplorePosts = async (req, res) => {
     try {
-        const loggedInUserId = req.id;
+        const loggedInUserId = req.user._id;
         const loggedInUser = await User.findById(loggedInUserId);
 
         if (!loggedInUser) {
@@ -138,7 +138,7 @@ export const getExplorePosts = async (req, res) => {
 
 export const getUserPost = async (req, res) => {
     try {
-        const authorId = req.id;
+        const authorId = req.user._id;
         const posts = await Post.find({ author: authorId }).sort({ createdAt: -1 })
             .populate({
                 path: 'author',
@@ -241,7 +241,7 @@ export const dislikePost = async (req, res) => {
 export const addComment = async (req, res) => {
     try {
         const postId = req.params.id;
-        const commentKrneWalaUserKiId = req.id;
+        const commentKrneWalaUserKiId = req.user._id;
         const { text } = req.body;
         const post = await Post.findById(postId);
         if (!post) return res.status(404).json({ message: "Post not found", success: false });
@@ -298,7 +298,7 @@ export const addComment = async (req, res) => {
 export const deleteComment = async (req, res) => {
     try {
         const { commentId } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
 
         // Find the comment
         const comment = await Comment.findById(commentId);
@@ -356,7 +356,7 @@ export const getCommentsOfPost = async (req, res) => {
 export const deletePost = async (req, res) => {
     try {
         const postId = req.params.id;
-        const authorId = req.id;
+        const authorId = req.user._id;
         const post = await Post.findById(postId);
         if (!post) return res.status(404).json({ message: 'Post not found', success: false });
         if (post.author.toString() !== authorId) return res.status(403).json({ message: 'Unauthorized' });
@@ -380,7 +380,7 @@ export const deletePost = async (req, res) => {
 export const bookmarkPost = async (req, res) => {
     try {
         const postId = req.params.id;
-        const authorId = req.id;
+        const authorId = req.user._id;
         const post = await Post.findById(postId);
         if (!post) return res.status(404).json({ message: 'Post not found', success: false });
 
@@ -431,7 +431,7 @@ export const bookmarkPost = async (req, res) => {
 export const getFootstepsPosts = async (req, res) => {
     try {
         const { mode } = req.query; // 'public' or 'private'
-        const userId = req.id; // from authentication middleware
+        const userId = req.user._id; // from authentication middleware
         
         console.log('Footsteps API called with mode:', mode, 'by user:', userId);
         
@@ -535,7 +535,7 @@ export const getPostById = async (req, res) => {
 export const getPostLikes = async (req, res) => {
     try {
         const postId = req.params.id;
-        const currentUserId = req.id;
+        const currentUserId = req.user._id;
         
         const post = await Post.findById(postId)
             .populate({

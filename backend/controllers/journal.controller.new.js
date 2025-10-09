@@ -7,10 +7,10 @@ export const createJournal = async (req, res) => {
         console.log('Journal creation request received');
         console.log('Request body:', req.body);
         console.log('Request files:', req.files);
-        console.log('User ID:', req.id);
+        console.log('User ID:', req.user._id);
         
         const { title, content, location, mood, tags, isPrivate = true } = req.body;
-        const authorId = req.id;
+        const authorId = req.user._id;
 
         if (!title || !content) {
             return res.status(400).json({
@@ -86,7 +86,7 @@ export const createJournal = async (req, res) => {
 
 export const getUserJournals = async (req, res) => {
     try {
-        const authorId = req.id;
+        const authorId = req.user._id;
         const { 
             page = 1, 
             limit = 10, 
@@ -167,7 +167,7 @@ export const getUserJournals = async (req, res) => {
 export const getJournalById = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
 
         const journal = await Journal.findById(id).populate({
             path: 'author',
@@ -206,7 +206,7 @@ export const getJournalById = async (req, res) => {
 export const updateJournal = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
         const { title, content, location, mood, tags } = req.body;
 
         const journal = await Journal.findById(id);
@@ -279,7 +279,7 @@ export const updateJournal = async (req, res) => {
 export const deleteJournal = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
 
         const journal = await Journal.findById(id);
 
@@ -316,7 +316,7 @@ export const deleteJournal = async (req, res) => {
 
 export const getJournalStats = async (req, res) => {
     try {
-        const userId = req.id;
+        const userId = req.user._id;
 
         const stats = await Journal.aggregate([
             { $match: { author: userId, isPrivate: true } },

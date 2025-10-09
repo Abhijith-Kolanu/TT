@@ -2,7 +2,7 @@ import { Notification } from "../models/notification.model.js";
 
 export const getAllNotifications = async (req, res) => {
     try {
-        const userId = req.id;
+        const userId = req.user._id;
         
         const notifications = await Notification.find({ recipient: userId })
             .populate('sender', 'username profilePicture')
@@ -25,7 +25,7 @@ export const getAllNotifications = async (req, res) => {
 
 export const markNotificationAsRead = async (req, res) => {
     try {
-        const userId = req.id;
+        const userId = req.user._id;
         const notificationId = req.params.id;
         
         const notification = await Notification.findOneAndUpdate(
@@ -56,7 +56,7 @@ export const markNotificationAsRead = async (req, res) => {
 
 export const markAllNotificationsAsRead = async (req, res) => {
     try {
-        const userId = req.id;
+        const userId = req.user._id;
         
         await Notification.updateMany(
             { recipient: userId, read: false },

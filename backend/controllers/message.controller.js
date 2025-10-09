@@ -4,7 +4,8 @@ import {Message} from "../models/message.model.js"
 // for chatting
 export const sendMessage = async (req,res) => {
     try {
-        const senderId = req.id;
+        console.log('sendMessage: req.user:', req.user);
+        const senderId = req.user._id;
         const receiverId = req.params.id;
         const {textMessage: message, postId, messageType = 'text'} = req.body;
       
@@ -72,7 +73,7 @@ export const sendMessage = async (req,res) => {
 }
 export const getMessage = async (req,res) => {
     try {
-        const senderId = req.id;
+        const senderId = req.user._id;
         const receiverId = req.params.id;
         const conversation = await Conversation.findOne({
             participants:{$all: [senderId, receiverId]}

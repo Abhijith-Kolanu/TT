@@ -82,62 +82,94 @@ const Messages = ({ selectedUser }) => {
             <div className='flex flex-col gap-3'>
                 {
                                      messages && messages.map((msg, idx) => {
-                                                // Debug log for sender/receiver alignment
-                                                console.log('Message debug:', {
-                                                    msgSenderId: msg.senderId,
-                                                    currentUserId: user?._id,
-                                                    isCurrentUserSender: msg.senderId === user?._id
-                                                });
-                                                // Use msg._id if available, otherwise fallback to index (should not happen in production)
-                                                const key = msg._id || `msg-${idx}`;
-                                                return (
-                                                        <div key={key} className={`flex ${msg.senderId === user?._id ? 'justify-end' : 'justify-start'}`}>
-                                                                <div className={`p-2 rounded-lg ${msg.messageType === 'post' ? 'max-w-sm' : 'max-w-xs'} break-words ${msg.senderId === user?._id ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-black dark:text-white'}`}>
-                                    {msg.messageType === 'post' && msg.sharedPost ? (
-                                        <div className="flex flex-col space-y-2">
-                                            <div className="text-sm opacity-80">
-                                                {msg.senderId === user?._id ? 'You shared a post' : 'Shared a post'}
-                                            </div>
-                                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border">
-                                                <div className="flex items-center space-x-2 mb-2">
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarImage src={msg.sharedPost.author?.profilePicture} alt="profile" />
-                                                        <AvatarFallback className="text-xs">
-                                                            {getUserInitials(msg.sharedPost.author?.username)}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {msg.sharedPost.author?.username}
-                                                    </span>
-                                                </div>
-                                                {msg.sharedPost.image && (
-                                                    <img 
-                                                        src={msg.sharedPost.image} 
-                                                        alt="Shared post" 
-                                                        className="w-full h-32 object-cover rounded mb-2"
-                                                    />
-                                                )}
-                                                {msg.sharedPost.caption && (
-                                                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                                                        {msg.sharedPost.caption}
-                                                    </p>
-                                                )}
-                                                <Button 
-                                                    size="sm" 
-                                                    variant="outline" 
-                                                    className="mt-2 text-xs"
-                                                    onClick={() => navigate(`/post/${msg.sharedPost._id}`)}
-                                                >
-                                                    View Post
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        msg.message
-                                    )}
-                                </div>
-                            </div>
-                        )
+                    // Use msg._id if available, otherwise fallback to index (should not happen in production)
+                    const key = msg._id || `msg-${idx}`;
+                    // Robustly extract senderId as string
+                    let senderIdStr = '';
+                    if (typeof msg.senderId === 'object' && msg.senderId !== null) {
+                        // Handle Mongoose ObjectId serialization (e.g., { $oid: '...' })
+                        if (msg.senderId.$oid) {
+                            senderIdStr = msg.senderId.$oid;
+                        } else if (msg.senderId.toHexString) {
+                            senderIdStr = msg.senderId.toHexString();
+                        } else if (msg.senderId._id) {
+                            senderIdStr = msg.senderId._id;
+                        } else {
+                            senderIdStr = String(msg.senderId);
+                        }
+                    } else {
+                        senderIdStr = String(msg.senderId || '');
+                    }
+                    const userIdStr = (user?._id && user._id.toString) ? user._id.toString() : String(user?._id || '');
+                    const isCurrentUserSender = senderIdStr === userIdStr;
+                                        // Enhanced debug output (console only)
+                                        if (!msg.senderId) {
+                                            console.warn('[Message Alignment Warning] senderId missing for message:', msg);
+                                        }
+                                        const debugInfo = {
+                                            msgSenderId: msg.senderId,
+                                            currentUserId: user?._id,
+                                            senderIdStr,
+                                            userIdStr,
+                                            isCurrentUserSender
+                                        };
+                                        if (window && window.console) {
+                                            if (isCurrentUserSender) {
+                                                console.log('%c[SENDER]', 'color: green; font-weight: bold;', debugInfo);
+                                            } else {
+                                                console.log('%c[RECEIVER]', 'color: blue; font-weight: bold;', debugInfo);
+                                            }
+                                        }
+                                        return (
+                                                <div key={key}>
+                                                    <div className={`flex ${isCurrentUserSender ? 'justify-end' : 'justify-start'}`}>
+                                                        <div className={`p-2 rounded-lg ${msg.messageType === 'post' ? 'max-w-sm' : 'max-w-xs'} break-words ${isCurrentUserSender ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-black dark:text-white'}`}>
+                                                                                                    {msg.messageType === 'post' && msg.sharedPost ? (
+                                                                                                        <div className="flex flex-col space-y-2">
+                                                                                                            <div className="text-sm opacity-80">
+                                                                                                                {msg.senderId === user?._id ? 'You shared a post' : 'Shared a post'}
+                                                                                                            </div>
+                                                                                                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border">
+                                                                                                                <div className="flex items-center space-x-2 mb-2">
+                                                                                                                    <Avatar className="h-6 w-6">
+                                                                                                                        <AvatarImage src={msg.sharedPost.author?.profilePicture} alt="profile" />
+                                                                                                                        <AvatarFallback className="text-xs">
+                                                                                                                            {getUserInitials(msg.sharedPost.author?.username)}
+                                                                                                                        </AvatarFallback>
+                                                                                                                    </Avatar>
+                                                                                                                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                                                                        {msg.sharedPost.author?.username}
+                                                                                                                    </span>
+                                                                                                                </div>
+                                                                                                                {msg.sharedPost.image && (
+                                                                                                                    <img 
+                                                                                                                        src={msg.sharedPost.image} 
+                                                                                                                        alt="Shared post" 
+                                                                                                                        className="w-full h-32 object-cover rounded mb-2"
+                                                                                                                    />
+                                                                                                                )}
+                                                                                                                {msg.sharedPost.caption && (
+                                                                                                                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                                                                                        {msg.sharedPost.caption}
+                                                                                                                    </p>
+                                                                                                                )}
+                                                                                                                <Button 
+                                                                                                                    size="sm" 
+                                                                                                                    variant="outline" 
+                                                                                                                    className="mt-2 text-xs"
+                                                                                                                    onClick={() => navigate(`/post/${msg.sharedPost._id}`)}
+                                                                                                                >
+                                                                                                                    View Post
+                                                                                                                </Button>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    ) : (
+                                                                                                        msg.message
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                );
                     })
                 }
                 {/* This div is for auto-scrolling to the bottom */}

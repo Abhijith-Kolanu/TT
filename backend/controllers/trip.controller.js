@@ -26,7 +26,7 @@ export const createTrip = async (req, res) => {
             preferences
         } = req.body;
 
-        const userId = req.id;
+        const userId = req.user._id;
         console.log('User ID:', userId);
 
         // Calculate duration if not provided
@@ -71,7 +71,7 @@ export const createTrip = async (req, res) => {
 export const generateItinerary = async (req, res) => {
     try {
         const { tripId } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
 
         const trip = await Trip.findOne({ _id: tripId, user: userId });
         if (!trip) {
@@ -278,7 +278,7 @@ Return ONLY the JSON object above. No additional text, explanations, or markdown
 export const getSmartRecommendations = async (req, res) => {
     try {
         const { tripId } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
 
         const trip = await Trip.findOne({ _id: tripId, user: userId });
         if (!trip) {
@@ -545,7 +545,7 @@ Return ONLY the JSON object above. No additional text, explanations, or markdown
 // Get user's trips
 export const getUserTrips = async (req, res) => {
     try {
-        const userId = req.id;
+        const userId = req.user._id;
         const trips = await Trip.find({ user: userId }).sort({ createdAt: -1 });
 
         res.status(200).json({
@@ -565,7 +565,7 @@ export const getUserTrips = async (req, res) => {
 export const getTripById = async (req, res) => {
     try {
         const { tripId } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
 
         const trip = await Trip.findOne({ _id: tripId, user: userId });
         if (!trip) {
@@ -592,7 +592,7 @@ export const getTripById = async (req, res) => {
 export const updateTrip = async (req, res) => {
     try {
         const { tripId } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
         const updates = req.body;
 
         const trip = await Trip.findOneAndUpdate(
@@ -626,7 +626,7 @@ export const updateTrip = async (req, res) => {
 export const deleteTrip = async (req, res) => {
     try {
         const { tripId } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
 
         const trip = await Trip.findOneAndDelete({ _id: tripId, user: userId });
         if (!trip) {
@@ -653,7 +653,7 @@ export const deleteTrip = async (req, res) => {
 export const getRealTimeInfo = async (req, res) => {
     try {
         const { tripId } = req.params;
-        const userId = req.id;
+        const userId = req.user._id;
 
         const trip = await Trip.findOne({ _id: tripId, user: userId });
         if (!trip) {
@@ -778,7 +778,7 @@ export const optimizeRoute = async (req, res) => {
     try {
         const { tripId } = req.params;
         const { selectedDay, customLocations } = req.body;
-        const userId = req.id;
+        const userId = req.user._id;
 
         const trip = await Trip.findOne({ _id: tripId, user: userId });
         if (!trip) {
