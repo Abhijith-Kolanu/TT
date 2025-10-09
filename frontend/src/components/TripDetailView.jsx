@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import TripDebugger from './TripDebugger';
 import { 
     MapPin, 
     Calendar, 
@@ -105,7 +106,7 @@ const TripDetailView = () => {
             
             if (response.data.success) {
                 dispatch(setCurrentTrip(response.data.trip));
-                if (response.data.trip.itinerary.length > 0) {
+                if (response.data.trip.itinerary && response.data.trip.itinerary.length > 0) {
                     setSelectedDay(0);
                 }
             }
@@ -322,7 +323,7 @@ const TripDetailView = () => {
 
         try {
             toast.loading('Regenerating itinerary with AI...');
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/regenerate`, {}, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/generate`, {}, {
                 withCredentials: true
             });
 
@@ -547,6 +548,9 @@ const TripDetailView = () => {
                         </Button>
                     </div>
                 </div>
+
+                {/* Debug Component - Remove in production */}
+                <TripDebugger tripId={tripId} />
 
                 {/* Tabs */}
                 <div className="border-b border-gray-200 dark:border-gray-700">
