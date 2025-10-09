@@ -118,7 +118,7 @@ const LeftSidebar = () => {
     ];
 
     return (
-        <div className='fixed top-0 z-10 left-0 w-64 h-screen bg-gradient-to-br from-white via-blue-50 to-green-50 dark:from-gray-900 dark:via-blue-950 dark:to-green-950 overflow-hidden lg:block hidden transition-all duration-300 border-r border-blue-200/30 dark:border-blue-800/30 travel-pattern'>
+        <div className='fixed top-0 z-20 left-0 w-64 h-screen bg-gradient-to-br from-white via-blue-50 to-green-50 dark:from-gray-900 dark:via-blue-950 dark:to-green-950 lg:block hidden transition-all duration-300 border-r border-blue-200/30 dark:border-blue-800/30 travel-pattern'>
             <div className='flex flex-col h-full relative'>
                 {/* Decorative Elements */}
                 <div className='absolute top-20 right-4 w-16 h-16 bg-gradient-to-br from-blue-400/20 to-green-400/20 rounded-full blur-xl'></div>
@@ -159,8 +159,8 @@ const LeftSidebar = () => {
                     {sidebarItems.map((item, index) => {
                         if (item.text === 'Search') {
                             return (
-                                <div key={index} className='mb-2'>
-                                    <div className='adventure-card hover:scale-[1.02] p-4 transition-all duration-300'>
+                                <div key={index} className='mb-2 relative z-50'>
+                                    <div className='adventure-card hover:scale-[1.02] p-4 transition-all duration-300 relative'>
                                         <SearchComponent />
                                     </div>
                                 </div>

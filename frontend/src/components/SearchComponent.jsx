@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, X, User, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { getUserInitials } from '@/lib/utils';
@@ -12,6 +12,7 @@ const SearchComponent = () => {
     const [isOpen, setIsOpen] = useState(false);
     const searchRef = useRef(null);
     const inputRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Handle click outside to close dropdown
@@ -65,10 +66,16 @@ const SearchComponent = () => {
         inputRef.current?.focus();
     };
 
-    const handleResultClick = () => {
-        setQuery('');
-        setResults([]);
-        setIsOpen(false);
+    const handleResultClick = (user, e) => {
+        try {
+            e.preventDefault();
+            setQuery('');
+            setResults([]);
+            setIsOpen(false);
+            navigate(`/profile/${user._id}`);
+        } catch (error) {
+            console.error('Error navigating to profile:', error);
+        }
     };
 
     return (
@@ -107,28 +114,31 @@ const SearchComponent = () => {
 
             {/* Search Results Dropdown */}
             {isOpen && (results.length > 0 || (query && !isLoading)) && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[100] max-h-80 overflow-y-auto">
                     {results.length > 0 ? (
                         <>
                             <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
                                 Users
                             </div>
-                            {results.map((user) => (
-                                <Link
-                                    to={`/profile/${user._id}`}
+                            {results.map((user) => {
+                                if (!user || !user._id) {
+                                    return null;
+                                }
+                                return (
+                                <div
                                     key={user._id}
-                                    className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                                    onClick={handleResultClick}
+                                    className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer"
+                                    onClick={(e) => handleResultClick(user, e)}
                                 >
                                     <Avatar className="h-10 w-10 mr-3">
                                         <AvatarImage src={user.profilePicture} alt={user.username} />
                                         <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
-                                            {getUserInitials(user.username)}
+                                            {getUserInitials(user.username || 'Unknown')}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                            {user.username}
+                                            {user.username || 'Unknown User'}
                                         </p>
                                         {user.bio && (
                                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -136,8 +146,9 @@ const SearchComponent = () => {
                                             </p>
                                         )}
                                     </div>
-                                </Link>
-                            ))}
+                                </div>
+                                );
+                            })}
                         </>
                     ) : (
                         <div className="p-4 text-center">

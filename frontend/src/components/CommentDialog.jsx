@@ -19,7 +19,10 @@ const CommentDialog = ({ open, setOpen }) => {
 
   useEffect(() => {
     if (selectedPost) {
-      setComment(selectedPost.comments);
+      // Ensure comments is always an array
+      setComment(selectedPost.comments || []);
+    } else {
+      setComment([]);
     }
   }, [selectedPost]);
 
@@ -33,9 +36,18 @@ const CommentDialog = ({ open, setOpen }) => {
   }
 
   const sendMessageHandler = async () => {
+    if (!selectedPost?._id) {
+      toast.error('No post selected');
+      return;
+    }
+
+    if (!text.trim()) {
+      toast.error('Please enter a comment');
+      return;
+    }
 
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/post/${selectedPost?._id}/comment`, { text }, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/post/${selectedPost._id}/comment`, { text }, {
         headers: {
           'Content-Type': 'application/json'
         },
@@ -43,7 +55,7 @@ const CommentDialog = ({ open, setOpen }) => {
       });
 
       if (res.data.success) {
-        const updatedCommentData = [...comment, res.data.comment];
+        const updatedCommentData = [...(comment || []), res.data.comment];
         setComment(updatedCommentData);
 
         const updatedPostData = posts.map(p =>
@@ -55,6 +67,7 @@ const CommentDialog = ({ open, setOpen }) => {
       }
     } catch (error) {
       console.log(error);
+      toast.error(error.response?.data?.message || 'Failed to add comment');
     }
   }
 
@@ -73,59 +86,69 @@ const CommentDialog = ({ open, setOpen }) => {
       <DialogContent onInteractOutside={() => setOpen(false)} className="max-w-5xl p-0 flex flex-col bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <DialogTitle className="sr-only">Comments</DialogTitle>
         <DialogDescription className="sr-only">View and add comments to this post.</DialogDescription>
-        <div className='flex flex-1'>
-          <div className='w-1/2'>
-            <img
-              src={selectedPost?.image}
-              alt="post_img"
-              className='w-full h-full object-cover rounded-l-lg'
-            />
-          </div>
-          <div className='w-1/2 flex flex-col justify-between'>
-            <div className='flex items-center justify-between p-4'>
-              <div className='flex gap-3 items-center'>
-                <Link>
-                  <Avatar>
-                    <AvatarImage src={selectedPost?.author?.profilePicture} />
-                    <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
-                      {getUserInitials(selectedPost?.author?.username)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-                <div>
-                  <Link className='font-semibold text-xs text-gray-900 dark:text-white'>{selectedPost?.author?.username}</Link>
-                  {/* <span className='text-gray-600 text-sm'>Bio here...</span> */}
+        {selectedPost ? (
+          <div className='flex flex-1'>
+            <div className='w-1/2'>
+              <img
+                src={selectedPost.image}
+                alt="post_img"
+                className='w-full h-full object-cover rounded-l-lg'
+              />
+            </div>
+            <div className='w-1/2 flex flex-col justify-between'>
+              <div className='flex items-center justify-between p-4'>
+                <div className='flex gap-3 items-center'>
+                  <Link>
+                    <Avatar>
+                      <AvatarImage src={selectedPost.author?.profilePicture} />
+                      <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
+                        {getUserInitials(selectedPost.author?.username)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
+                  <div>
+                    <Link className='font-semibold text-xs text-gray-900 dark:text-white'>{selectedPost.author?.username}</Link>
+                    {/* <span className='text-gray-600 text-sm'>Bio here...</span> */}
+                  </div>
+                </div>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <MoreHorizontal className='cursor-pointer text-gray-600 dark:text-gray-400' />
+                  </DialogTrigger>
+                  <DialogContent className="flex flex-col items-center text-sm text-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                    <div className='cursor-pointer w-full text-[#ED4956] font-bold'>
+                      Unfollow
+                    </div>
+                    <div className='cursor-pointer w-full text-gray-900 dark:text-white'>
+                      Add to favorites
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <hr className='border-gray-200 dark:border-gray-700' />
+              <div className='flex-1 overflow-y-auto max-h-96 p-4 bg-white dark:bg-gray-800'>
+                {comment && comment.length > 0 ? (
+                  comment.map((comment) => <Comment key={comment._id} comment={comment} onDeleteComment={handleDeleteComment} />)
+                ) : (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No comments yet. Be the first to comment!
+                  </div>
+                )}
+              </div>
+              <div className='p-4 border-t border-gray-200 dark:border-gray-700'>
+                <div className='flex items-center gap-2'>
+                  <input type="text" value={text} onChange={changeEventHandler} placeholder='Add a comment...' className='w-full outline-none border text-sm border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400' />
+                  <Button disabled={!text.trim()} onClick={sendMessageHandler} variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Send</Button>
                 </div>
               </div>
-
-              <Dialog>
-                <DialogTrigger asChild>
-                  <MoreHorizontal className='cursor-pointer text-gray-600 dark:text-gray-400' />
-                </DialogTrigger>
-                <DialogContent className="flex flex-col items-center text-sm text-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                  <div className='cursor-pointer w-full text-[#ED4956] font-bold'>
-                    Unfollow
-                  </div>
-                  <div className='cursor-pointer w-full text-gray-900 dark:text-white'>
-                    Add to favorites
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <hr className='border-gray-200 dark:border-gray-700' />
-            <div className='flex-1 overflow-y-auto max-h-96 p-4 bg-white dark:bg-gray-800'>
-              {
-                comment.map((comment) => <Comment key={comment._id} comment={comment} onDeleteComment={handleDeleteComment} />)
-              }
-            </div>
-            <div className='p-4 border-t border-gray-200 dark:border-gray-700'>
-              <div className='flex items-center gap-2'>
-                <input type="text" value={text} onChange={changeEventHandler} placeholder='Add a comment...' className='w-full outline-none border text-sm border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400' />
-                <Button disabled={!text.trim()} onClick={sendMessageHandler} variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Send</Button>
-              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            Loading post...
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

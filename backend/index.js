@@ -44,7 +44,8 @@ const corsOptions = {
     // Allow only the correct production frontend and localhost for dev
     origin: [
         "https://trek-tales.vercel.app", // production (with dash)
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://localhost:5174"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
@@ -55,7 +56,8 @@ app.use(cors(corsOptions));
 app.use((req, res, next) => {
     const allowedOrigins = [
         "https://trek-tales.vercel.app",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://localhost:5174"
     ];
     const origin = req.headers.origin;
     if (allowedOrigins.includes(origin)) {

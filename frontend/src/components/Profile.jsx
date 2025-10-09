@@ -5,42 +5,63 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import useGetUserProfile from '@/hooks/useGetUserProfile';
 import { useState as useReactState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { AtSign, Heart, MessageCircle } from 'lucide-react';
 import GuideBookingRequests from './GuideBookingRequests';
 import { getUserInitials } from '@/lib/utils';
 import FollowersFollowingModal from './FollowersFollowingModal';
+import { setUserProfile as setReduxUserProfile } from '@/redux/authSlice';
 
 const Profile = () => {
   const params = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const userId = params.id;
-  useGetUserProfile(userId);
+  
   const [activeTab, setActiveTab] = useState('posts');
   const [followersModalOpen, setFollowersModalOpen] = useState(false);
   const [followersModalTab, setFollowersModalTab] = useState('followers');
   const { userProfile: rawUserProfile, user } = useSelector(store => store.auth);
-  const [userProfile, setUserProfile] = useReactState(rawUserProfile);
+  const [userProfile, setUserProfile] = useReactState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Clear profile data when userId changes to prevent showing wrong profile
+  useEffect(() => {
+    setUserProfile(null);
+    setIsLoading(true);
+    dispatch(setReduxUserProfile(null));
+  }, [userId, dispatch]);
+
+  // Fetch user profile
+  const { isLoading: profileLoading } = useGetUserProfile(userId);
+
+  // Update local state when Redux state changes and matches current userId
+  useEffect(() => {
+    if (rawUserProfile && rawUserProfile._id === userId) {
+      setUserProfile(rawUserProfile);
+      setIsLoading(false);
+    }
+  }, [rawUserProfile, userId]);
 
   // Check if user is a guide by fetching their guide profile
   useEffect(() => {
     const checkGuide = async () => {
-      if (!rawUserProfile?._id) return;
+      if (!userProfile?._id || userProfile._id !== userId) return;
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/guide/${rawUserProfile._id}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/guide/${userProfile._id}`);
         if (res.data.success && res.data.profile) {
-          setUserProfile({ ...rawUserProfile, isGuide: true });
+          setUserProfile({ ...userProfile, isGuide: true });
         } else {
-          setUserProfile({ ...rawUserProfile, isGuide: false });
+          setUserProfile({ ...userProfile, isGuide: false });
         }
       } catch {
-        setUserProfile({ ...rawUserProfile, isGuide: false });
+        setUserProfile({ ...userProfile, isGuide: false });
       }
     };
     checkGuide();
-  }, [rawUserProfile]);
+  }, [userProfile?._id, userId]);
 
   const isLoggedInUserProfile = user?._id === userProfile?._id;
   // Assume userProfile.isGuide is true if user is a guide (add this property if needed)
@@ -94,6 +115,26 @@ const Profile = () => {
   };
 
   const displayedPost = activeTab === 'posts' ? userProfile?.posts : userProfile?.bookmarks;
+
+  // Show loading state until the correct profile is loaded
+  if (isLoading || profileLoading || !userProfile || userProfile._id !== userId) {
+    return (
+      <div className='flex max-w-5xl justify-center mx-auto pl-10 transition-colors duration-200'>
+        <div className='flex flex-col gap-20 p-8'>
+          <div className='grid grid-cols-2 gap-32'>
+            <section className='flex items-center justify-center'>
+              <div className='animate-pulse bg-gray-300 dark:bg-gray-700 rounded-full h-32 w-32'></div>
+            </section>
+            <section className='space-y-4'>
+              <div className='animate-pulse bg-gray-300 dark:bg-gray-700 h-8 w-48 rounded'></div>
+              <div className='animate-pulse bg-gray-300 dark:bg-gray-700 h-4 w-32 rounded'></div>
+              <div className='animate-pulse bg-gray-300 dark:bg-gray-700 h-4 w-40 rounded'></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex max-w-5xl justify-center mx-auto pl-10 transition-colors duration-200'>
