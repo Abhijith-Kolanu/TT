@@ -203,6 +203,38 @@ export const editProfile = async (req, res) => {
         console.log(error);
     }
 };
+
+export const removeProfilePicture = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        const user = await User.findById(userId).select('-password');
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found.',
+                success: false
+            });
+        }
+        
+        // Remove the profile picture URL
+        user.profilePicture = '';
+        await user.save();
+
+        return res.status(200).json({
+            message: 'Profile picture removed.',
+            success: true,
+            user
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            message: 'Server error',
+            success: false
+        });
+    }
+};
+
 export const getSuggestedUsers = async (req, res) => {
     try {
         const suggestedUsers = await User.find({ _id: { $ne: req.user._id } }).select("-password");
