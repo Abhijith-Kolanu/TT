@@ -44,10 +44,6 @@ const RightSidebar = () => {
                   {user?.username}
                 </Link>
               </h1>
-              <p className='text-gray-500 dark:text-gray-400 text-sm truncate flex items-center gap-1'>
-                <MapPin size={12} />
-                {user?.bio || 'Explorer'}
-              </p>
             </div>
           </div>
         </div>

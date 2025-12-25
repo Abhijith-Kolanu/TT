@@ -6,15 +6,16 @@ import GuideBookingRequests from './GuideBookingRequests';
 import AssignedGuide from './AssignedGuide';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
+import { Compass, UserCheck, MapPin, Users } from 'lucide-react';
 
 const TravellerGuideConnect = () => {
   const [selectedGuide, setSelectedGuide] = useState(null);
   const [myGuideProfile, setMyGuideProfile] = useState(null);
   const [showGuideForm, setShowGuideForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('search'); // 'search', 'myprofile', 'requests'
   const { user } = useSelector(store => store.auth);
 
   useEffect(() => {
-    // Fetch my guide profile if logged in
     const fetchMyProfile = async () => {
       if (!user?._id) return;
       try {
@@ -29,54 +30,110 @@ const TravellerGuideConnect = () => {
   }, [user]);
 
   return (
-    <div className="traveller-guide-connect max-w-3xl mx-auto p-4">
-      {/* Section header with background */}
-      <div className="relative mb-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-white to-purple-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-3xl -z-10" style={{ filter: 'blur(2px)' }}></div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-6 py-6 rounded-3xl">
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Traveller–Guide Connect</h1>
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      {/* Header Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
+              <Compass className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Guide Connect</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Find local guides for your adventures</p>
+            </div>
+          </div>
           {user && (
             <button
-              className="btn-adventure px-5 py-2 rounded-xl shadow-md hover:scale-105 transition-transform"
+              className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
               onClick={() => setShowGuideForm(f => !f)}
             >
-              {myGuideProfile ? 'Edit My Guide Profile' : 'Become a Guide'}
+              {myGuideProfile ? 'Edit Guide Profile' : 'Become a Guide'}
             </button>
           )}
         </div>
       </div>
 
-      {/* Guide registration form */}
+      {/* Guide Registration Form */}
       {showGuideForm && (
-        <div className="mb-8">
-          <GuideRegistrationForm profile={myGuideProfile} onSuccess={p => { setMyGuideProfile(p); setShowGuideForm(false); }} />
+        <div className="mb-6">
+          <GuideRegistrationForm 
+            profile={myGuideProfile} 
+            onSuccess={p => { setMyGuideProfile(p); setShowGuideForm(false); }} 
+            onCancel={() => setShowGuideForm(false)}
+          />
         </div>
       )}
 
-  {/* Assigned guide section for traveller */}
-  <AssignedGuide />
+      {/* Assigned Guide Section */}
+      <AssignedGuide />
 
-      {/* My guide profile and booking requests (for guides) */}
+      {/* Tab Navigation for Guides */}
       {myGuideProfile && !showGuideForm && !selectedGuide && (
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-600/30 shadow-xl">
-            <div className="font-semibold mb-2 text-lg text-green-700 dark:text-green-300">Guide Profile</div>
-            <GuideProfile guideId={user._id} onBack={() => {}} />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setActiveTab('search')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'search'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              }`}
+            >
+              <Users size={16} />
+              Find Guides
+            </button>
+            <button
+              onClick={() => setActiveTab('myprofile')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'myprofile'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              }`}
+            >
+              <UserCheck size={16} />
+              My Profile
+            </button>
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'requests'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              }`}
+            >
+              <MapPin size={16} />
+              Requests
+            </button>
           </div>
-          <div className="p-6 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-600/30 shadow-xl">
-            <GuideBookingRequests />
+
+          <div className="p-5">
+            {activeTab === 'search' && (
+              <GuideSearch onSelectGuide={guide => setSelectedGuide(guide)} />
+            )}
+            {activeTab === 'myprofile' && (
+              <GuideProfile guideId={user._id} onBack={() => {}} isOwnProfileView />
+            )}
+            {activeTab === 'requests' && (
+              <GuideBookingRequests />
+            )}
           </div>
         </div>
       )}
 
-      {/* Guide search or selected guide profile */}
-      <div className="mt-8">
-        {!selectedGuide ? (
+      {/* Guide Search or Selected Guide Profile (for non-guides) */}
+      {(!myGuideProfile || showGuideForm) && !selectedGuide && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
           <GuideSearch onSelectGuide={guide => setSelectedGuide(guide)} />
-        ) : (
+        </div>
+      )}
+
+      {/* Selected Guide Profile */}
+      {selectedGuide && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
           <GuideProfile guideId={selectedGuide.user._id} onBack={() => setSelectedGuide(null)} />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

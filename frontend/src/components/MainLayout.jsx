@@ -11,6 +11,7 @@ const MainLayout = () => {
   const isTripPlannerPage = location.pathname === '/planner';
   const isTripDetailPage = location.pathname.startsWith('/trip/');
   const isProfilePage = location.pathname.startsWith('/profile/');
+  const isEditProfilePage = location.pathname === '/account/edit';
   const isScrapbookPage = location.pathname === '/scrapbook';
   const isJournalPage = location.pathname === '/journal';
   const isHomePage = location.pathname === '/';
@@ -33,17 +34,17 @@ const MainLayout = () => {
 
       {/* 
         The RightSidebar is also using 'fixed' positioning and is static
-        Hide it on the Messages page, Footsteps page, Profile pages, Scrapbook page, Journal page, and all Trip-related pages for better experience
+        Hide it on the Messages page, Footsteps page, Profile pages, Edit Profile page, Scrapbook page, Journal page, and all Trip-related pages for better experience
       */}
-  {!isMessagesPage && !isFootstepsPage && !isProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage && !isGuideConnectPage && <RightSidebar />}
+  {!isMessagesPage && !isFootstepsPage && !isProfilePage && !isEditProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage && !isGuideConnectPage && <RightSidebar />}
 
       {/* 
         This is the main content area that will hold our pages.
         We will give it a left margin equal to the width of the left sidebar (w-64)
         and right margin for the right sidebar (w-72) to prevent overlapping.
-        On Messages page, Footsteps page, Profile pages, Scrapbook page, and all Trip-related pages, we don't add right margin since RightSidebar is hidden
+        On Messages page, Footsteps page, Profile pages, Edit Profile page, Scrapbook page, and all Trip-related pages, we don't add right margin since RightSidebar is hidden
       */}
-      <main className={`flex-1 lg:ml-64 ${!isMessagesPage && !isFootstepsPage && !isProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage ? 'xl:mr-72' : ''} overflow-y-auto`}>  
+      <main className={`flex-1 lg:ml-64 ${!isMessagesPage && !isFootstepsPage && !isProfilePage && !isEditProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage ? 'xl:mr-72' : ''} overflow-y-auto`}>  
         {/* 
           lg:ml-64 adds left margin only on large screens when LeftSidebar is visible (w-64).
           xl:mr-72 adds right margin only on extra large screens when RightSidebar is visible (w-72).

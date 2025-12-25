@@ -171,25 +171,56 @@ export const getCurrentUser = async (req, res) => {
 export const editProfile = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { bio, gender } = req.body;
+        const { bio, gender, username } = req.body;
         const profilePicture = req.file;
-        let cloudResponse;
-
+        
+        // Start user fetch and username check in parallel with image upload
+        const userPromise = User.findById(userId).select('-password');
+        
+        // Check username availability in parallel if username is provided
+        const usernameCheckPromise = username ? 
+            User.findOne({ username: username.toLowerCase(), _id: { $ne: userId } }) : 
+            Promise.resolve(null);
+        
+        // Upload image with optimization settings if provided
+        let cloudResponse = null;
         if (profilePicture) {
             const fileUri = getDataUri(profilePicture);
-            cloudResponse = await cloudinary.uploader.upload(fileUri);
+            cloudResponse = await cloudinary.uploader.upload(fileUri, {
+                folder: 'profile_pictures',
+                transformation: [
+                    { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+                    { quality: 'auto:good' },
+                    { fetch_format: 'auto' }
+                ],
+                resource_type: 'image'
+            });
         }
 
-        const user = await User.findById(userId).select('-password');
+        // Wait for user and username check
+        const [user, existingUser] = await Promise.all([userPromise, usernameCheckPromise]);
+        
         if (!user) {
             return res.status(404).json({
                 message: 'User not found.',
                 success: false
             });
-        };
-        if (bio) user.bio = bio;
-        if (gender) user.gender = gender;
-        if (profilePicture) user.profilePicture = cloudResponse.secure_url;
+        }
+        
+        // Check if username is being changed and if it's already taken
+        if (username && username !== user.username) {
+            if (existingUser) {
+                return res.status(400).json({
+                    message: 'Username is already taken.',
+                    success: false
+                });
+            }
+            user.username = username;
+        }
+        
+        if (bio !== undefined) user.bio = bio;
+        if (gender && gender !== 'undefined') user.gender = gender;
+        if (cloudResponse) user.profilePicture = cloudResponse.secure_url;
 
         await user.save();
 
@@ -201,6 +232,10 @@ export const editProfile = async (req, res) => {
 
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: 'Failed to update profile.',
+            success: false
+        });
     }
 };
 

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Slider } from './ui/slider';
 import axios from 'axios';
-import { Loader2, Camera, Trash2, ZoomIn, RotateCw, X, Check } from 'lucide-react';
+import { Loader2, Camera, Trash2, ZoomIn, RotateCw, X, Check, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { setAuthUser } from '@/redux/authSlice';
@@ -22,7 +22,8 @@ const EditProfile = () => {
     const [input, setInput] = useState({
         profilePhoto: user?.profilePicture,
         bio: user?.bio,
-        gender: user?.gender
+        gender: user?.gender,
+        username: user?.username
     });
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -163,6 +164,7 @@ const EditProfile = () => {
         const formData = new FormData();
         formData.append("bio", input.bio);
         formData.append("gender", input.gender);
+        formData.append("username", input.username);
         if(input.profilePhoto && input.profilePhoto instanceof File){
             formData.append("profilePhoto", input.profilePhoto);
         }
@@ -179,7 +181,8 @@ const EditProfile = () => {
                     ...user,
                     bio:res.data.user?.bio,
                     profilePicture:res.data.user?.profilePicture,
-                    gender:res.data.user.gender
+                    gender:res.data.user.gender,
+                    username:res.data.user.username
                 };
                 dispatch(setAuthUser(updatedUserData));
                 navigate(`/profile/${user?._id}`);
@@ -188,7 +191,7 @@ const EditProfile = () => {
 
         } catch (error) {
             console.log(error);
-            toast.error(error.response.data.messasge);
+            toast.error(error?.response?.data?.message || 'Failed to update profile');
         } finally{
             setLoading(false);
         }
@@ -203,9 +206,20 @@ const EditProfile = () => {
     };
 
     return (
-        <div className='flex max-w-2xl mx-auto pl-10 bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200'>
-            <section className='flex flex-col gap-6 w-full my-8'>
-                <h1 className='font-bold text-xl text-gray-900 dark:text-white'>Edit Profile</h1>
+        <div className='flex justify-center w-full bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200 px-4'>
+            <section className='flex flex-col gap-6 w-full max-w-xl my-8'>
+                {/* Header with back button */}
+                <div className='flex items-center gap-3'>
+                    <Button 
+                        variant='ghost' 
+                        size='sm'
+                        onClick={() => navigate(`/profile/${user?._id}`)}
+                        className='h-8 w-8 p-0 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    >
+                        <ArrowLeft className='w-5 h-5' />
+                    </Button>
+                    <h1 className='font-bold text-xl text-gray-900 dark:text-white'>Edit Profile</h1>
+                </div>
                 
                 {/* Profile Picture Section */}
                 <div className='flex flex-col items-center gap-4 bg-gray-100 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700'>
@@ -264,24 +278,41 @@ const EditProfile = () => {
                     )}
                 </div>
 
+                {/* Username Section */}
+                <div>
+                    <h1 className='font-bold text-xl mb-2 text-gray-900 dark:text-white'>Username</h1>
+                    <input 
+                        type='text'
+                        value={input.username} 
+                        onChange={(e) => setInput({ ...input, username: e.target.value.toLowerCase().replace(/\s/g, '') })} 
+                        name='username' 
+                        placeholder='Enter your username'
+                        className="w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus-visible:ring-emerald-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" 
+                    />
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                        Username must be unique and lowercase without spaces
+                    </p>
+                </div>
+
                 {/* Bio Section */}
                 <div>
                     <h1 className='font-bold text-xl mb-2 text-gray-900 dark:text-white'>Bio</h1>
                     <Textarea 
-                        value={input.bio} 
-                        onChange={(e) => setInput({ ...input, bio: e.target.value })} 
+                        value={input.bio || ''} 
+                        onChange={(e) => setInput({ ...input, bio: e.target.value.slice(0, 150) })} 
                         name='bio' 
+                        maxLength={150}
                         placeholder='Tell us about yourself and your travel adventures...'
-                        className="focus-visible:ring-emerald-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 min-h-[100px]" 
+                        className="focus-visible:ring-emerald-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 min-h-[80px] resize-none" 
                     />
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                    <p className={`text-xs mt-1 ${(input.bio?.length || 0) >= 140 ? 'text-orange-500' : 'text-gray-500 dark:text-gray-400'}`}>
                         {input.bio?.length || 0}/150 characters
                     </p>
                 </div>
 
                 {/* Gender Section */}
                 <div>
-                    <h1 className='font-bold mb-2 text-gray-900 dark:text-white'>Gender</h1>
+                    <h1 className='font-bold text-xl mb-2 text-gray-900 dark:text-white'>Gender</h1>
                     <Select defaultValue={input.gender} onValueChange={selectChangeHandler}>
                         <SelectTrigger className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-emerald-500">
                             <SelectValue placeholder="Select your gender" />
@@ -298,11 +329,11 @@ const EditProfile = () => {
                 </div>
 
                 {/* Submit Button */}
-                <div className='flex justify-end gap-3'>
+                <div className='flex justify-end gap-3 pt-2'>
                     <Button 
                         variant='outline'
                         onClick={() => navigate(`/profile/${user?._id}`)}
-                        className='border-gray-300 dark:border-gray-600'
+                        className='border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                     >
                         Cancel
                     </Button>
@@ -378,7 +409,7 @@ const EditProfile = () => {
 
                         {/* Action Buttons */}
                         <div className='flex justify-end gap-3 pt-2'>
-                            <Button variant='outline' onClick={handleCropCancel}>
+                            <Button variant='outline' onClick={handleCropCancel} className='text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'>
                                 <X className='w-4 h-4 mr-2' />
                                 Cancel
                             </Button>
