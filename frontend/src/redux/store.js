@@ -23,7 +23,7 @@ const persistConfig = {
     key: 'root',
     version: 1,
     storage,
-    blacklist: ['socketio'] // Don't persist socket connection
+    blacklist: ['socketio', 'chat'] // Don't persist socket connection or chat state (messages, unread counts)
 }
 
 const rootReducer = combineReducers({

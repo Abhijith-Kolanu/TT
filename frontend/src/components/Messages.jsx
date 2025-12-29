@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useLayoutEffect } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import { Link, useNavigate } from 'react-router-dom'
@@ -13,6 +13,9 @@ const Messages = ({ selectedUser }) => {
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const lastMessageCountRef = useRef(0);
+    const initialScrollDoneRef = useRef(false);
+    const previousUserRef = useRef(null);
+    
     useGetAllMessage();
     const {messages} = useSelector(store=>store.chat);
     const {user} = useSelector(store=>store.auth);
@@ -32,51 +35,57 @@ const Messages = ({ selectedUser }) => {
             }
         }
         // Also scroll to the bottom element
-        messagesEndRef.current?.scrollIntoView({ behavior: behavior });
+        messagesEndRef.current?.scrollIntoView({ behavior: behavior === 'instant' ? 'auto' : behavior });
     };
 
     // Function to check if user is near bottom of scroll
     const isNearBottom = () => {
-        // Get the parent container that actually has the scroll (the ChatPage messages container)
         const scrollContainer = messagesContainerRef.current?.parentElement;
         if (!scrollContainer) return true;
         const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-        return scrollHeight - scrollTop - clientHeight < 100; // Within 100px of bottom
+        return scrollHeight - scrollTop - clientHeight < 100;
     };
 
-    
-    // Smart auto-scroll when messages change
+    // Reset when selected user changes
     useEffect(() => {
-        if (messages && messages.length > 0) {
+        if (selectedUser?._id !== previousUserRef.current) {
+            initialScrollDoneRef.current = false;
+            lastMessageCountRef.current = 0;
+            previousUserRef.current = selectedUser?._id;
+        }
+    }, [selectedUser?._id]);
+
+    // Scroll to bottom when messages load for the first time for this user
+    useEffect(() => {
+        if (messages && messages.length > 0 && !initialScrollDoneRef.current) {
+            // Use multiple timeouts to ensure DOM is fully rendered
+            const timer1 = setTimeout(() => scrollToBottom('instant'), 0);
+            const timer2 = setTimeout(() => scrollToBottom('instant'), 100);
+            const timer3 = setTimeout(() => {
+                scrollToBottom('instant');
+                initialScrollDoneRef.current = true;
+                lastMessageCountRef.current = messages.length;
+            }, 200);
+            
+            return () => {
+                clearTimeout(timer1);
+                clearTimeout(timer2);
+                clearTimeout(timer3);
+            };
+        }
+    }, [messages]);
+    
+    // Smart auto-scroll when new messages arrive (after initial load)
+    useEffect(() => {
+        if (messages && messages.length > 0 && initialScrollDoneRef.current) {
             // Only auto-scroll if this is a new message and user is near bottom
             if (messages.length > lastMessageCountRef.current && isNearBottom()) {
-                scrollToBottom();
+                scrollToBottom('smooth');
             }
             lastMessageCountRef.current = messages.length;
         }
     }, [messages]);
-    
-    // Auto-scroll when component mounts or user changes - ALWAYS scroll to bottom
-    useEffect(() => {
-        // Use instant scroll for immediate display when switching users
-        const timer = setTimeout(() => {
-            scrollToBottom('instant');
-            lastMessageCountRef.current = messages?.length || 0;
-        }, 50);
-        
-        return () => clearTimeout(timer);
-    }, [selectedUser?._id]);
-    
-    // Also scroll to bottom when messages first load for a user
-    useEffect(() => {
-        if (messages && messages.length > 0 && lastMessageCountRef.current === 0) {
-            const timer = setTimeout(() => {
-                scrollToBottom('instant');
-            }, 50);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [messages]);
+
     return (    
         <div ref={messagesContainerRef} className='min-h-full p-4 bg-transparent'>
             <div className='flex flex-col gap-3'>

@@ -104,6 +104,7 @@ const browserRouter = createBrowserRouter([
 function App() {
   const { user } = useSelector(store => store.auth);
   const { socket } = useSelector(store => store.socketio);
+  const { selectedChatUserId } = useSelector(store => store.chat);
   const dispatch = useDispatch();
   
   // Check authentication status on app load
@@ -124,10 +125,15 @@ function App() {
         dispatch(setOnlineUsers(onlineUsers));
       });
 
+      // Note: newMessage handler is defined here but selectedChatUserId 
+      // is accessed from closure, which may be stale. We'll use a ref pattern
+      // or move the logic to middleware. For now, we pass undefined and let
+      // the reducer use the state directly.
       socketio.on('newMessage', (newMessage) => {
         dispatch(addNewMessage({ 
           newMessage, 
           currentUserId: user?._id 
+          // selectedUserId is read from state.selectedChatUserId in the reducer
         }));
       });
 

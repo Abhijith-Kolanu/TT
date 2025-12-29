@@ -8,12 +8,8 @@ import { Button } from './ui/button';
 import { MessageCircleCode, MessageCircle } from 'lucide-react';
 import Messages from './Messages';
 import axios from 'axios';
-import { setMessages, markMessagesAsRead, addNewMessage } from '@/redux/chatSlice';
+import { setMessages, markMessagesAsRead, addNewMessage, replaceOptimisticMessage } from '@/redux/chatSlice';
 import { getUserInitials } from '@/lib/utils';
-import { io as socketIOClient } from 'socket.io-client';
-
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `${import.meta.env.VITE_API_URL}`.replace(/^http/, 'ws');
-let socket;
 
 const ChatPage = () => {
     const [textMessage, setTextMessage] = useState("");
@@ -25,33 +21,14 @@ const ChatPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // --- SOCKET.IO SETUP ---
-    useEffect(() => {
-        if (!user?._id) return;
-        // Connect to socket server
-        socket = socketIOClient(`${import.meta.env.VITE_API_URL.replace(/^http/, 'ws')}`, {
-            query: { userId: user._id },
-            transports: ['websocket']
-        });
-        // Listen for newMessage event
-        socket.on('newMessage', (newMessage) => {
-            console.log('[Socket] Received newMessage:', newMessage);
-            // Only increment unread if this client is the receiver
-            dispatch(addNewMessage({ newMessage, currentUserId: user._id }));
-        });
-        // Cleanup on unmount
-        return () => {
-            if (socket) socket.disconnect();
-        };
-    }, [user?._id, dispatch]);
-
     const sendMessageHandler = async (receiverId) => {
         if (!textMessage.trim() || sending) return;
         setSending(true);
         setSendError("");
         // Optimistic UI: show message instantly
+        const optimisticId = `optimistic-${Date.now()}`;
         const optimisticMessage = {
-            _id: `optimistic-${Date.now()}`,
+            _id: optimisticId,
             senderId: user?._id,
             receiverId,
             message: textMessage,
@@ -60,7 +37,11 @@ const ChatPage = () => {
             createdAt: new Date().toISOString(),
             optimistic: true
         };
-        dispatch(addNewMessage({ newMessage: optimisticMessage, currentUserId: user?._id }));
+        dispatch(addNewMessage({ 
+            newMessage: optimisticMessage, 
+            currentUserId: user?._id,
+            selectedUserId: selectedUser?._id 
+        }));
         setTextMessage("");
         try {
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/message/send/${receiverId}`, { textMessage }, {
@@ -70,12 +51,11 @@ const ChatPage = () => {
                 withCredentials: true
             });
             if (res.data.success) {
-                // Replace optimistic message with real one
-                dispatch(setMessages(
-                    messages.map(msg =>
-                        msg._id === optimisticMessage._id ? res.data.newMessage : msg
-                    )
-                ));
+                // Replace optimistic message with real one using the new action
+                dispatch(replaceOptimisticMessage({
+                    optimisticId,
+                    realMessage: res.data.newMessage
+                }));
             } else {
                 setSendError("Failed to send message.");
             }

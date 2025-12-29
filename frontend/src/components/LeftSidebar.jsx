@@ -14,6 +14,7 @@ import SearchComponent from './SearchComponent';
 import ThemeToggle from './ThemeToggle';
 import { getUserInitials } from '@/lib/utils';
 import useGetAllNotifications from '@/hooks/useGetAllNotifications';
+import { resetChatState } from '@/redux/chatSlice';
 
 const LeftSidebar = () => {
     const navigate = useNavigate();
@@ -66,6 +67,7 @@ const LeftSidebar = () => {
                 dispatch(setAuthUser(null));
                 dispatch(setSelectedPost(null));
                 dispatch(setPosts([]));
+                dispatch(resetChatState()); // Clear chat state on logout
                 navigate("/login");
                 toast.success(res.data.message);
             }
