@@ -143,7 +143,7 @@ const Login = () => {
                             </div>
                         </div>
                     </div>
-                    <p className='text-lg text-gray-600 dark:text-gray-400'>Plan trips, track footsteps & share travel stories</p>
+                    <p className='text-lg text-gray-600 dark:text-gray-400'>The world is waiting. Your stories are too.</p>
                 </div>
                 
                 {/* Rainbow animated border wrapper */}

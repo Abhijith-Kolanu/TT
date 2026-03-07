@@ -144,7 +144,7 @@ const Signup = () => {
                             </div>
                         </div>
                     </div>
-                    <p className='text-lg text-gray-600 dark:text-gray-400'>Plan trips, connect with guides & document your travels</p>
+                    <p className='text-lg text-gray-600 dark:text-gray-400'>Share where you've been. Discover where to go next.</p>
                 </div>
 
                 {/* Rainbow animated border wrapper */}
