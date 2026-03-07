@@ -215,72 +215,6 @@ const LeftSidebar = () => {
                                             {unreadCount > 99 ? '99+' : unreadCount}
                                         </div>
                                     )}
-
-                                    {/* Notifications badge */}
-                                    {item.text === 'Notifications' && notificationUnreadCount > 0 && (
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <div className='absolute -top-1.5 -right-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold shadow border-2 border-white dark:border-gray-900 cursor-pointer'>
-                                                    {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
-                                                </div>
-                                            </PopoverTrigger>
-                                            <PopoverContent className='w-80 adventure-card border-blue-200/30 dark:border-blue-700/30'>
-                                                <div className='max-h-80 overflow-y-auto adventure-scroll'>
-                                                    <h3 className='font-bold text-lg mb-4 text-gray-900 dark:text-white'>Notifications</h3>
-                                                    {!notifications || notifications.length === 0 ? (
-                                                        <div className='text-center py-8'>
-                                                            <Heart className='w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2' />
-                                                            <p className='text-gray-500 dark:text-gray-400'>No new notifications</p>
-                                                        </div>
-                                                    ) : (
-                                                        notifications.map((notification) => {
-                                                            let message = '';
-                                                            let icon = <Heart className='w-4 h-4' />;
-                                                            let iconBg = 'from-red-500 to-pink-500';
-                                                            if (notification.type === 'like') { message = 'liked your post'; icon = <Heart className='w-4 h-4' />; iconBg = 'from-red-500 to-pink-500'; }
-                                                            else if (notification.type === 'comment') { message = 'commented on your post'; icon = <MessageCircle className='w-4 h-4' />; iconBg = 'from-blue-500 to-purple-500'; }
-                                                            else if (notification.type === 'follow') { message = 'started following you'; icon = <PlusSquare className='w-4 h-4' />; iconBg = 'from-green-500 to-emerald-500'; }
-                                                            else if (notification.type === 'bookmark') { message = 'bookmarked your post'; iconBg = 'from-yellow-500 to-orange-500'; }
-                                                            else { message = 'interacted with your content'; }
-                                                            return (
-                                                                <div key={notification._id} className='flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 mb-2'>
-                                                                    <div className='relative'>
-                                                                        <Avatar className='w-10 h-10 ring-2 ring-white dark:ring-gray-800'>
-                                                                            <AvatarImage src={notification.sender?.profilePicture} />
-                                                                            <AvatarFallback className='bg-gradient-to-br from-blue-400 to-purple-500 text-white font-semibold text-sm'>
-                                                                                {getUserInitials(notification.sender?.username)}
-                                                                            </AvatarFallback>
-                                                                        </Avatar>
-                                                                        <div className={`absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br ${iconBg} rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800 text-white`}>{icon}</div>
-                                                                    </div>
-                                                                    <div className='flex-1 min-w-0'>
-                                                                        <p className='text-sm text-gray-700 dark:text-gray-300 leading-relaxed'>
-                                                                            <span className='font-bold text-gray-900 dark:text-white'>{notification.sender?.username}</span> {message}
-                                                                        </p>
-                                                                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                                                                            {(() => {
-                                                                                if (!notification.createdAt) return 'Recently';
-                                                                                const date = new Date(notification.createdAt);
-                                                                                const now = new Date();
-                                                                                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-                                                                                const diffInHours = Math.floor(diffInMinutes / 60);
-                                                                                const diffInDays = Math.floor(diffInHours / 24);
-                                                                                if (diffInMinutes < 1) return 'Now';
-                                                                                if (diffInMinutes < 60) return `${diffInMinutes}m`;
-                                                                                if (diffInHours < 24) return `${diffInHours}h`;
-                                                                                if (diffInDays < 7) return `${diffInDays}d`;
-                                                                                return date.toLocaleDateString();
-                                                                            })()}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })
-                                                    )}
-                                                </div>
-                                            </PopoverContent>
-                                        </Popover>
-                                    )}
                                 </div>
 
                                 {/* Label */}
@@ -293,6 +227,13 @@ const LeftSidebar = () => {
                                 }`}>
                                     {item.text}
                                 </span>
+
+                                {/* Notification count pill next to label */}
+                                {item.text === 'Notifications' && notificationUnreadCount > 0 && (
+                                    <span className='ml-auto flex-shrink-0 bg-red-500 text-white text-[11px] font-bold rounded-full px-2 py-0.5 min-w-[22px] text-center leading-tight shadow-sm'>
+                                        {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                                    </span>
+                                )}
                             </div>
                         );
                     })}

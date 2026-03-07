@@ -3,6 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Bookmark, MessageCircle, MoreHorizontal, Send } from 'lucide-react'
 import { Button } from './ui/button'
 import { FaHeart, FaRegHeart, FaBookmark, FaRegBookmark } from "react-icons/fa";
+import { Dialog, DialogContent, DialogHeader } from './ui/dialog'
+import { Textarea } from './ui/textarea'
 import CommentDialog from './CommentDialog'
 import ShareDialog from './ShareDialog'
 import LikesModal from './LikesModal'
@@ -21,6 +23,8 @@ const Post = ({ post }) => {
     const btnRef = useRef(null);
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [likesModalOpen, setLikesModalOpen] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
+    const [editCaption, setEditCaption] = useState(post.caption || '');
     const { user } = useSelector(store => store.auth);
     const { posts } = useSelector(store => store.post);
     const dispatch = useDispatch();
@@ -137,6 +141,23 @@ const Post = ({ post }) => {
             toast.error(error.response.data.message);
         }
     }
+
+    const editPostHandler = async () => {
+        try {
+            const res = await axios.put(
+                `${import.meta.env.VITE_API_URL}/api/v1/post/${post._id}/edit`,
+                { caption: editCaption },
+                { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
+            );
+            if (res.data.success) {
+                dispatch(setPosts(posts.map(p => p._id === post._id ? { ...p, caption: editCaption } : p)));
+                toast.success('Post updated');
+                setEditOpen(false);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update post');
+        }
+    };
 
     const bookmarkHandler = async () => {
         try {
@@ -262,12 +283,20 @@ const Post = ({ post }) => {
                             </button>
                         )}
                         {menuOpen && isOwnPost && (
-                            <button
+                            <>
+                              <button
+                                onClick={() => { setEditOpen(true); setMenuOpen(false); }}
+                                className='px-3 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg border border-blue-300 dark:border-blue-700 transition-colors duration-150'
+                              >
+                                Edit
+                              </button>
+                              <button
                                 onClick={() => { deletePostHandler(); setMenuOpen(false); }}
                                 className='px-3 py-1 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 transition-colors duration-150'
-                            >
+                              >
                                 Delete
-                            </button>
+                              </button>
+                            </>
                         )}
                         {/* 3-dot button */}
                         <div className='relative'>
@@ -426,6 +455,23 @@ const Post = ({ post }) => {
                 onClose={setLikesModalOpen}
                 postId={post._id}
             />
+
+            {/* Edit Post Dialog */}
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className='bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-w-md'>
+                    <DialogHeader className='text-center font-semibold text-gray-900 dark:text-white'>Edit Caption</DialogHeader>
+                    <Textarea
+                        value={editCaption}
+                        onChange={(e) => setEditCaption(e.target.value)}
+                        className='focus-visible:ring-transparent bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 min-h-[100px]'
+                        placeholder='Write a caption...'
+                    />
+                    <div className='flex justify-end gap-2 mt-1'>
+                        <Button variant='outline' onClick={() => setEditOpen(false)} className='border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'>Cancel</Button>
+                        <Button onClick={editPostHandler} className='bg-blue-600 hover:bg-blue-700 text-white'>Save</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

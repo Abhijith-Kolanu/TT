@@ -9,9 +9,10 @@ import {
     deletePost,
     deleteComment,
     dislikePost,
+    editPost,
     getAllPost,
     getCommentsOfPost,
-    getExplorePosts, // ADD THIS
+    getExplorePosts,
     getUserPost,
     likePost,
     getFootstepsPosts,
@@ -29,6 +30,7 @@ router.route("/explore").get(isAuthenticated, getExplorePosts);
 router.route("/:id").get(isAuthenticated, getPostById);
 router.route("/:id/likes").get(isAuthenticated, getPostLikes);
 router.route("/delete/:id").delete(isAuthenticated, deletePost);
+router.route("/:id/edit").put(isAuthenticated, editPost);
 router.route("/:id/like").get(isAuthenticated, likePost);
 router.route("/:id/dislike").get(isAuthenticated, dislikePost);
 router.route("/:id/comment").post(isAuthenticated, addComment);

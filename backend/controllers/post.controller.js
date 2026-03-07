@@ -362,6 +362,28 @@ export const getCommentsOfPost = async (req, res) => {
     }
 };
 
+export const editPost = async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const authorId = req.user._id;
+        const { caption } = req.body;
+
+        const post = await Post.findById(postId);
+        if (!post) return res.status(404).json({ message: 'Post not found', success: false });
+        if (post.author.toString() !== authorId.toString())
+            return res.status(403).json({ message: 'Unauthorized', success: false });
+
+        post.caption = caption ?? post.caption;
+        await post.save();
+        await post.populate({ path: 'author', select: '-password' });
+
+        return res.status(200).json({ success: true, message: 'Post updated', post });
+    } catch (error) {
+        console.log("Error in editPost:", error);
+        return res.status(500).json({ message: "Internal server error", success: false });
+    }
+};
+
 export const deletePost = async (req, res) => {
     try {
         const postId = req.params.id;

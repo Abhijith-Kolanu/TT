@@ -521,11 +521,12 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { readFileAsDataURL, getUserInitials } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Smile } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { setPosts } from '@/redux/postSlice';
+import EmojiPicker from 'emoji-picker-react';
 
 // Leaflet
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
@@ -592,6 +593,23 @@ const CreatePost = ({ open, setOpen }) => {
   const [coordinates, setCoordinates] = useState(null);
   const [placeName, setPlaceName] = useState('');
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef(null);
+
+  // Close emoji picker on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    if (showEmojiPicker) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showEmojiPicker]);
+
+  const onEmojiClick = (emojiData) => {
+    setCaption(prev => prev + emojiData.emoji);
+  };
 
   const { user } = useSelector(store => store.auth);
   const { posts } = useSelector(store => store.post);
@@ -675,12 +693,33 @@ const CreatePost = ({ open, setOpen }) => {
             </div>
           </div>
 
-          <Textarea
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            className="focus-visible:ring-transparent border-none bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-            placeholder="Write a caption..."
-          />
+          <div className='relative'>
+            <Textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              className="focus-visible:ring-transparent border-none bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 pr-9"
+              placeholder="Write a caption..."
+            />
+            <button
+              type='button'
+              onClick={() => setShowEmojiPicker(p => !p)}
+              className='absolute top-2 right-2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors'
+            >
+              <Smile size={18} />
+            </button>
+            {showEmojiPicker && (
+              <div ref={emojiPickerRef} className='absolute right-0 top-10 z-50'>
+                <EmojiPicker
+                  onEmojiClick={onEmojiClick}
+                  theme='auto'
+                  width={300}
+                  height={380}
+                  skinTonesDisabled
+                  previewConfig={{ showPreview: false }}
+                />
+              </div>
+            )}
+          </div>
 
           {imagePreview && (
             <div className='w-full h-64 flex items-center justify-center'>
