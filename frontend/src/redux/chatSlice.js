@@ -107,6 +107,15 @@ const chatSlice = createSlice({
             state.messages = [];
             state.unreadMessages = {};
             state.selectedChatUserId = null;
+        },
+        clearConversation:(state, action) => {
+            const userId = action.payload;
+            // Clear messages (they'll be refetched or are already deleted)
+            state.messages = [];
+            // Clear unread messages for this user
+            if (state.unreadMessages && state.unreadMessages[userId]) {
+                delete state.unreadMessages[userId];
+            }
         }
     }
 });
@@ -118,6 +127,7 @@ export const {
     addNewMessage, 
     markMessagesAsRead, 
     clearAllUnreadMessages,
-    resetChatState
+    resetChatState,
+    clearConversation
 } = chatSlice.actions;
 export default chatSlice.reducer;

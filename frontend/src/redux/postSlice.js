@@ -5,25 +5,20 @@ const postSlice = createSlice({
     initialState: {
         posts: [],
         selectedPost: null,
-        // 1. ADD THE 'explorePosts' PROPERTY TO YOUR INITIAL STATE
-        explorePosts: null, 
+        followingEndIndex: 0,
     },
     reducers: {
-        // --- Existing Actions ---
         setPosts: (state, action) => {
             state.posts = action.payload;
         },
         setSelectedPost: (state, action) => {
             state.selectedPost = action.payload;
         },
-
-        // --- 2. ADD THE NEW ACTION FOR THE EXPLORE PAGE ---
-        setExplorePosts: (state, action) => {
-            state.explorePosts = action.payload;
-        }
+        setFollowingEndIndex: (state, action) => {
+            state.followingEndIndex = action.payload;
+        },
     }
 });
 
-// 3. EXPORT THE NEW ACTION
-export const { setPosts, setSelectedPost, setExplorePosts } = postSlice.actions;
+export const { setPosts, setSelectedPost, setFollowingEndIndex } = postSlice.actions;
 export default postSlice.reducer;

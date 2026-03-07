@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from './ui/dialog'
+﻿import React, { useEffect, useState, useRef } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Link } from 'react-router-dom'
-import { MoreHorizontal } from 'lucide-react'
-import { Button } from './ui/button'
+import { X, Send } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import Comment from './Comment'
 import axios from 'axios'
@@ -16,142 +14,154 @@ const CommentDialog = ({ open, setOpen }) => {
   const { selectedPost, posts } = useSelector(store => store.post);
   const [comment, setComment] = useState([]);
   const dispatch = useDispatch();
+  const commentsEndRef = useRef(null);
 
   useEffect(() => {
     if (selectedPost) {
-      // Ensure comments is always an array
       setComment(selectedPost.comments || []);
     } else {
       setComment([]);
     }
   }, [selectedPost]);
 
+  useEffect(() => {
+    if (open) commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [comment, open]);
+
   const changeEventHandler = (e) => {
-    const inputText = e.target.value;
-    if (inputText.trim()) {
-      setText(inputText);
-    } else {
-      setText("");
-    }
-  }
+    setText(e.target.value);
+  };
 
   const sendMessageHandler = async () => {
-    if (!selectedPost?._id) {
-      toast.error('No post selected');
-      return;
-    }
-
-    if (!text.trim()) {
-      toast.error('Please enter a comment');
-      return;
-    }
-
+    if (!selectedPost?._id) return toast.error('No post selected');
+    if (!text.trim()) return;
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/post/${selectedPost._id}/comment`, { text }, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        withCredentials: true
-      });
-
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/v1/post/${selectedPost._id}/comment`,
+        { text },
+        { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
+      );
       if (res.data.success) {
-        const updatedCommentData = [...(comment || []), res.data.comment];
-        setComment(updatedCommentData);
-
-        const updatedPostData = posts.map(p =>
-          p._id === selectedPost._id ? { ...p, comments: updatedCommentData } : p
-        );
-        dispatch(setPosts(updatedPostData));
-        toast.success(res.data.message);
+        const updatedComments = [...(comment || []), res.data.comment];
+        setComment(updatedComments);
+        dispatch(setPosts(posts.map(p =>
+          p._id === selectedPost._id ? { ...p, comments: updatedComments } : p
+        )));
         setText("");
       }
     } catch (error) {
-      console.log(error);
       toast.error(error.response?.data?.message || 'Failed to add comment');
     }
-  }
+  };
 
   const handleDeleteComment = (commentId) => {
     const updatedComments = comment.filter(c => c._id !== commentId);
     setComment(updatedComments);
-
-    const updatedPostData = posts.map(p =>
+    dispatch(setPosts(posts.map(p =>
       p._id === selectedPost._id ? { ...p, comments: updatedComments } : p
-    );
-    dispatch(setPosts(updatedPostData));
-  }
+    )));
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && text.trim()) {
+      e.preventDefault();
+      sendMessageHandler();
+    }
+  };
 
   return (
-    <Dialog open={open}>
-      <DialogContent onInteractOutside={() => setOpen(false)} className="max-w-5xl p-0 flex flex-col bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-        <DialogTitle className="sr-only">Comments</DialogTitle>
-        <DialogDescription className="sr-only">View and add comments to this post.</DialogDescription>
-        {selectedPost ? (
-          <div className='flex flex-1'>
-            <div className='w-1/2'>
-              <img
-                src={selectedPost.image}
-                alt="post_img"
-                className='w-full h-full object-cover rounded-l-lg'
-              />
-            </div>
-            <div className='w-1/2 flex flex-col justify-between'>
-              <div className='flex items-center justify-between p-4'>
-                <div className='flex gap-3 items-center'>
-                  <Link>
-                    <Avatar>
-                      <AvatarImage src={selectedPost.author?.profilePicture} />
-                      <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
-                        {getUserInitials(selectedPost.author?.username)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Link>
-                  <div>
-                    <Link className='font-semibold text-xs text-gray-900 dark:text-white'>{selectedPost.author?.username}</Link>
-                    {/* <span className='text-gray-600 text-sm'>Bio here...</span> */}
-                  </div>
-                </div>
+    <>
+      {open && (
+        <div
+          className='fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity duration-300'
+          onClick={() => setOpen(false)}
+        />
+      )}
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <MoreHorizontal className='cursor-pointer text-gray-600 dark:text-gray-400' />
-                  </DialogTrigger>
-                  <DialogContent className="flex flex-col items-center text-sm text-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                    <div className='cursor-pointer w-full text-[#ED4956] font-bold'>
-                      Unfollow
-                    </div>
-                    <div className='cursor-pointer w-full text-gray-900 dark:text-white'>
-                      Add to favorites
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <hr className='border-gray-200 dark:border-gray-700' />
-              <div className='flex-1 overflow-y-auto max-h-96 p-4 bg-white dark:bg-gray-800'>
-                {comment && comment.length > 0 ? (
-                  comment.map((comment) => <Comment key={comment._id} comment={comment} onDeleteComment={handleDeleteComment} />)
-                ) : (
-                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-                    No comments yet. Be the first to comment!
-                  </div>
-                )}
-              </div>
-              <div className='p-4 border-t border-gray-200 dark:border-gray-700'>
-                <div className='flex items-center gap-2'>
-                  <input type="text" value={text} onChange={changeEventHandler} placeholder='Add a comment...' className='w-full outline-none border text-sm border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400' />
-                  <Button disabled={!text.trim()} onClick={sendMessageHandler} variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Send</Button>
-                </div>
-              </div>
+      <div className={`fixed top-0 right-0 h-full w-[360px] z-50 flex flex-col bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full shadow-none'}`}>
+
+        <div className='flex items-center justify-between px-4 py-3.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0'>
+          <div className='flex items-center gap-2.5'>
+            {selectedPost && (
+              <Link to={`/profile/${selectedPost.author?._id}`} onClick={() => setOpen(false)}>
+                <Avatar className='w-8 h-8'>
+                  <AvatarImage src={selectedPost.author?.profilePicture} />
+                  <AvatarFallback className='bg-gradient-to-br from-indigo-400 to-violet-500 text-white font-bold text-xs'>
+                    {getUserInitials(selectedPost.author?.username)}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            )}
+            <div>
+              <p className='font-semibold text-sm text-gray-900 dark:text-white leading-tight'>
+                {selectedPost?.author?.username || 'Comments'}
+              </p>
+              <p className='text-[11px] text-gray-400 dark:text-gray-500'>
+                {comment.length} {comment.length === 1 ? 'comment' : 'comments'}
+              </p>
             </div>
           </div>
-        ) : (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            Loading post...
+          <button
+            onClick={() => setOpen(false)}
+            className='w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400'
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {selectedPost?.caption && (
+          <div className='px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex-shrink-0'>
+            <p className='text-xs text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2'>
+              <span className='font-semibold text-gray-900 dark:text-white mr-1.5'>{selectedPost.author?.username}</span>
+              {selectedPost.caption}
+            </p>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
-  )
-}
+
+        <div className='flex-1 overflow-y-auto px-4 py-3 space-y-1'>
+          {comment.length > 0 ? (
+            <>
+              {comment.map((c) => (
+                <Comment key={c._id} comment={c} onDeleteComment={handleDeleteComment} />
+              ))}
+              <div ref={commentsEndRef} />
+            </>
+          ) : (
+            <div className='flex flex-col items-center justify-center h-full text-center gap-3 py-12'>
+              <div className='w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center'>
+                <Send size={22} className='text-gray-400 dark:text-gray-500' />
+              </div>
+              <div>
+                <p className='font-semibold text-gray-700 dark:text-gray-300 text-sm'>No comments yet</p>
+                <p className='text-xs text-gray-400 dark:text-gray-500 mt-0.5'>Be the first to comment</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className='flex-shrink-0 border-t border-gray-200 dark:border-gray-700 px-4 py-3'>
+          <div className='flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-2'>
+            <input
+              type='text'
+              value={text}
+              onChange={changeEventHandler}
+              onKeyDown={handleKeyDown}
+              placeholder='Add a comment'
+              className='flex-1 bg-transparent outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500'
+            />
+            {text.trim() && (
+              <button
+                onClick={sendMessageHandler}
+                className='flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-white hover:opacity-90 transition-opacity'
+              >
+                <Send size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
 export default CommentDialog

@@ -6,6 +6,10 @@ import cloudinary from "../utils/cloudinary.js";
 import { io, getReceiverSocketId } from "../socket/socket.js";
 import { Post } from "../models/post.model.js";
 import { Notification } from "../models/notification.model.js";
+import { Comment } from "../models/comment.model.js";
+import { Conversation } from "../models/conversation.model.js";
+import { Message } from "../models/message.model.js";
+import Journal from "../models/journal.model.js";
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -272,7 +276,18 @@ export const removeProfilePicture = async (req, res) => {
 
 export const getSuggestedUsers = async (req, res) => {
     try {
-        const suggestedUsers = await User.find({ _id: { $ne: req.user._id } }).select("-password");
+        // Get current user to check deletedChats
+        const currentUser = await User.findById(req.user._id);
+        const deletedChatIds = currentUser?.deletedChats || [];
+        
+        // Exclude current user and users with deleted chats
+        const suggestedUsers = await User.find({ 
+            _id: { 
+                $ne: req.user._id,
+                $nin: deletedChatIds 
+            } 
+        }).select("-password");
+        
         if (!suggestedUsers) {
             return res.status(400).json({
                 message: 'Currently do not have any users',
@@ -375,6 +390,96 @@ export const searchUsers = async (req, res) => {
     } catch (error) {
         console.log("Error in searchUsers:", error);
         return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { password } = req.body;
+
+        // Find the user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+
+        // Verify password
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+        if (!isPasswordMatch) {
+            return res.status(401).json({
+                message: "Incorrect password",
+                success: false
+            });
+        }
+
+        // Delete user's posts and their comments
+        const userPosts = await Post.find({ author: userId });
+        for (const post of userPosts) {
+            // Delete comments on this post
+            await Comment.deleteMany({ post: post._id });
+            // Delete the post
+            await Post.findByIdAndDelete(post._id);
+        }
+
+        // Delete user's comments on other posts
+        await Comment.deleteMany({ author: userId });
+
+        // Delete user's journals
+        await Journal.deleteMany({ user: userId });
+
+        // Delete user's notifications (sent and received)
+        await Notification.deleteMany({
+            $or: [{ senderId: userId }, { recipientId: userId }]
+        });
+
+        // Delete conversations and messages
+        const conversations = await Conversation.find({ participants: userId });
+        for (const conv of conversations) {
+            await Message.deleteMany({ _id: { $in: conv.messages } });
+            await Conversation.findByIdAndDelete(conv._id);
+        }
+
+        // Remove user from other users' followers/following lists
+        await User.updateMany(
+            { followers: userId },
+            { $pull: { followers: userId } }
+        );
+        await User.updateMany(
+            { following: userId },
+            { $pull: { following: userId } }
+        );
+
+        // Remove user from other users' deletedChats
+        await User.updateMany(
+            { deletedChats: userId },
+            { $pull: { deletedChats: userId } }
+        );
+
+        // Remove user's likes from all posts
+        await Post.updateMany(
+            { likes: userId },
+            { $pull: { likes: userId } }
+        );
+
+        // Delete the user
+        await User.findByIdAndDelete(userId);
+
+        // Clear cookie
+        return res.cookie('token', '', { maxAge: 0 }).json({
+            message: "Account deleted successfully",
+            success: true
+        });
+
+    } catch (error) {
+        console.log("Error in deleteAccount:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false
+        });
     }
 };
 

@@ -2,24 +2,60 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { setSelectedUser } from '@/redux/authSlice';
+import { setSelectedUser, removeFromSuggestedUsers } from '@/redux/authSlice';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { MessageCircleCode, MessageCircle } from 'lucide-react';
+import { MessageCircleCode, MessageCircle, Trash2 } from 'lucide-react';
 import Messages from './Messages';
 import axios from 'axios';
-import { setMessages, markMessagesAsRead, addNewMessage, replaceOptimisticMessage } from '@/redux/chatSlice';
+import { setMessages, markMessagesAsRead, addNewMessage, replaceOptimisticMessage, clearConversation } from '@/redux/chatSlice';
 import { getUserInitials } from '@/lib/utils';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from './ui/dialog';
+import { toast } from 'sonner';
 
 const ChatPage = () => {
     const [textMessage, setTextMessage] = useState("");
     const [sending, setSending] = useState(false);
     const [sendError, setSendError] = useState("");
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const { user, suggestedUsers, selectedUser } = useSelector(store => store.auth);
     const { onlineUsers, messages, unreadMessages } = useSelector(store => store.chat);
     const dispatch = useDispatch();
     const location = useLocation();
     const navigate = useNavigate();
+
+    // Delete conversation handler
+    const handleDeleteChat = async () => {
+        if (!selectedUser || deleting) return;
+        setDeleting(true);
+        try {
+            const res = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/v1/message/delete/${selectedUser._id}`,
+                {},
+                { withCredentials: true }
+            );
+            if (res.data.success) {
+                dispatch(clearConversation(selectedUser._id));
+                dispatch(removeFromSuggestedUsers(selectedUser._id));
+                dispatch(setSelectedUser(null));
+                setDeleteDialogOpen(false);
+                toast.success('Chat deleted successfully');
+            }
+        } catch (error) {
+            console.error('Delete chat error:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete chat');
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     const sendMessageHandler = async (receiverId) => {
         if (!textMessage.trim() || sending) return;
@@ -159,24 +195,60 @@ const ChatPage = () => {
                             <div className='absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-green-400/5 to-blue-400/5 rounded-full blur-2xl'></div>
                             
                             {/* Header */}
-                            <div className='relative z-10 flex gap-4 items-center p-6 border-b border-blue-200/30 dark:border-blue-700/30 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors duration-200'
-                                 onClick={() => navigate(`/profile/${selectedUser?._id}`)}>
-                                <Avatar className='w-12 h-12 ring-2 ring-blue-200 dark:ring-blue-700'>
-                                    <AvatarImage src={selectedUser?.profilePicture} alt='profile' />
-                                    <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-semibold">
-                                        {getUserInitials(selectedUser?.username)}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className='flex flex-col'>
-                                    <span className='text-gray-900 dark:text-white font-semibold text-lg'>{selectedUser?.username}</span>
-                                    <span className='text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors'>Click to view profile</span>
+                            <div className='relative z-10 flex gap-4 items-center p-6 border-b border-blue-200/30 dark:border-blue-700/30'>
+                                <div className='flex-1 flex items-center gap-4 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors duration-200 rounded-lg p-2 -m-2'
+                                     onClick={() => navigate(`/profile/${selectedUser?._id}`)}>
+                                    <Avatar className='w-12 h-12 ring-2 ring-blue-200 dark:ring-blue-700'>
+                                        <AvatarImage src={selectedUser?.profilePicture} alt='profile' />
+                                        <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-semibold">
+                                            {getUserInitials(selectedUser?.username)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className='flex flex-col'>
+                                        <span className='text-gray-900 dark:text-white font-semibold text-lg'>{selectedUser?.username}</span>
+                                        <span className='text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors'>Click to view profile</span>
+                                    </div>
                                 </div>
-                                <div className='ml-auto flex items-center gap-2'>
-                                    <div className='nav-dot active'></div>
-                                    <div className='nav-dot'></div>
-                                    <div className='nav-dot'></div>
-                                </div>
+                                {/* Delete Chat Button */}
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    onClick={() => setDeleteDialogOpen(true)}
+                                    className="h-10 w-10 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+                                    title="Delete Chat"
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                </Button>
                             </div>
+
+                            {/* Delete Confirmation Dialog */}
+                            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                                <DialogContent className="sm:max-w-md">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-red-600">Delete Chat</DialogTitle>
+                                        <DialogDescription>
+                                            Are you sure you want to delete your conversation with <strong>{selectedUser?.username}</strong>? This action cannot be undone and all messages will be permanently deleted.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <DialogFooter className="flex gap-2 sm:gap-0">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setDeleteDialogOpen(false)}
+                                            disabled={deleting}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            variant="destructive"
+                                            onClick={handleDeleteChat}
+                                            disabled={deleting}
+                                            className="bg-red-600 hover:bg-red-700"
+                                        >
+                                            {deleting ? 'Deleting...' : 'Delete Chat'}
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                             
                             {/* Messages */}
                             <div className='relative z-10 flex-1 overflow-y-auto adventure-scroll min-h-0'>

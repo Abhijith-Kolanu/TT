@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { Input } from './ui/input'
-import { Button } from './ui/button'
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Loader2, Mountain, Compass } from 'lucide-react';
+import { Loader2, Mountain, Compass, Mail, Lock, User } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setAuthUser } from '@/redux/authSlice';
 import ThemeToggle from './ThemeToggle';
@@ -64,16 +63,65 @@ const Signup = () => {
         }
     },[])
     return (
-        <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 px-4 sm:px-6 lg:px-8 transition-colors duration-200'>
+        <div className='min-h-screen overflow-y-auto flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 transition-colors duration-200'>
+            <style>{`
+                @keyframes rainbow-spin {
+                    0%   { background-position: 0% 50%; }
+                    50%  { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                .rainbow-border-anim {
+                    background: linear-gradient(270deg, #ff0000, #ff8800, #ffff00, #00cc00, #0088ff, #8800ff, #ff0088, #ff0000);
+                    background-size: 400% 400%;
+                    animation: rainbow-spin 8s linear infinite;
+                }
+                .signup-card {
+                    background: #ffffff;
+                }
+                .dark .signup-card {
+                    background: #374151;
+                }
+                .signup-input {
+                    background: #ffffff;
+                    color: #1f2937;
+                    border: 1.5px solid #e5e7eb;
+                }
+                .dark .signup-input {
+                    background: #4b5563;
+                    color: #f9fafb;
+                    border: 1.5px solid #6b7280;
+                }
+                .signup-input::placeholder { color: #9ca3af; }
+                .dark .signup-input::placeholder { color: #d1d5db; }
+                .signup-btn {
+                    background: linear-gradient(90deg, #ffffff, #fca5a5, #ef4444);
+                    border: 1.5px solid #fca5a5;
+                    color: #b91c1c;
+                    box-shadow: 0 4px 16px rgba(239,68,68,0.25);
+                }
+                .signup-btn:hover {
+                    box-shadow: 0 6px 24px rgba(239,68,68,0.45);
+                }
+                .dark .signup-btn {
+                    background: linear-gradient(90deg, #ffffff, #67e8f9, #06b6d4);
+                    border: 1.5px solid #67e8f9;
+                    color: #0e7490;
+                    box-shadow: 0 4px 16px rgba(6,182,212,0.25);
+                }
+                .dark .signup-btn:hover {
+                    box-shadow: 0 6px 24px rgba(6,182,212,0.5);
+                }
+            `}</style>
+
             {/* Theme Toggle */}
             <div className='absolute top-6 right-6'>
                 <ThemeToggle />
             </div>
-            
-            <div className='max-w-md w-full space-y-8'>
+
+            <div className='max-w-sm w-full space-y-5'>
                 <div className='text-center'>
                     <div className='flex items-center justify-center gap-4 mb-4'>
-                        {/* Enhanced Logo */}
+                        {/* Logo */}
                         <div className='relative'>
                             <div className='w-16 h-16 bg-gradient-to-br from-blue-500 via-green-500 to-orange-500 rounded-3xl flex items-center justify-center shadow-2xl rotate-12 hover:rotate-0 transition-all duration-500 group'>
                                 <div className='relative'>
@@ -81,14 +129,12 @@ const Signup = () => {
                                     <Compass className='absolute -top-1 -right-1 w-4 h-4 text-orange-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-spin' style={{ animationDuration: '3s' }} />
                                 </div>
                             </div>
-                            {/* Decorative elements */}
                             <div className='absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-green-400 to-blue-400 rounded-full opacity-60 blur-sm animate-pulse'></div>
                             <div className='absolute -bottom-2 -left-2 w-4 h-4 bg-gradient-to-br from-orange-400 to-yellow-400 rounded-full opacity-70 blur-sm'></div>
                         </div>
                         <div className='flex flex-col items-start'>
                             <h1 className='text-5xl font-bold bg-gradient-to-r from-blue-600 via-green-600 to-orange-600 bg-clip-text text-transparent'>TrekTales</h1>
                             <div className='flex items-center gap-2 mt-1'>
-                                <Mountain className='w-4 h-4 text-green-500' />
                                 <span className='text-sm font-medium text-gray-500 dark:text-gray-400'>Begin Your Journey</span>
                                 <div className='flex gap-1'>
                                     <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
@@ -98,13 +144,25 @@ const Signup = () => {
                             </div>
                         </div>
                     </div>
-                    <p className='text-lg text-gray-600 dark:text-gray-400'>🚀 Join adventurers and share your journey 🌟</p>
+                    <p className='text-lg text-gray-600 dark:text-gray-400'>Plan trips, connect with guides & document your travels</p>
                 </div>
-                
-                <form onSubmit={signupHandler} className='mt-8 space-y-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700'>
-                    <div className='space-y-4'>
+
+                {/* Rainbow animated border wrapper */}
+                <div className='rainbow-border-anim mt-6 rounded-2xl shadow-2xl' style={{ padding: '3px' }}>
+                <form onSubmit={signupHandler} className='signup-card rounded-2xl'>
+
+                    <div className='p-5 space-y-4'>
+
+                        {/* Card heading */}
+                        <div className='mb-2'>
+                            <h2 className='text-lg font-bold text-gray-800 dark:text-white tracking-wide'>Create Account</h2>
+                            <p className='text-xs text-gray-500 dark:text-gray-300 mt-0.5'>Start your adventure today</p>
+                        </div>
+
+                        {/* Username Field */}
                         <div>
-                            <label htmlFor="username" className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                            <label htmlFor="username" className='flex items-center gap-1.5 text-xs font-semibold mb-1.5 text-gray-700 dark:text-gray-200'>
+                                <User className='w-3 h-3 text-gray-500 dark:text-gray-300' />
                                 Username
                             </label>
                             <Input
@@ -114,12 +172,16 @@ const Signup = () => {
                                 value={input.username}
                                 onChange={changeEventHandler}
                                 placeholder="Choose a unique username"
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                                className="signup-input w-full px-3 py-2.5 focus:ring-2 focus:ring-cyan-300 focus:border-transparent transition-colors text-sm"
+                                style={{ borderRadius: '0px 8px 0px 8px' }}
                                 required
                             />
                         </div>
+
+                        {/* Email Field */}
                         <div>
-                            <label htmlFor="email" className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                            <label htmlFor="email" className='flex items-center gap-1.5 text-xs font-semibold mb-1.5 text-gray-700 dark:text-gray-200'>
+                                <Mail className='w-3 h-3 text-gray-500 dark:text-gray-300' />
                                 Email Address
                             </label>
                             <Input
@@ -129,12 +191,16 @@ const Signup = () => {
                                 value={input.email}
                                 onChange={changeEventHandler}
                                 placeholder="Enter your email"
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                                className="signup-input w-full px-3 py-2.5 focus:ring-2 focus:ring-cyan-300 focus:border-transparent transition-colors text-sm"
+                                style={{ borderRadius: '0px 8px 0px 8px' }}
                                 required
                             />
                         </div>
+
+                        {/* Password Field */}
                         <div>
-                            <label htmlFor="password" className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                            <label htmlFor="password" className='flex items-center gap-1.5 text-xs font-semibold mb-1.5 text-gray-700 dark:text-gray-200'>
+                                <Lock className='w-3 h-3 text-gray-500 dark:text-gray-300' />
                                 Password
                             </label>
                             <Input
@@ -144,34 +210,61 @@ const Signup = () => {
                                 value={input.password}
                                 onChange={changeEventHandler}
                                 placeholder="Create a strong password"
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                                className="signup-input w-full px-3 py-2.5 focus:ring-2 focus:ring-cyan-300 focus:border-transparent transition-colors text-sm"
+                                style={{ borderRadius: '0px 8px 0px 8px' }}
                                 required
                             />
                         </div>
-                    </div>
 
-                    <div className='pt-4'>
-                        {loading ? (
-                            <Button disabled className='w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center'>
-                                <Loader2 className='mr-2 h-5 w-5 animate-spin' />
-                                Creating account...
-                            </Button>
-                        ) : (
-                            <Button type='submit' className='w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors'>
-                                Create Account
-                            </Button>
-                        )}
-                    </div>
+                        {/* Sign Up Button */}
+                        <div className='pt-1'>
+                            {loading ? (
+                                <button
+                                    disabled
+                                    className='signup-btn w-full py-2.5 px-4 font-bold text-sm tracking-wide flex items-center justify-center transition-all duration-300'
+                                    style={{
+                                        borderRadius: '0px 10px 0px 10px',
+                                        opacity: 0.75,
+                                        cursor: 'not-allowed',
+                                    }}
+                                >
+                                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                    Creating account...
+                                </button>
+                            ) : (
+                                <button
+                                    type='submit'
+                                    className='signup-btn w-full py-2.5 px-4 font-bold text-sm tracking-wide transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]'
+                                    style={{
+                                        borderRadius: '0px 10px 0px 10px',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    Create Account
+                                </button>
+                            )}
+                        </div>
 
-                    <div className='text-center pt-4 border-t border-gray-200 dark:border-gray-700'>
-                        <span className='text-sm text-gray-600 dark:text-gray-400'>
-                            Already have an account?{' '}
-                            <Link to="/login" state={location.state} className='font-medium text-green-600 dark:text-green-400 hover:text-green-500 transition-colors'>
-                                Sign in here
-                            </Link>
-                        </span>
+                        {/* Divider */}
+                        <div className='flex items-center gap-3'>
+                            <div className='flex-1 h-px bg-gray-200 dark:bg-gray-600' />
+                            <span className='text-xs font-medium text-gray-400'>OR</span>
+                            <div className='flex-1 h-px bg-gray-200 dark:bg-gray-600' />
+                        </div>
+
+                        {/* Login Link */}
+                        <div className='text-center'>
+                            <span className='text-xs text-gray-500 dark:text-gray-300'>
+                                Already have an account?{' '}
+                                <Link to="/login" state={location.state} className='font-bold text-red-500 dark:text-cyan-400 hover:text-red-600 dark:hover:text-cyan-300 transition-colors hover:underline'>
+                                    Sign in here
+                                </Link>
+                            </span>
+                        </div>
+
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     )

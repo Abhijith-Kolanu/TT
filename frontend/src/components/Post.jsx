@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
 import { Bookmark, MessageCircle, MoreHorizontal, Send } from 'lucide-react'
 import { Button } from './ui/button'
 import { FaHeart, FaRegHeart, FaBookmark, FaRegBookmark } from "react-icons/fa";
@@ -11,11 +10,15 @@ import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { setPosts, setSelectedPost } from '@/redux/postSlice'
+import { setAuthUser } from '@/redux/authSlice'
 import { useNavigate } from 'react-router-dom'
 
 const Post = ({ post }) => {
     const [text, setText] = useState("");
     const [open, setOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef(null);
+    const btnRef = useRef(null);
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [likesModalOpen, setLikesModalOpen] = useState(false);
     const { user } = useSelector(store => store.auth);
@@ -23,13 +26,35 @@ const Post = ({ post }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Debug API URL
-    console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-
     const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
     const [postLike, setPostLike] = useState(post.likes.length);
     const [comment, setComment] = useState(post.comments);
     const [bookmarked, setBookmarked] = useState(user?.bookmarks?.includes(post._id) || false);
+
+    // Sync comment count whenever the post in Redux store is updated (e.g. from CommentDialog)
+    useEffect(() => {
+        const updated = posts.find(p => p._id === post._id);
+        if (updated) setComment(updated.comments);
+    }, [posts]);
+    const isOwnPost = post?.author?._id === user?._id;
+    const [isFollowing, setIsFollowing] = useState(user?.following?.includes(post?.author?._id) || false);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (
+                menuRef.current && !menuRef.current.contains(e.target) &&
+                btnRef.current && !btnRef.current.contains(e.target)
+            ) {
+                setMenuOpen(false);
+            }
+        };
+        if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [menuOpen]);
+
+    const openMenu = () => {
+        setMenuOpen(prev => !prev);
+    };
 
     // Helper function to get user initials
     const getUserInitials = (username) => {
@@ -141,6 +166,28 @@ const Post = ({ post }) => {
         navigate(`/profile/${post?.author?._id}`);
     }
 
+    const followHandler = async () => {
+        try {
+            const res = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/v1/user/followorunfollow/${post?.author?._id}`,
+                {},
+                { withCredentials: true }
+            );
+            if (res.data.success) {
+                const nowFollowing = !isFollowing;
+                setIsFollowing(nowFollowing);
+                // Update the auth user's following list in redux
+                const updatedFollowing = nowFollowing
+                    ? [...(user.following || []), post?.author?._id]
+                    : (user.following || []).filter(id => id !== post?.author?._id);
+                dispatch(setAuthUser({ ...user, following: updatedFollowing }));
+                toast.success(res.data.message);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Action failed');
+        }
+    };
+
     return (
         <div className='relative w-full max-w-lg mx-auto mb-8 group'>
             {/* Animated background with travel theme */}
@@ -197,37 +244,48 @@ const Post = ({ post }) => {
                                 </span>
                             </div>
                         </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <div className='w-10 h-10 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 backdrop-blur-sm shadow-lg'>
-                                    <MoreHorizontal className='w-5 h-5 text-gray-600 dark:text-gray-400' />
-                                </div>
-                            </DialogTrigger>
-                            <DialogContent className="adventure-card flex flex-col items-center text-sm text-center border-blue-200/30 dark:border-blue-700/30 max-w-sm">
-                                <div className='w-full space-y-2'>
-                                    {post?.author?._id !== user?._id && (
-                                        <Button variant='ghost' className="w-full justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded-xl">
-                                            Unfollow
-                                        </Button>
-                                    )}
-                                    <Button variant='ghost' className="w-full justify-center text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl">
-                                        Add to favorites
-                                    </Button>
-                                    {user && user?._id === post?.author._id && (
-                                        <Button onClick={deletePostHandler} variant='ghost' className="w-full justify-center text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl">
-                                            Delete
-                                        </Button>
-                                    )}
-                                </div>
-                            </DialogContent>
-                        </Dialog>
+                        {!isOwnPost && !isFollowing && (
+                            <button
+                                onClick={followHandler}
+                                className='px-3 py-1 text-xs font-semibold rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-200 shadow-sm'
+                            >
+                                Follow
+                            </button>
+                        )}
+                        {/* Inline action that appears left of 3-dots on click */}
+                        {menuOpen && !isOwnPost && isFollowing && (
+                            <button
+                                onClick={async () => { await followHandler(); setMenuOpen(false); }}
+                                className='px-3 py-1 text-xs font-semibold text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-red-300 dark:border-red-700 transition-colors duration-150'
+                            >
+                                Unfollow
+                            </button>
+                        )}
+                        {menuOpen && isOwnPost && (
+                            <button
+                                onClick={() => { deletePostHandler(); setMenuOpen(false); }}
+                                className='px-3 py-1 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 transition-colors duration-150'
+                            >
+                                Delete
+                            </button>
+                        )}
+                        {/* 3-dot button */}
+                        <div className='relative'>
+                            <div
+                                ref={btnRef}
+                                onClick={!isOwnPost && !isFollowing ? undefined : openMenu}
+                                className={`w-10 h-10 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm shadow-lg ${!isOwnPost && !isFollowing ? 'cursor-default' : 'cursor-pointer'}`}
+                            >
+                                <MoreHorizontal className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Image */}
-                <div className='relative z-10 mx-4 mb-4 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300'>
+                <div className='relative z-10 mx-4 mb-4 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300 bg-gray-100 dark:bg-gray-800'>
                     <img
-                        className='w-full aspect-square object-cover transition-all duration-700'
+                        className='w-full h-auto max-h-[600px] object-contain transition-all duration-700'
                         src={post.image}
                         alt="post_img"
                     />
@@ -340,23 +398,18 @@ const Post = ({ post }) => {
                         </div>
                     )}
 
-                    {/* Comment input */}
+                    {/* Comment input — opens the side panel */}
                     <div className='flex items-center gap-3 pt-4 border-t border-gray-200/50 dark:border-gray-700/50'>
                         <input
                             type="text"
                             placeholder='Add a comment...'
-                            value={text}
-                            onChange={changeEventHandler}
-                            className='flex-1 outline-none text-sm bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 py-2'
+                            readOnly
+                            onClick={() => {
+                                dispatch(setSelectedPost(post));
+                                setOpen(true);
+                            }}
+                            className='flex-1 outline-none text-sm bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 py-2 cursor-pointer'
                         />
-                        {text && (
-                            <button 
-                                onClick={commentHandler} 
-                                className='text-blue-500 text-sm font-medium hover:text-blue-600 transition-colors'
-                            >
-                                Post
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>

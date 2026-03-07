@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Loader2, Mountain, Compass } from 'lucide-react';
+import { Loader2, Mountain, Compass, Mail, Lock } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAuthUser } from '@/redux/authSlice';
 import ThemeToggle from './ThemeToggle';
@@ -58,19 +58,65 @@ const Login = () => {
     useEffect(()=>{
         if(user){
             navigate("/");
-        } else if (location.state?.message) {
-            // Show message if user was redirected here
-            toast.info(location.state.message);
         }
-    },[user, location.state])
+    },[user])
     return (
-        <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4 sm:px-6 lg:px-8 transition-colors duration-200'>
+        <div className='min-h-screen overflow-y-auto flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 transition-colors duration-200'>
+            <style>{`
+                @keyframes rainbow-spin {
+                    0%   { background-position: 0% 50%; }
+                    50%  { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                .rainbow-border-anim {
+                    background: linear-gradient(270deg, #ff0000, #ff8800, #ffff00, #00cc00, #0088ff, #8800ff, #ff0088, #ff0000);
+                    background-size: 400% 400%;
+                    animation: rainbow-spin 8s linear infinite;
+                }
+                .login-card {
+                    background: #ffffff;
+                }
+                .dark .login-card {
+                    background: #374151;
+                }
+                .login-input {
+                    background: #ffffff;
+                    color: #1f2937;
+                    border: 1.5px solid #e5e7eb;
+                }
+                .dark .login-input {
+                    background: #4b5563;
+                    color: #f9fafb;
+                    border: 1.5px solid #6b7280;
+                }
+                .login-input::placeholder { color: #9ca3af; }
+                .dark .login-input::placeholder { color: #d1d5db; }
+                .login-btn {
+                    background: linear-gradient(90deg, #ffffff, #fca5a5, #ef4444);
+                    border: 1.5px solid #fca5a5;
+                    color: #b91c1c;
+                    box-shadow: 0 4px 16px rgba(239,68,68,0.25);
+                }
+                .login-btn:hover {
+                    box-shadow: 0 6px 24px rgba(239,68,68,0.45);
+                }
+                .dark .login-btn {
+                    background: linear-gradient(90deg, #ffffff, #67e8f9, #06b6d4);
+                    border: 1.5px solid #67e8f9;
+                    color: #0e7490;
+                    box-shadow: 0 4px 16px rgba(6,182,212,0.25);
+                }
+                .dark .login-btn:hover {
+                    box-shadow: 0 6px 24px rgba(6,182,212,0.5);
+                }
+            `}</style>
+
             {/* Theme Toggle */}
             <div className='absolute top-6 right-6'>
                 <ThemeToggle />
             </div>
             
-            <div className='max-w-md w-full space-y-8'>
+            <div className='max-w-sm w-full space-y-5'>
                 <div className='text-center'>
                     <div className='flex items-center justify-center gap-4 mb-4'>
                         {/* Enhanced Logo */}
@@ -88,8 +134,7 @@ const Login = () => {
                         <div className='flex flex-col items-start'>
                             <h1 className='text-5xl font-bold bg-gradient-to-r from-blue-600 via-green-600 to-orange-600 bg-clip-text text-transparent'>TrekTales</h1>
                             <div className='flex items-center gap-2 mt-1'>
-                                <Mountain className='w-4 h-4 text-green-500' />
-                                <span className='text-sm font-medium text-gray-500 dark:text-gray-400'>Adventure Awaits</span>
+                                <span className='text-sm font-medium text-gray-500 dark:text-gray-400'>Your story continues</span>
                                 <div className='flex gap-1'>
                                     <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
                                     <div className='w-2 h-2 bg-orange-500 rounded-full animate-pulse delay-100'></div>
@@ -98,13 +143,25 @@ const Login = () => {
                             </div>
                         </div>
                     </div>
-                    <p className='text-lg text-gray-600 dark:text-gray-400'>🌍 Share your adventures & discover amazing travel stories 🏔️</p>
+                    <p className='text-lg text-gray-600 dark:text-gray-400'>Plan trips, track footsteps & share travel stories</p>
                 </div>
                 
-                <form onSubmit={signupHandler} className='mt-8 space-y-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700'>
-                    <div className='space-y-4'>
+                {/* Rainbow animated border wrapper */}
+                <div className='rainbow-border-anim mt-6 rounded-2xl shadow-2xl' style={{ padding: '3px' }}>
+                <form onSubmit={signupHandler} className='login-card rounded-2xl'>
+
+                    <div className='p-5 space-y-4'>
+
+                        {/* Card heading */}
+                        <div className='mb-2'>
+                            <h2 className='text-lg font-bold text-gray-800 dark:text-white tracking-wide'>Welcome Back</h2>
+                            <p className='text-xs text-gray-500 dark:text-gray-300 mt-0.5'>Sign in to continue your journey</p>
+                        </div>
+
+                        {/* Email Field */}
                         <div>
-                            <label htmlFor="email" className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                            <label htmlFor="email" className='flex items-center gap-1.5 text-xs font-semibold mb-1.5 text-gray-700 dark:text-gray-200'>
+                                <Mail className='w-3 h-3 text-gray-500 dark:text-gray-300' />
                                 Email Address
                             </label>
                             <Input
@@ -114,12 +171,16 @@ const Login = () => {
                                 value={input.email}
                                 onChange={changeEventHandler}
                                 placeholder="Enter your email"
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                                className="login-input w-full px-3 py-2.5 focus:ring-2 focus:ring-cyan-300 focus:border-transparent transition-colors text-sm"
+                                style={{ borderRadius: '0px 8px 0px 8px' }}
                                 required
                             />
                         </div>
+
+                        {/* Password Field */}
                         <div>
-                            <label htmlFor="password" className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                            <label htmlFor="password" className='flex items-center gap-1.5 text-xs font-semibold mb-1.5 text-gray-700 dark:text-gray-200'>
+                                <Lock className='w-3 h-3 text-gray-500 dark:text-gray-300' />
                                 Password
                             </label>
                             <Input
@@ -129,34 +190,61 @@ const Login = () => {
                                 value={input.password}
                                 onChange={changeEventHandler}
                                 placeholder="Enter your password"
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                                className="login-input w-full px-3 py-2.5 focus:ring-2 focus:ring-cyan-300 focus:border-transparent transition-colors text-sm"
+                                style={{ borderRadius: '0px 8px 0px 8px' }}
                                 required
                             />
                         </div>
-                    </div>
 
-                    <div className='pt-4'>
-                        {loading ? (
-                            <Button disabled className='w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center'>
-                                <Loader2 className='mr-2 h-5 w-5 animate-spin' />
-                                Signing in...
-                            </Button>
-                        ) : (
-                            <Button type='submit' className='w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors'>
-                                Sign In
-                            </Button>
-                        )}
-                    </div>
+                        {/* Login Button */}
+                        <div className='pt-1'>
+                            {loading ? (
+                                <button
+                                    disabled
+                                    className='login-btn w-full py-2.5 px-4 font-bold text-sm tracking-wide flex items-center justify-center transition-all duration-300'
+                                    style={{
+                                        borderRadius: '0px 10px 0px 10px',
+                                        opacity: 0.75,
+                                        cursor: 'not-allowed',
+                                    }}
+                                >
+                                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                    Signing in...
+                                </button>
+                            ) : (
+                                <button
+                                    type='submit'
+                                    className='login-btn w-full py-2.5 px-4 font-bold text-sm tracking-wide transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]'
+                                    style={{
+                                        borderRadius: '0px 10px 0px 10px',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    Sign In
+                                </button>
+                            )}
+                        </div>
 
-                    <div className='text-center pt-4 border-t border-gray-200 dark:border-gray-700'>
-                        <span className='text-sm text-gray-600 dark:text-gray-400'>
-                            Don't have an account?{' '}
-                            <Link to="/signup" state={location.state} className='font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors'>
-                                Create one now
-                            </Link>
-                        </span>
+                        {/* Divider */}
+                        <div className='flex items-center gap-3'>
+                            <div className='flex-1 h-px bg-gray-200 dark:bg-gray-600' />
+                            <span className='text-xs font-medium text-gray-400 dark:text-gray-400'>OR</span>
+                            <div className='flex-1 h-px bg-gray-200 dark:bg-gray-600' />
+                        </div>
+
+                        {/* Sign Up Link */}
+                        <div className='text-center'>
+                            <span className='text-xs text-gray-500 dark:text-gray-300'>
+                                Don't have an account?{' '}
+                                <Link to="/signup" state={location.state} className='font-bold text-red-500 dark:text-cyan-400 hover:text-red-600 dark:hover:text-cyan-300 transition-colors hover:underline'>
+                                    Create one now
+                                </Link>
+                            </span>
+                        </div>
+
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     )

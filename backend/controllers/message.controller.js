@@ -1,6 +1,7 @@
 import {Conversation} from "../models/conversation.model.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
 import {Message} from "../models/message.model.js"
+import User from "../models/user.model.js";
 // for chatting
 export const sendMessage = async (req,res) => {
     try {
@@ -96,6 +97,53 @@ export const getMessage = async (req,res) => {
         return res.status(500).json({
             success: false,
             message: "Failed to get messages"
+        });
+    }
+}
+
+// Delete conversation with a specific user
+export const deleteChat = async (req, res) => {
+    try {
+        const currentUserId = req.user._id;
+        const otherUserId = req.params.id;
+
+        console.log('deleteChat called - currentUser:', currentUserId, 'otherUser:', otherUserId);
+
+        // Find the conversation between the two users
+        const conversation = await Conversation.findOne({
+            participants: { $all: [currentUserId, otherUserId] }
+        });
+
+        if (conversation) {
+            console.log('Found conversation:', conversation._id, 'with', conversation.messages.length, 'messages');
+
+            // Delete all messages in the conversation
+            if (conversation.messages && conversation.messages.length > 0) {
+                await Message.deleteMany({ _id: { $in: conversation.messages } });
+                console.log('Deleted messages');
+            }
+
+            // Delete the conversation
+            await Conversation.findByIdAndDelete(conversation._id);
+            console.log('Deleted conversation');
+        }
+
+        // Add otherUserId to current user's deletedChats array (so they won't appear in suggested users)
+        await User.findByIdAndUpdate(currentUserId, {
+            $addToSet: { deletedChats: otherUserId }
+        });
+        console.log('Added to deletedChats');
+
+        return res.status(200).json({
+            success: true,
+            message: "Chat deleted successfully"
+        });
+
+    } catch (error) {
+        console.error('deleteChat error:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to delete chat"
         });
     }
 }

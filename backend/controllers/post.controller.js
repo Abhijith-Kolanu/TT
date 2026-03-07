@@ -81,27 +81,36 @@ export const addNewPost = async (req, res) => {
 
 export const getAllPost = async (req, res) => {
     try {
-        const posts = await Post.find().sort({ createdAt: -1 })
-            .select('+createdAt +updatedAt') // Explicitly include timestamps
-            .populate({ path: 'author', select: 'username profilePicture' })
-            .populate({
+        const loggedInUserId = req.user._id;
+        const loggedInUser = await User.findById(loggedInUserId);
+
+        const populateOptions = [
+            { path: 'author', select: 'username profilePicture' },
+            {
                 path: 'comments',
-                sort: { createdAt: -1 },
-                populate: {
-                    path: 'author',
-                    select: 'username profilePicture'
-                }
-            });
-        
-        // Debug log to see what we're getting
-        console.log('Sample post timestamp data:', {
-            hasCreatedAt: posts[0]?.createdAt ? true : false,
-            createdAt: posts[0]?.createdAt,
-            postId: posts[0]?._id
-        });
-        
+                options: { sort: { createdAt: -1 } },
+                populate: { path: 'author', select: 'username profilePicture' }
+            }
+        ];
+
+        // Posts from followed users first
+        const followingIds = loggedInUser?.following || [];
+        const followedPosts = await Post.find({ author: { $in: followingIds } })
+            .sort({ createdAt: -1 })
+            .populate(populateOptions[0])
+            .populate(populateOptions[1]);
+
+        // Discover: posts NOT from followed users and NOT own posts
+        const discoverPosts = await Post.find({ author: { $nin: [...followingIds, loggedInUserId] } })
+            .sort({ createdAt: -1 })
+            .populate(populateOptions[0])
+            .populate(populateOptions[1]);
+
+        const posts = [...followedPosts, ...discoverPosts];
+
         return res.status(200).json({
             posts,
+            followingEndIndex: followedPosts.length,
             success: true
         });
     } catch (error) {

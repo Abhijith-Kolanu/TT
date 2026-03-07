@@ -14,7 +14,6 @@ import { setSocket } from './redux/socketSlice';
 import { setOnlineUsers, addNewMessage } from './redux/chatSlice';
 import { setLikeNotification } from './redux/rtnSlice';
 import ProtectedRoutes from './components/ProtectedRoutes';
-import ExplorePage from './components/ExplorePage';
 import Footsteps from './components/Footsteps';
 import NotificationPage from './components/NotificationPage';
 import TripPlanner from './components/TripPlanner';
@@ -39,10 +38,6 @@ const browserRouter = createBrowserRouter([
       {
         path: '/',
         element: <Home />
-      },
-      {
-        path: '/explore',
-        element: <ExplorePage />
       },
       {
         path: '/profile/:id',

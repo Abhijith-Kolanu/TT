@@ -82,36 +82,36 @@ const TEMPLATES = [
   {
     id: 'sunset',
     name: 'Sunset Journey',
-    background: 'travel-gradient-sunset',
-    accent: 'border-pink-300',
+    background: 'travel-gradient-sunset dark:bg-gradient-to-br dark:from-gray-800 dark:via-orange-900/30 dark:to-pink-900/30',
+    accent: 'border-pink-300 dark:border-pink-700',
     description: 'Perfect for romantic destinations'
   },
   {
     id: 'ocean',
     name: 'Ocean Adventure',
-    background: 'travel-gradient-ocean',
-    accent: 'border-blue-300',
+    background: 'travel-gradient-ocean dark:bg-gradient-to-br dark:from-gray-800 dark:via-blue-900/30 dark:to-cyan-900/30',
+    accent: 'border-blue-300 dark:border-blue-700',
     description: 'For beach and coastal trips'
   },
   {
     id: 'forest',
     name: 'Forest Escape',
-    background: 'travel-gradient-forest',
-    accent: 'border-green-300',
+    background: 'travel-gradient-forest dark:bg-gradient-to-br dark:from-gray-800 dark:via-green-900/30 dark:to-emerald-900/30',
+    accent: 'border-green-300 dark:border-green-700',
     description: 'Nature and wildlife journeys'
   },
   {
     id: 'mountain',
     name: 'Mountain Peak',
-    background: 'travel-gradient-mountain',
-    accent: 'border-cyan-300',
+    background: 'travel-gradient-mountain dark:bg-gradient-to-br dark:from-gray-800 dark:via-slate-900/30 dark:to-cyan-900/30',
+    accent: 'border-cyan-300 dark:border-cyan-700',
     description: 'High altitude adventures'
   },
   {
     id: 'vintage',
     name: 'Vintage Explorer',
-    background: 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50',
-    accent: 'border-amber-300',
+    background: 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-800 dark:via-amber-900/30 dark:to-yellow-900/30',
+    accent: 'border-amber-300 dark:border-amber-700',
     description: 'Classic travel memories'
   }
 ];
@@ -753,7 +753,7 @@ const Scrapbook = () => {
                 }}
                 variant="outline"
                 size="sm"
-                className="justify-start hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+                className="justify-start text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-200"
               >
                 <Type className="w-4 h-4 mr-2" />
                 Add Text
@@ -766,7 +766,7 @@ const Scrapbook = () => {
                 }}
                 variant="outline"
                 size="sm"
-                className="justify-start hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200"
+                className="justify-start text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-300 dark:hover:border-yellow-500 transition-all duration-200"
               >
                 <Smile className="w-4 h-4 mr-2" />
                 Stickers
@@ -779,7 +779,7 @@ const Scrapbook = () => {
                 }}
                 variant="outline"
                 size="sm"
-                className="justify-start hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                className="justify-start text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-500 transition-all duration-200"
               >
                 <Palette className="w-4 h-4 mr-2" />
                 Templates
@@ -814,7 +814,7 @@ const Scrapbook = () => {
               disabled={currentPageIndex === 0 || isFlipping}
               variant="outline"
               size="sm"
-              className="group hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+              className="group text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200"
             >
               <ChevronLeft className="w-4 h-4 group-hover:translate-x-[-2px] transition-transform duration-200" />
               Previous
@@ -838,7 +838,7 @@ const Scrapbook = () => {
               disabled={currentPageIndex === pages.length - 1 || isFlipping}
               variant="outline"
               size="sm"
-              className="group hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+              className="group text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200"
             >
               Next
               <ChevronRight className="w-4 h-4 group-hover:translate-x-[2px] transition-transform duration-200" />
@@ -848,7 +848,7 @@ const Scrapbook = () => {
               onClick={addNewPage}
               variant="outline"
               size="sm"
-              className="ml-4 hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+              className="ml-4 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-500 transition-all duration-200"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Page
@@ -969,9 +969,9 @@ const Scrapbook = () => {
                         onDoubleClick={() => startEditing(item)}
                       >
                         <p 
+                          className="text-gray-800 dark:text-gray-200"
                           style={{
                             fontSize: item.style?.fontSize || '16px',
-                            color: item.style?.color || '#2d3748',
                             fontFamily: item.style?.fontFamily || 'sans-serif',
                             wordWrap: 'break-word',
                             width: '100%'
@@ -1115,7 +1115,7 @@ const Scrapbook = () => {
                       <Button
                         onClick={() => fileInputRef.current?.click()}
                         variant="outline"
-                        className="h-20 flex-col gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 hover:scale-105"
+                        className="h-20 flex-col gap-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-300 hover:scale-105"
                       >
                         <Upload className="w-6 h-6 text-blue-500" />
                         <span className="text-xs font-medium">Upload Photos</span>
@@ -1133,7 +1133,7 @@ const Scrapbook = () => {
                       <Button
                         onClick={addTextItem}
                         variant="outline"
-                        className="h-20 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 hover:scale-105"
+                        className="h-20 flex-col gap-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-300 hover:scale-105"
                       >
                         <Type className="w-6 h-6 text-purple-500" />
                         <span className="text-xs font-medium">Add Text</span>
@@ -1142,7 +1142,7 @@ const Scrapbook = () => {
                       <Button
                         onClick={() => setShowStickers(true)}
                         variant="outline"
-                        className="h-20 flex-col gap-2 hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-300 hover:scale-105"
+                        className="h-20 flex-col gap-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-300 dark:hover:border-yellow-500 transition-all duration-300 hover:scale-105"
                       >
                         <Smile className="w-6 h-6 text-yellow-500" />
                         <span className="text-xs font-medium">Add Stickers</span>
@@ -1196,7 +1196,7 @@ const Scrapbook = () => {
               onClick={() => fileInputRef.current?.click()}
               variant="outline"
               size="sm"
-              className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 shrink-0"
+              className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 shrink-0"
             >
               <Upload className="w-4 h-4" />
             </Button>
@@ -1212,7 +1212,7 @@ const Scrapbook = () => {
               onClick={addTextItem}
               variant="outline"
               size="sm"
-              className="hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 shrink-0"
+              className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-200 shrink-0"
             >
               <Type className="w-4 h-4" />
             </Button>
@@ -1220,7 +1220,7 @@ const Scrapbook = () => {
               onClick={() => setShowStickers(true)}
               variant="outline"
               size="sm"
-              className="hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200 shrink-0"
+              className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-300 dark:hover:border-yellow-500 transition-all duration-200 shrink-0"
             >
               <Smile className="w-4 h-4" />
             </Button>
@@ -1228,7 +1228,7 @@ const Scrapbook = () => {
               onClick={() => setShowTemplates(true)}
               variant="outline"
               size="sm"
-              className="hover:bg-green-50 hover:border-green-300 transition-all duration-200 shrink-0"
+              className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-500 transition-all duration-200 shrink-0"
             >
               <Palette className="w-4 h-4" />
             </Button>
@@ -1323,7 +1323,7 @@ const Scrapbook = () => {
                   onClick={() => setSelectedStickerCategory(category)}
                   variant={selectedStickerCategory === category ? "default" : "outline"}
                   size="sm"
-                  className="capitalize"
+                  className={`capitalize ${selectedStickerCategory !== category ? 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600' : ''}`}
                 >
                   {category}
                 </Button>
@@ -1371,8 +1371,8 @@ const Scrapbook = () => {
                     currentPage.template === template.id ? 'ring-2 ring-orange-500' : ''
                   }`}
                 >
-                  <div className="h-20 rounded mb-2 border border-gray-200 dark:border-gray-600"></div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white">{template.name}</h4>
+                  <div className="h-20 rounded mb-2 border border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50"></div>
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100">{template.name}</h4>
                   <p className="text-xs text-gray-600 dark:text-gray-400">{template.description}</p>
                 </div>
               ))}

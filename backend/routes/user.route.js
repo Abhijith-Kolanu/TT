@@ -11,7 +11,8 @@ import {
     searchUsers,
     getFollowersFollowing,
     getCurrentUser,
-    removeProfilePicture
+    removeProfilePicture,
+    deleteAccount
 } from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import upload from "../middlewares/multer.js";
@@ -24,6 +25,7 @@ router.route('/logout').get(logout);
 router.route('/me').get(isAuthenticated, getCurrentUser);
 router.route('/profile/edit').post(isAuthenticated, upload.single('profilePhoto'), editProfile);
 router.route('/profile/remove-picture').delete(isAuthenticated, removeProfilePicture);
+router.route('/delete-account').post(isAuthenticated, deleteAccount);
 router.route('/suggested').get(isAuthenticated, getSuggestedUsers);
 router.route('/followorunfollow/:id').post(isAuthenticated, followOrUnfollow);
 router.route('/:id/profile').get(isAuthenticated, getProfile);

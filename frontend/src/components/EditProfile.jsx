@@ -5,9 +5,10 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import axios from 'axios';
-import { Loader2, Camera, Trash2, ZoomIn, RotateCw, X, Check, ArrowLeft } from 'lucide-react';
+import { Loader2, Camera, Trash2, ZoomIn, RotateCw, X, Check, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { setAuthUser } from '@/redux/authSlice';
@@ -19,6 +20,9 @@ const EditProfile = () => {
     const { user } = useSelector(store => store.auth);
     const [loading, setLoading] = useState(false);
     const [removeLoading, setRemoveLoading] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [input, setInput] = useState({
         profilePhoto: user?.profilePicture,
         bio: user?.bio,
@@ -197,6 +201,34 @@ const EditProfile = () => {
         }
     };
 
+    // Delete account handler
+    const deleteAccountHandler = async () => {
+        if (!deletePassword) {
+            toast.error('Please enter your password to confirm');
+            return;
+        }
+        try {
+            setDeleteLoading(true);
+            const res = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/v1/user/delete-account`,
+                { password: deletePassword },
+                { withCredentials: true }
+            );
+            if (res.data.success) {
+                dispatch(setAuthUser(null));
+                navigate('/login');
+                toast.success('Account deleted successfully');
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error(error?.response?.data?.message || 'Failed to delete account');
+        } finally {
+            setDeleteLoading(false);
+            setDeleteDialogOpen(false);
+            setDeletePassword('');
+        }
+    };
+
     // Get the preview URL for the avatar
     const getPreviewUrl = () => {
         if (input.profilePhoto instanceof File) {
@@ -351,7 +383,95 @@ const EditProfile = () => {
                         </Button>
                     )}
                 </div>
+
+                {/* Danger Zone - Delete Account */}
+                <div className='mt-8 p-4 border-2 border-red-200 dark:border-red-900 rounded-xl bg-red-50 dark:bg-red-950/30'>
+                    <div className='flex items-center gap-2 mb-2'>
+                        <AlertTriangle className='w-5 h-5 text-red-600 dark:text-red-400' />
+                        <h2 className='font-bold text-lg text-red-600 dark:text-red-400'>Danger Zone</h2>
+                    </div>
+                    <p className='text-sm text-red-600/80 dark:text-red-400/80 mb-4'>
+                        Once you delete your account, there is no going back. Please be certain.
+                    </p>
+                    <Button 
+                        variant='outline'
+                        onClick={() => setDeleteDialogOpen(true)}
+                        className='border-red-500 text-red-600 hover:bg-red-100 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/30'
+                    >
+                        <Trash2 className='w-4 h-4 mr-2' />
+                        Delete Account
+                    </Button>
+                </div>
             </section>
+
+            {/* Delete Account Confirmation Dialog */}
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent className='max-w-md bg-white dark:bg-gray-900'>
+                    <DialogHeader>
+                        <DialogTitle className='text-red-600 dark:text-red-400 flex items-center gap-2'>
+                            <AlertTriangle className='w-5 h-5' />
+                            Delete Account
+                        </DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className='space-y-4 py-4'>
+                        <div className='p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800'>
+                            <p className='text-sm text-red-700 dark:text-red-300'>
+                                <strong>Warning:</strong> This action is irreversible. All your data will be permanently deleted including:
+                            </p>
+                            <ul className='text-sm text-red-600 dark:text-red-400 mt-2 ml-4 list-disc'>
+                                <li>Your posts and comments</li>
+                                <li>Your journals and trips</li>
+                                <li>Your messages and conversations</li>
+                                <li>Your followers and following</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                                Enter your password to confirm
+                            </label>
+                            <Input
+                                type='password'
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                placeholder='Enter your password'
+                                className='bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white'
+                            />
+                        </div>
+                    </div>
+
+                    <div className='flex justify-end gap-3'>
+                        <Button 
+                            variant='outline'
+                            onClick={() => {
+                                setDeleteDialogOpen(false);
+                                setDeletePassword('');
+                            }}
+                            className='border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200'
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={deleteAccountHandler}
+                            disabled={deleteLoading || !deletePassword}
+                            className='bg-red-600 hover:bg-red-700 text-white'
+                        >
+                            {deleteLoading ? (
+                                <>
+                                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                                    Deleting...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className='w-4 h-4 mr-2' />
+                                    Delete My Account
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Image Cropper Dialog */}
             <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>

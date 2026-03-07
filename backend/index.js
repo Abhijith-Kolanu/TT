@@ -79,6 +79,9 @@ app.use("/api/v1/notification", notificationRoute);
 app.use("/api/v1/guide", guideRoute);
 app.use("/api/v1/booking", bookingRoute);
 
+// Handle preflight OPTIONS requests for all API routes
+app.options("/api/*", cors(corsOptions));
+
 // Journal routes (added directly due to import issues)
 app.get("/api/v1/journal/test", (req, res) => {
     res.json({ message: "Journal API is working!", success: true });
