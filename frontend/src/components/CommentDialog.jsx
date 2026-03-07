@@ -1,13 +1,14 @@
 ﻿import React, { useEffect, useState, useRef } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Link } from 'react-router-dom'
-import { X, Send } from 'lucide-react'
+import { X, Send, Smile } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import Comment from './Comment'
 import axios from 'axios'
 import { toast } from 'sonner'
 import { setPosts } from '@/redux/postSlice'
 import { getUserInitials } from '@/lib/utils'
+import EmojiPicker from 'emoji-picker-react'
 
 const CommentDialog = ({ open, setOpen }) => {
   const [text, setText] = useState("");
@@ -15,6 +16,23 @@ const CommentDialog = ({ open, setOpen }) => {
   const [comment, setComment] = useState([]);
   const dispatch = useDispatch();
   const commentsEndRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef(null);
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    if (showEmojiPicker) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showEmojiPicker]);
+
+  const onEmojiClick = (emojiData) => {
+    setText(prev => prev + emojiData.emoji);
+  };
 
   useEffect(() => {
     if (selectedPost) {
@@ -48,6 +66,7 @@ const CommentDialog = ({ open, setOpen }) => {
           p._id === selectedPost._id ? { ...p, comments: updatedComments } : p
         )));
         setText("");
+        setShowEmojiPicker(false);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to add comment');
@@ -140,13 +159,34 @@ const CommentDialog = ({ open, setOpen }) => {
         </div>
 
         <div className='flex-shrink-0 border-t border-gray-200 dark:border-gray-700 px-4 py-3'>
+          {/* Emoji Picker */}
+          {showEmojiPicker && (
+            <div ref={emojiPickerRef} className='absolute bottom-16 right-4 z-50'>
+              <EmojiPicker
+                onEmojiClick={onEmojiClick}
+                theme='auto'
+                width={300}
+                height={380}
+                searchDisabled={false}
+                skinTonesDisabled
+                previewConfig={{ showPreview: false }}
+              />
+            </div>
+          )}
           <div className='flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-2'>
+            <button
+              type='button'
+              onClick={() => setShowEmojiPicker(p => !p)}
+              className='flex-shrink-0 text-gray-400 dark:text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors'
+            >
+              <Smile size={18} />
+            </button>
             <input
               type='text'
               value={text}
               onChange={changeEventHandler}
               onKeyDown={handleKeyDown}
-              placeholder='Add a comment'
+              placeholder='Add a comment…'
               className='flex-1 bg-transparent outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500'
             />
             {text.trim() && (
