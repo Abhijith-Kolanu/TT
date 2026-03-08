@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import TripDebugger from './TripDebugger';
 import { 
     MapPin, 
     Calendar, 
@@ -548,9 +547,6 @@ const TripDetailView = () => {
                         </Button>
                     </div>
                 </div>
-
-                {/* Debug Component - Remove in production */}
-                <TripDebugger tripId={tripId} />
 
                 {/* Tabs */}
                 <div className="border-b border-gray-200 dark:border-gray-700">

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { MapPin, Calendar, Users, DollarSign, Heart, Globe } from 'lucide-react';
+import { MapPin, Calendar, Users, DollarSign, Heart, Globe, Plus, Minus, Plane, Zap, Feather } from 'lucide-react';
 
 const CreateTripDialog = ({ open, onClose, onSubmit }) => {
     const [formData, setFormData] = useState({
@@ -34,8 +34,36 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
     const [errors, setErrors] = useState({});
 
     const interests = [
-        'culture', 'history', 'food', 'adventure', 'relaxation', 
-        'shopping', 'nightlife', 'nature', 'art', 'museums'
+        { id: 'culture',     label: 'Culture',     emoji: '🏛️' },
+        { id: 'history',     label: 'History',     emoji: '📜' },
+        { id: 'food',        label: 'Food',        emoji: '🍜' },
+        { id: 'adventure',   label: 'Adventure',   emoji: '🧗' },
+        { id: 'relaxation',  label: 'Relaxation',  emoji: '🧘' },
+        { id: 'shopping',    label: 'Shopping',    emoji: '🛍️' },
+        { id: 'nightlife',   label: 'Nightlife',   emoji: '🎉' },
+        { id: 'nature',      label: 'Nature',      emoji: '🌿' },
+        { id: 'art',         label: 'Art',         emoji: '🎨' },
+        { id: 'museums',     label: 'Museums',     emoji: '🗿' },
+    ];
+
+    const budgetOptions = [
+        { id: 'budget',    label: 'Budget',    sub: 'Economical',  emoji: '💰' },
+        { id: 'mid-range', label: 'Mid-Range', sub: 'Balanced',    emoji: '💳' },
+        { id: 'luxury',    label: 'Luxury',    sub: 'Premium',     emoji: '💎' },
+    ];
+
+    const travelStyleOptions = [
+        { id: 'solo',     label: 'Solo',     emoji: '🧍' },
+        { id: 'couple',   label: 'Couple',   emoji: '💑' },
+        { id: 'family',   label: 'Family',   emoji: '👨‍👩‍👧' },
+        { id: 'friends',  label: 'Friends',  emoji: '👯' },
+        { id: 'business', label: 'Business', emoji: '💼' },
+    ];
+
+    const paceOptions = [
+        { id: 'relaxed',  label: 'Relaxed',  sub: 'Plenty of downtime',    emoji: '🌅' },
+        { id: 'moderate', label: 'Moderate', sub: 'Balanced schedule',     emoji: '⚖️' },
+        { id: 'packed',   label: 'Packed',   sub: 'See everything',        emoji: '⚡' },
     ];
 
     const handleInputChange = (field, value) => {
@@ -200,268 +228,308 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-xl text-gray-900 dark:text-white">
-                        <MapPin className="text-blue-600" />
-                        Plan Your Dream Trip
-                    </DialogTitle>
-                </DialogHeader>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Trip Title */}
-                    <div>
-                        <Label htmlFor="title" className="text-gray-900 dark:text-white">Trip Title</Label>
-                        <Input
-                            id="title"
-                            placeholder="e.g., Summer Vacation in Paris"
-                            value={formData.title}
-                            onChange={(e) => handleInputChange('title', e.target.value)}
-                            className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 ${errors.title ? 'border-red-500' : ''}`}
-                        />
-                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-                    </div>
-
-                    {/* Destination */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="city" className="text-gray-900 dark:text-white">Destination City</Label>
-                            <Input
-                                id="city"
-                                placeholder="e.g., Paris"
-                                value={formData.destination.city}
-                                onChange={(e) => handleNestedInputChange('destination', 'city', e.target.value)}
-                                className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 ${errors['destination.city'] ? 'border-red-500' : ''}`}
-                            />
-                            {errors['destination.city'] && (
-                                <p className="text-red-500 text-sm mt-1">{errors['destination.city']}</p>
-                            )}
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-2xl">
+                
+                {/* Gradient Header */}
+                <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 px-6 py-6 rounded-t-2xl">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/20 p-2.5 rounded-xl">
+                            <Plane className="text-white" size={22} />
                         </div>
                         <div>
-                            <Label htmlFor="country" className="text-gray-900 dark:text-white">Country</Label>
-                            <Input
-                                id="country"
-                                placeholder="e.g., France"
-                                value={formData.destination.country}
-                                onChange={(e) => handleNestedInputChange('destination', 'country', e.target.value)}
-                                className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 ${errors['destination.country'] ? 'border-red-500' : ''}`}
-                            />
-                            {errors['destination.country'] && (
-                                <p className="text-red-500 text-sm mt-1">{errors['destination.country']}</p>
-                            )}
+                            <h2 className="text-xl font-bold text-white">Plan Your Dream Trip</h2>
+                            <p className="text-blue-100 text-sm mt-0.5">Tell us about your trip and we'll craft the perfect itinerary</p>
                         </div>
                     </div>
+                </div>
 
-                    {/* Dates */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="startDate" className="flex items-center gap-2 text-gray-900 dark:text-white">
-                                <Calendar size={16} />
-                                Start Date
-                            </Label>
-                            <Input
-                                id="startDate"
-                                type="date"
-                                value={formData.dates.startDate}
-                                onChange={(e) => handleNestedInputChange('dates', 'startDate', e.target.value)}
-                                className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 ${errors['dates.startDate'] ? 'border-red-500' : ''}`}
-                            />
-                            {errors['dates.startDate'] && (
-                                <p className="text-red-500 text-sm mt-1">{errors['dates.startDate']}</p>
-                            )}
-                        </div>
-                        <div>
-                            <Label htmlFor="endDate" className="flex items-center gap-2 text-gray-900 dark:text-white">
-                                <Calendar size={16} />
-                                End Date
-                            </Label>
-                            <Input
-                                id="endDate"
-                                type="date"
-                                value={formData.dates.endDate}
-                                onChange={(e) => handleNestedInputChange('dates', 'endDate', e.target.value)}
-                                className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 ${errors['dates.endDate'] ? 'border-red-500' : ''}`}
-                            />
-                            {errors['dates.endDate'] && (
-                                <p className="text-red-500 text-sm mt-1">{errors['dates.endDate']}</p>
-                            )}
-                        </div>
-                    </div>
+                <form onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
 
-                    {/* Travelers */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* ── Section: Basic Info ─────────────────────────── */}
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Trip Details</h3>
+
+                        {/* Trip Title */}
                         <div>
-                            <Label htmlFor="adults" className="flex items-center gap-2 text-gray-900 dark:text-white">
-                                <Users size={16} />
-                                Adults
-                            </Label>
+                            <Label htmlFor="title" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Trip Title</Label>
                             <Input
-                                id="adults"
-                                type="number"
-                                min="1"
-                                value={formData.travelers.adults}
-                                onChange={(e) => handleNestedInputChange('travelers', 'adults', parseInt(e.target.value))}
-                                className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 ${errors['travelers.adults'] ? 'border-red-500' : ''}`}
+                                id="title"
+                                placeholder="e.g., Summer Vacation in Paris"
+                                value={formData.title}
+                                onChange={(e) => handleInputChange('title', e.target.value)}
+                                className={`h-11 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:border-blue-500 focus:ring-blue-500 ${errors.title ? 'border-red-500' : ''}`}
                             />
-                            {errors['travelers.adults'] && (
-                                <p className="text-red-500 text-sm mt-1">{errors['travelers.adults']}</p>
-                            )}
+                            {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
                         </div>
-                        <div>
-                            <Label htmlFor="children" className="text-gray-900 dark:text-white">Children</Label>
-                            <Input
-                                id="children"
-                                type="number"
-                                min="0"
-                                value={formData.travelers.children}
-                                onChange={(e) => handleNestedInputChange('travelers', 'children', parseInt(e.target.value))}
-                                className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
-                            />
+
+                        {/* Destination */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label htmlFor="city" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                                    <MapPin size={13} className="text-blue-500" /> City
+                                </Label>
+                                <Input
+                                    id="city"
+                                    placeholder="e.g., Paris"
+                                    value={formData.destination.city}
+                                    onChange={(e) => handleNestedInputChange('destination', 'city', e.target.value)}
+                                    className={`h-11 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 placeholder-gray-400 rounded-xl ${errors['destination.city'] ? 'border-red-500' : ''}`}
+                                />
+                                {errors['destination.city'] && <p className="text-red-500 text-xs mt-1">{errors['destination.city']}</p>}
+                            </div>
+                            <div>
+                                <Label htmlFor="country" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                                    <Globe size={13} className="text-blue-500" /> Country
+                                </Label>
+                                <Input
+                                    id="country"
+                                    placeholder="e.g., France"
+                                    value={formData.destination.country}
+                                    onChange={(e) => handleNestedInputChange('destination', 'country', e.target.value)}
+                                    className={`h-11 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 placeholder-gray-400 rounded-xl ${errors['destination.country'] ? 'border-red-500' : ''}`}
+                                />
+                                {errors['destination.country'] && <p className="text-red-500 text-xs mt-1">{errors['destination.country']}</p>}
+                            </div>
+                        </div>
+
+                        {/* Dates */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label htmlFor="startDate" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                                    <Calendar size={13} className="text-blue-500" /> Start Date
+                                </Label>
+                                <Input
+                                    id="startDate"
+                                    type="date"
+                                    value={formData.dates.startDate}
+                                    onChange={(e) => handleNestedInputChange('dates', 'startDate', e.target.value)}
+                                    className={`h-11 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-xl ${errors['dates.startDate'] ? 'border-red-500' : ''}`}
+                                />
+                                {errors['dates.startDate'] && <p className="text-red-500 text-xs mt-1">{errors['dates.startDate']}</p>}
+                            </div>
+                            <div>
+                                <Label htmlFor="endDate" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                                    <Calendar size={13} className="text-blue-500" /> End Date
+                                </Label>
+                                <Input
+                                    id="endDate"
+                                    type="date"
+                                    value={formData.dates.endDate}
+                                    onChange={(e) => handleNestedInputChange('dates', 'endDate', e.target.value)}
+                                    className={`h-11 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-xl ${errors['dates.endDate'] ? 'border-red-500' : ''}`}
+                                />
+                                {errors['dates.endDate'] && <p className="text-red-500 text-xs mt-1">{errors['dates.endDate']}</p>}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Budget Type */}
-                    <div>
-                        <Label className="flex items-center gap-2 text-gray-900 dark:text-white">
-                            <DollarSign size={16} />
-                            Budget Type
-                        </Label>
-                        <Select
-                            value={formData.preferences.budgetType}
-                            onValueChange={(value) => handleNestedInputChange('preferences', 'budgetType', value)}
-                        >
-                            <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
-                                <SelectItem value="budget" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Budget (Economical options)</SelectItem>
-                                <SelectItem value="mid-range" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Mid-Range (Balanced experience)</SelectItem>
-                                <SelectItem value="luxury" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Luxury (Premium experiences)</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="border-t border-gray-100 dark:border-gray-800" />
+
+                    {/* ── Section: Travelers ───────────────────────────── */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                            <Users size={13} /> Travelers
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Adults */}
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Adults</p>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleNestedInputChange('travelers', 'adults', Math.max(1, formData.travelers.adults - 1))}
+                                        className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                    >
+                                        <Minus size={14} />
+                                    </button>
+                                    <span className="text-lg font-bold w-6 text-center text-gray-900 dark:text-white">{formData.travelers.adults}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleNestedInputChange('travelers', 'adults', formData.travelers.adults + 1)}
+                                        className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors"
+                                    >
+                                        <Plus size={14} />
+                                    </button>
+                                </div>
+                                {errors['travelers.adults'] && <p className="text-red-500 text-xs mt-1">{errors['travelers.adults']}</p>}
+                            </div>
+                            {/* Children */}
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Children</p>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleNestedInputChange('travelers', 'children', Math.max(0, formData.travelers.children - 1))}
+                                        className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                    >
+                                        <Minus size={14} />
+                                    </button>
+                                    <span className="text-lg font-bold w-6 text-center text-gray-900 dark:text-white">{formData.travelers.children}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleNestedInputChange('travelers', 'children', formData.travelers.children + 1)}
+                                        className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors"
+                                    >
+                                        <Plus size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Currency */}
-                    <div>
-                        <Label className="flex items-center gap-2 text-gray-900 dark:text-white">
-                            <DollarSign size={16} />
-                            Currency
+                    <div className="border-t border-gray-100 dark:border-gray-800" />
+
+                    {/* ── Section: Budget ──────────────────────────────── */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                            <DollarSign size={13} /> Budget
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            {budgetOptions.map((opt) => (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() => handleNestedInputChange('preferences', 'budgetType', opt.id)}
+                                    className={`p-3 rounded-xl border-2 text-center transition-all ${
+                                        formData.preferences.budgetType === opt.id
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-300'
+                                    }`}
+                                >
+                                    <div className="text-2xl mb-1">{opt.emoji}</div>
+                                    <div className={`text-sm font-semibold ${formData.preferences.budgetType === opt.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>{opt.label}</div>
+                                    <div className="text-xs text-gray-400 dark:text-gray-500">{opt.sub}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── Section: Currency ────────────────────────────── */}
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                            <DollarSign size={13} className="text-blue-500" /> Currency
                         </Label>
                         <Select
                             value={formData.preferences.currency}
                             onValueChange={(value) => handleNestedInputChange('preferences', 'currency', value)}
                         >
-                            <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
+                            <SelectTrigger className="h-11 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-xl">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 max-h-60 overflow-y-auto">
-                                <SelectItem value="USD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">USD - US Dollar ($)</SelectItem>
-                                <SelectItem value="EUR" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">EUR - Euro (€)</SelectItem>
-                                <SelectItem value="GBP" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">GBP - British Pound (£)</SelectItem>
-                                <SelectItem value="JPY" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">JPY - Japanese Yen (¥)</SelectItem>
-                                <SelectItem value="CAD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">CAD - Canadian Dollar (C$)</SelectItem>
-                                <SelectItem value="AUD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">AUD - Australian Dollar (A$)</SelectItem>
-                                <SelectItem value="CHF" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">CHF - Swiss Franc (CHF)</SelectItem>
-                                <SelectItem value="CNY" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">CNY - Chinese Yuan (¥)</SelectItem>
-                                <SelectItem value="INR" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">INR - Indian Rupee (₹)</SelectItem>
-                                <SelectItem value="KRW" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">KRW - South Korean Won (₩)</SelectItem>
-                                <SelectItem value="SGD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">SGD - Singapore Dollar (S$)</SelectItem>
-                                <SelectItem value="HKD" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">HKD - Hong Kong Dollar (HK$)</SelectItem>
-                                <SelectItem value="THB" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">THB - Thai Baht (฿)</SelectItem>
-                                <SelectItem value="MXN" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">MXN - Mexican Peso (MX$)</SelectItem>
-                                <SelectItem value="BRL" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">BRL - Brazilian Real (R$)</SelectItem>
-                                <SelectItem value="RUB" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">RUB - Russian Ruble (₽)</SelectItem>
-                                <SelectItem value="ZAR" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">ZAR - South African Rand (R)</SelectItem>
-                                <SelectItem value="TRY" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">TRY - Turkish Lira (₺)</SelectItem>
-                                <SelectItem value="AED" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">AED - UAE Dirham (د.إ)</SelectItem>
-                                <SelectItem value="SAR" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">SAR - Saudi Riyal (﷼)</SelectItem>
+                            <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto rounded-xl">
+                                {[
+                                    ['USD','US Dollar','$'],['EUR','Euro','€'],['GBP','British Pound','£'],
+                                    ['JPY','Japanese Yen','¥'],['CAD','Canadian Dollar','C$'],['AUD','Australian Dollar','A$'],
+                                    ['CHF','Swiss Franc','CHF'],['CNY','Chinese Yuan','¥'],['INR','Indian Rupee','₹'],
+                                    ['KRW','South Korean Won','₩'],['SGD','Singapore Dollar','S$'],['HKD','Hong Kong Dollar','HK$'],
+                                    ['THB','Thai Baht','฿'],['MXN','Mexican Peso','MX$'],['BRL','Brazilian Real','R$'],
+                                    ['AED','UAE Dirham','د.إ'],['SAR','Saudi Riyal','﷼'],
+                                ].map(([code, name, symbol]) => (
+                                    <SelectItem key={code} value={code} className="text-gray-900 dark:text-white">
+                                        {code} — {name} ({symbol})
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
 
-                    {/* Travel Style */}
-                    <div>
-                        <Label className="flex items-center gap-2 text-gray-900 dark:text-white">
-                            <Globe size={16} />
-                            Travel Style
-                        </Label>
-                        <Select
-                            value={formData.preferences.travelStyle}
-                            onValueChange={(value) => handleNestedInputChange('preferences', 'travelStyle', value)}
-                        >
-                            <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
-                                <SelectItem value="solo" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Solo Adventure</SelectItem>
-                                <SelectItem value="couple" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Romantic Getaway</SelectItem>
-                                <SelectItem value="family" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Family Trip</SelectItem>
-                                <SelectItem value="friends" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Friends Trip</SelectItem>
-                                <SelectItem value="business" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Business Travel</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <div className="border-t border-gray-100 dark:border-gray-800" />
 
-                    {/* Pace */}
-                    <div>
-                        <Label className="text-gray-900 dark:text-white">Trip Pace</Label>
-                        <Select
-                            value={formData.preferences.pace}
-                            onValueChange={(value) => handleNestedInputChange('preferences', 'pace', value)}
-                        >
-                            <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
-                                <SelectItem value="relaxed" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Relaxed (Plenty of downtime)</SelectItem>
-                                <SelectItem value="moderate" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Moderate (Balanced schedule)</SelectItem>
-                                <SelectItem value="packed" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">Packed (See everything)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Interests */}
-                    <div>
-                        <Label className="flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
-                            <Heart size={16} />
-                            Your Interests
-                        </Label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {interests.map((interest) => (
+                    {/* ── Section: Travel Style ────────────────────────── */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                            <Globe size={13} /> Travel Style
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                            {travelStyleOptions.map((opt) => (
                                 <button
-                                    key={interest}
+                                    key={opt.id}
                                     type="button"
-                                    onClick={() => handleInterestToggle(interest)}
-                                    className={`p-2 rounded-lg border text-sm capitalize transition-colors ${
-                                        formData.preferences.interests.includes(interest)
-                                            ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
+                                    onClick={() => handleNestedInputChange('preferences', 'travelStyle', opt.id)}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                                        formData.preferences.travelStyle === opt.id
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-blue-300'
                                     }`}
                                 >
-                                    {interest}
+                                    <span>{opt.emoji}</span> {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── Section: Pace ────────────────────────────────── */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                            <Zap size={13} /> Trip Pace
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            {paceOptions.map((opt) => (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() => handleNestedInputChange('preferences', 'pace', opt.id)}
+                                    className={`p-3 rounded-xl border-2 text-center transition-all ${
+                                        formData.preferences.pace === opt.id
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-300'
+                                    }`}
+                                >
+                                    <div className="text-2xl mb-1">{opt.emoji}</div>
+                                    <div className={`text-sm font-semibold ${formData.preferences.pace === opt.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>{opt.label}</div>
+                                    <div className="text-xs text-gray-400 dark:text-gray-500">{opt.sub}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 dark:border-gray-800" />
+
+                    {/* ── Section: Interests ───────────────────────────── */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                            <Heart size={13} /> Your Interests
+                            <span className="ml-auto text-xs font-normal normal-case text-gray-400">
+                                {formData.preferences.interests.length > 0 && `${formData.preferences.interests.length} selected`}
+                            </span>
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                            {interests.map(({ id, label, emoji }) => (
+                                <button
+                                    key={id}
+                                    type="button"
+                                    onClick={() => handleInterestToggle(id)}
+                                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                                        formData.preferences.interests.includes(id)
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-blue-300'
+                                    }`}
+                                >
+                                    <span>{emoji}</span> {label}
                                 </button>
                             ))}
                         </div>
                         {errors['preferences.interests'] && (
-                            <p className="text-red-500 text-sm mt-1">{errors['preferences.interests']}</p>
+                            <p className="text-red-500 text-xs mt-1">{errors['preferences.interests']}</p>
                         )}
                     </div>
 
-                    {/* Submit Buttons */}
-                    <div className="flex gap-3 pt-4">
+                    {/* ── Submit Buttons ───────────────────────────────── */}
+                    <div className="flex gap-3 pt-2 pb-1">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={handleClose}
-                            className="flex-1"
+                            className="flex-1 h-11 rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
-                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            className="flex-1 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold flex items-center justify-center gap-2"
                         >
-                            Create Trip
+                            <Plane size={16} />
+                            Generate Itinerary
                         </Button>
                     </div>
                 </form>
