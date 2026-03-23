@@ -171,8 +171,8 @@ const Footsteps = () => {
           {posts.map((post) => {
             if (!post?.coordinates || post.coordinates.length !== 2) return null;
             const [lon, lat] = post.coordinates;
-            // fallback image URL handling (in case backend returned imageUrl)
-            const img = post.imageUrl || post.image || "";
+            // fallback image URL handling (in case backend returned imageUrl or video)
+            const img = post.imageUrl || post.image || post.video || "";
             return (
               <Marker key={post._id} position={[lat, lon]} icon={createThumbnailIcon(img)}>
                 <Popup minWidth={260}>

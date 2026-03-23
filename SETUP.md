@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. **Google Gemini API Key**: Get your API key from [Google AI Studio](https://aistudio.google.com/)
+1. **Gemini API Key**: Get your API key from [Google AI Studio](https://aistudio.google.com/)
 
 ## Backend Setup
 
@@ -21,7 +21,7 @@
    # JWT
    JWT_SECRET=your_jwt_secret_key_here
 
-   # Google Gemini AI API
+   # Gemini AI API
    GEMINI_API_KEY=your_gemini_api_key_here
 
    # Server

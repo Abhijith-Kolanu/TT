@@ -79,6 +79,11 @@ app.use("/api/v1/notification", notificationRoute);
 app.use("/api/v1/guide", guideRoute);
 app.use("/api/v1/booking", bookingRoute);
 
+// HEALTH CHECK ENDPOINT
+app.get("/api/v1/health", (req, res) => {
+    res.json({ message: "Server is running", success: true });
+});
+
 // Handle preflight OPTIONS requests for all API routes
 app.options("/api/*", cors(corsOptions));
 

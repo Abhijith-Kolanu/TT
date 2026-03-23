@@ -382,11 +382,26 @@ const Profile = () => {
                 className='relative aspect-square group cursor-pointer overflow-hidden'
                 onClick={() => handlePostClick(post?._id)}
               >
-                <img 
-                  src={post.image} 
-                  alt='post' 
-                  className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105' 
-                />
+                {post.mediaType === 'video' ? (
+                  <>
+                    <video 
+                      src={post.video} 
+                      alt='post' 
+                      className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 bg-gray-200' 
+                    />
+                    <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                      <div className='w-12 h-12 bg-white/80 rounded-full flex items-center justify-center'>
+                        <span className='text-2xl'>▶</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <img 
+                    src={post.image} 
+                    alt='post' 
+                    className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105' 
+                  />
+                )}
                 
                 {/* Overlay on hover */}
                 <div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center'>

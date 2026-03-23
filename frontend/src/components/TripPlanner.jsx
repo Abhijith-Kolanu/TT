@@ -2,37 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { 
-    Plus, 
     MapPin, 
     Calendar, 
-    Users, 
-    DollarSign, 
     Sparkles, 
-    Compass,
     Clock,
     Globe,
-    TrendingUp,
-    Star,
     Search,
-    Filter,
-    SortAsc,
-    MoreVertical,
-    Eye,
-    Edit,
-    Trash2,
-    Share2,
-    Download,
     Plane,
-    Camera,
-    Heart,
     BookOpen,
-    Navigation,
     Zap
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { formatCurrency } from '@/utils/currency';
 import { setTrips, addTrip, setLoading, setError } from '@/redux/tripSlice';
 import CreateTripDialog from './CreateTripDialog';
 import TripCard from './TripCard';
@@ -40,14 +22,11 @@ import TripCard from './TripCard';
 const TripPlanner = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { trips, loading, error } = useSelector(store => store.trip);
-    const { user } = useSelector(store => store.auth);
+    const { trips, loading } = useSelector(store => store.trip);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('newest');
     const [filterBy, setFilterBy] = useState('all');
-    const [view, setView] = useState('grid'); // 'grid' or 'list'
-
     useEffect(() => {
         fetchUserTrips();
     }, []);
@@ -121,24 +100,6 @@ const TripPlanner = () => {
         });
 
     const getEnhancedStats = () => {
-        const currentDate = new Date();
-        const upcoming = trips.filter(trip => {
-            const tripDate = new Date(trip.startDate);
-            return tripDate > currentDate;
-        });
-        
-        const thisYear = trips.filter(trip => {
-            const tripDate = new Date(trip.createdAt);
-            return tripDate.getFullYear() === currentDate.getFullYear();
-        });
-        
-        const totalBudget = trips.reduce((sum, trip) => {
-            if (trip.totalEstimatedCost && trip.totalEstimatedCost.budget) {
-                return sum + (trip.totalEstimatedCost.budget.total || 0);
-            }
-            return sum;
-        }, 0);
-        
         const countries = new Set();
         trips.forEach(trip => {
             if (trip.destination?.country) {
@@ -147,13 +108,8 @@ const TripPlanner = () => {
         });
 
         return {
-            total: trips.length,
-            upcoming: upcoming.length,
-            thisYear: thisYear.length,
             countries: countries.size,
-            totalBudget: totalBudget,
             generated: trips.filter(trip => trip.status === 'generated').length,
-            published: trips.filter(trip => trip.status === 'published').length,
             completed: trips.filter(trip => trip.status === 'completed').length,
             draft: trips.filter(trip => trip.status === 'draft').length
         };
@@ -173,37 +129,34 @@ const TripPlanner = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-all duration-300">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 transition-all duration-300">
             <div className="max-w-7xl mx-auto p-6">
                 {/* Hero Section */}
                 <div className="mb-8">
-                    <div className="text-center mb-8 relative">
+                    <div className="text-center mb-8 relative rounded-3xl border border-white/60 dark:border-gray-700/60 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-xl p-8 md:p-10 overflow-hidden">
                         {/* Background Pattern */}
                         <div className="absolute inset-0 overflow-hidden">
-                            <div className="absolute -top-4 -left-4 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 dark:opacity-20 animate-pulse"></div>
-                            <div className="absolute -bottom-8 -right-4 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 dark:opacity-20 animate-pulse delay-1000"></div>
+                            <div className="absolute -top-10 -left-6 w-72 h-72 bg-blue-300/40 rounded-full mix-blend-multiply filter blur-2xl opacity-40 dark:opacity-20"></div>
+                            <div className="absolute -bottom-14 -right-8 w-72 h-72 bg-purple-300/40 rounded-full mix-blend-multiply filter blur-2xl opacity-40 dark:opacity-20"></div>
                         </div>
                         
                         {/* Content */}
                         <div className="relative z-10">
-                            <div className="flex items-center justify-center mb-4">
-                                <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg">
+                            <div className="flex items-center justify-center mb-5">
+                                <div className="p-3.5 bg-gradient-to-r from-blue-600 to-violet-600 rounded-2xl shadow-lg ring-4 ring-white/40 dark:ring-gray-800/50">
                                     <Sparkles className="text-white" size={32} />
                                 </div>
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                            <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent mb-4 tracking-tight">
                                 AI Trip Planner
                             </h1>
-                            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-6">
-                                {trips.length === 0 
-                                    ? "Create personalized itineraries powered by artificial intelligence. Plan smarter, travel better, and discover amazing experiences tailored just for you."
-                                    : `You have ${trips.length} trip${trips.length === 1 ? '' : 's'} planned. Create a new adventure or continue working on your existing plans.`
-                                }
+                            <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-7 leading-relaxed">
+                                Create realistic itineraries with smart day plans, practical recommendations, budget visibility, and real-time destination updates powered by AI.
                             </p>
                             <div className="flex items-center justify-center gap-4">
                                 <Button
                                     onClick={() => setShowCreateDialog(true)}
-                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                                    className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                                 >
                                     <Zap size={20} className="mr-2" />
                                     {trips.length === 0 ? 'Start Planning' : 'Plan New Trip'}
@@ -218,7 +171,7 @@ const TripPlanner = () => {
                                             }
                                         }}
                                         variant="outline"
-                                        className="px-6 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-300 bg-white dark:bg-gray-800 transition-all duration-200"
+                                        className="px-6 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-300 bg-white/90 dark:bg-gray-800 transition-all duration-200"
                                     >
                                         <BookOpen size={20} className="mr-2" />
                                         View Recent Trip
@@ -228,164 +181,64 @@ const TripPlanner = () => {
                         </div>
                     </div>
 
-                    {/* Enhanced Stats - More Relevant Travel Data */}
+                    {/* Planner Stats */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        {/* Total Trips */}
-                        <div 
-                            className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-200 group cursor-pointer"
-                            onClick={() => setFilterBy('all')}
-                        >
+                        {/* Draft Trips */}
+                        <div className="bg-white/90 dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl group-hover:scale-110 transition-transform duration-200">
-                                    <Globe className="text-blue-600 dark:text-blue-400" size={24} />
+                                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                                    <Clock className="text-blue-600 dark:text-blue-400" size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Adventures</p>
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-1">Click to view all</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.draft}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Draft Trips</p>
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-1">Pending itinerary</p>
                                 </div>
                             </div>
                         </div>
                         
-                        {/* Upcoming Trips */}
-                        <div 
-                            className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-200 group cursor-pointer"
-                            onClick={() => {
-                                const upcoming = trips.filter(trip => new Date(trip.startDate) > new Date());
-                                if (upcoming.length > 0) {
-                                    toast.success(`You have ${upcoming.length} upcoming trip${upcoming.length !== 1 ? 's' : ''}!`);
-                                }
-                            }}
-                        >
+                        {/* AI Generated */}
+                        <div className="bg-white/90 dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl group-hover:scale-110 transition-transform duration-200">
-                                    <Clock className="text-green-600 dark:text-green-400" size={24} />
+                                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                                    <Sparkles className="text-green-600 dark:text-green-400" size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.upcoming}</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Upcoming Trips</p>
-                                    <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-1">Next adventures</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.generated}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">AI Generated</p>
+                                    <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-1">Ready itineraries</p>
                                 </div>
                             </div>
                         </div>
                         
-                        {/* Countries Visited */}
-                        <div 
-                            className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-200 group cursor-pointer"
-                            onClick={() => {
-                                const countries = new Set();
-                                trips.forEach(trip => {
-                                    if (trip.destination?.country) countries.add(trip.destination.country);
-                                });
-                                if (countries.size > 0) {
-                                    toast.success(`You've explored ${countries.size} different countries!`);
-                                }
-                            }}
-                        >
+                        {/* Completed Trips */}
+                        <div className="bg-white/90 dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl group-hover:scale-110 transition-transform duration-200">
+                                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
                                     <MapPin className="text-purple-600 dark:text-purple-400" size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.countries}</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Countries</p>
-                                    <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mt-1">Explored</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completed}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Completed Trips</p>
+                                    <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mt-1">Travel finished</p>
                                 </div>
                             </div>
                         </div>
                         
-                        {/* Total Budget/This Year */}
-                        <div 
-                            className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-200 group cursor-pointer"
-                            onClick={() => {
-                                if (stats.totalBudget > 0) {
-                                    toast.success(`Total estimated budget: ${formatCurrency(stats.totalBudget, 'USD')}`);
-                                } else {
-                                    toast.info(`${stats.thisYear} trips planned this year!`);
-                                }
-                            }}
-                        >
+                        {/* Countries Covered */}
+                        <div className="bg-white/90 dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl group-hover:scale-110 transition-transform duration-200">
-                                    {stats.totalBudget > 0 ? (
-                                        <DollarSign className="text-orange-600 dark:text-orange-400" size={24} />
-                                    ) : (
-                                        <Calendar className="text-orange-600 dark:text-orange-400" size={24} />
-                                    )}
+                                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
+                                    <Globe className="text-orange-600 dark:text-orange-400" size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {stats.totalBudget > 0 ? 
-                                            stats.totalBudget >= 1000 ?
-                                                `$${(stats.totalBudget / 1000).toFixed(1)}k` :
-                                                formatCurrency(stats.totalBudget, 'USD')
-                                            : stats.thisYear}
-                                    </p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {stats.totalBudget > 0 ? 'Total Budget' : 'This Year'}
-                                    </p>
-                                    <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1">
-                                        {stats.totalBudget > 0 ? 'Estimated' : 'Planned'}
-                                    </p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.countries}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Countries Covered</p>
+                                    <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1">Destination diversity</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Quick Actions Bar */}
-                    {trips.length > 0 && (
-                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl p-4 mb-8">
-                            <div className="flex flex-wrap items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                        <TrendingUp className="text-blue-600 dark:text-blue-400" size={20} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">Manage your travel plans efficiently</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-3">
-                                    <Button
-                                        onClick={() => {
-                                            const upcoming = trips.filter(trip => new Date(trip.startDate) > new Date());
-                                            if (upcoming.length > 0) {
-                                                navigate(`/trip/${upcoming[0]._id}`);
-                                            } else {
-                                                toast.info("No upcoming trips found.");
-                                            }
-                                        }}
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                                        disabled={trips.filter(trip => new Date(trip.startDate) > new Date()).length === 0}
-                                    >
-                                        <Eye size={16} className="mr-2" />
-                                        View Next Trip
-                                    </Button>
-                                    
-                                    <Button
-                                        onClick={() => {
-                                            const drafts = trips.filter(trip => trip.status === 'draft' || !trip.itinerary?.length);
-                                            if (drafts.length > 0) {
-                                                navigate(`/trip/${drafts[0]._id}`);
-                                            } else {
-                                                toast.info("No draft trips found. All trips are completed!");
-                                            }
-                                        }}
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                                        disabled={trips.filter(trip => trip.status === 'draft' || !trip.itinerary?.length).length === 0}
-                                    >
-                                        <Edit size={16} className="mr-2" />
-                                        Continue Draft
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {/* AI Features Showcase */}
                     {trips.length === 0 && (

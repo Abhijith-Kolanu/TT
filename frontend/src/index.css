@@ -284,6 +284,41 @@ body,
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
+/* Custom scrollbar for trip planning form */
+.trip-form-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.trip-form-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trip-form-scroll::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.35);
+  border-radius: 9999px;
+}
+
+.trip-form-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.6);
+}
+
+.dark .trip-form-scroll::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.35);
+}
+
+.dark .trip-form-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 140, 248, 0.6);
+}
+
+.trip-form-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
+}
+
+.dark .trip-form-scroll {
+  scrollbar-color: rgba(129, 140, 248, 0.35) transparent;
+}
+
 /* Hide scrollbar completely (optional alternative) */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;

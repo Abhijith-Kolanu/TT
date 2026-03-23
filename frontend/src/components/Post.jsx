@@ -77,13 +77,10 @@ const Post = ({ post }) => {
 
     const likeOrDislikeHandler = async () => {
         try {
-            console.log('Like/Dislike handler called', { postId: post._id, liked, user: user?._id });
             const action = liked ? 'dislike' : 'like';
             const url = `${import.meta.env.VITE_API_URL}/api/v1/post/${post._id}/${action}`;
-            console.log('Making request to:', url);
             
             const res = await axios.get(url, { withCredentials: true });
-            console.log('Response:', res.data);
             
             if (res.data.success) {
                 const updatedLikes = liked ? postLike - 1 : postLike + 1;
@@ -103,8 +100,6 @@ const Post = ({ post }) => {
                 toast.success(res.data.message);
             }
         } catch (error) {
-            console.log('Like error:', error);
-            console.log('Error response:', error.response?.data);
             toast.error(error.response?.data?.message || 'Like failed');
         }
     }
@@ -124,7 +119,7 @@ const Post = ({ post }) => {
                 setText("");
             }
         } catch (error) {
-            console.log(error);
+            toast.error(error.response?.data?.message || 'Comment failed');
         }
     }
 
@@ -137,8 +132,7 @@ const Post = ({ post }) => {
                 toast.success(res.data.message);
             }
         } catch (error) {
-            console.log(error);
-            toast.error(error.response.data.message);
+            toast.error(error.response?.data?.message || 'Delete failed');
         }
     }
 
@@ -161,20 +155,15 @@ const Post = ({ post }) => {
 
     const bookmarkHandler = async () => {
         try {
-            console.log('Bookmark handler called', { postId: post._id, bookmarked, user: user?._id });
             const url = `${import.meta.env.VITE_API_URL}/api/v1/post/${post?._id}/bookmark`;
-            console.log('Making bookmark request to:', url);
             
             const res = await axios.get(url, { withCredentials: true });
-            console.log('Bookmark response:', res.data);
             
             if (res.data.success) {
                 setBookmarked(!bookmarked);
                 toast.success(res.data.message);
             }
         } catch (error) {
-            console.log('Bookmark error:', error);
-            console.log('Error response:', error.response?.data);
             toast.error(error.response?.data?.message || 'Bookmark failed');
         }
     }
@@ -311,15 +300,28 @@ const Post = ({ post }) => {
                     </div>
                 </div>
 
-                {/* Image */}
-                <div className='relative z-10 mx-4 mb-4 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300 bg-gray-100 dark:bg-gray-800'>
-                    <img
-                        className='w-full h-auto max-h-[600px] object-contain transition-all duration-700'
-                        src={post.image}
-                        alt="post_img"
-                    />
+                {/* Image/Video */}
+                <div className='relative z-10 mx-4 mb-4 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300 bg-black dark:bg-black'>
+                    {post.mediaType === 'video' && post.video ? (
+                        <video
+                            className='w-full h-auto max-h-[600px] object-contain transition-all duration-700 bg-black'
+                            controls
+                            controlsList='nodownload noremoteplayback'
+                            playsInline
+                            preload='metadata'
+                        >
+                            <source src={post.video} />
+                            Your browser does not support the video tag.
+                        </video>
+                    ) : post.image ? (
+                        <img
+                            className='w-full h-auto max-h-[600px] object-contain transition-all duration-700 bg-black'
+                            src={post.image}
+                            alt="post_img"
+                        />
+                    ) : null}
                     {/* Overlay gradient */}
-                    <div className='absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
+                    <div className='absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
                 </div>
 
                 {/* Content */}

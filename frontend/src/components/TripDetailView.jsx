@@ -19,31 +19,15 @@ import {
     Edit,
     Download,
     ChevronLeft,
-    ChevronRight,
     Filter,
-    SortAsc,
-    Landmark,
     PartyPopper,
     Eye,
-    Target,
     Plus,
     Trash2,
     Save,
     RefreshCw,
-    Map,
-    BookOpen,
     CheckCircle,
     AlertCircle,
-    Info,
-    Phone,
-    Wifi,
-    Car,
-    Train,
-    Plane,
-    Sun,
-    Cloud,
-    Umbrella,
-    List,
     StickyNote
 } from 'lucide-react';
 import { Button } from './ui/button';
@@ -53,6 +37,11 @@ import axios from 'axios';
 import { formatCurrency } from '@/utils/currency';
 import { setCurrentTrip, setLoading } from '@/redux/tripSlice';
 
+const resolveTripCurrency = (trip) => {
+    const candidate = String(trip?.preferences?.currency || '').trim().toUpperCase();
+    return candidate || 'USD';
+};
+
 const TripDetailView = () => {
     const { tripId } = useParams();
     const navigate = useNavigate();
@@ -60,17 +49,14 @@ const TripDetailView = () => {
     const { currentTrip, loading } = useSelector(store => store.trip);
     const [selectedDay, setSelectedDay] = useState(0);
     const [activeTab, setActiveTab] = useState('itinerary');
+    const [isGeneratingItinerary, setIsGeneratingItinerary] = useState(false);
+    const [itineraryError, setItineraryError] = useState('');
     
     // Itinerary specific states
     const [editMode, setEditMode] = useState(false);
-    const [selectedActivity, setSelectedActivity] = useState(null);
-    const [showAddActivity, setShowAddActivity] = useState(false);
     const [activityFilter, setActivityFilter] = useState('all');
-    const [viewMode, setViewMode] = useState('timeline'); // timeline, list, map
     const [completedActivities, setCompletedActivities] = useState(new Set());
     const [activityNotes, setActivityNotes] = useState({});
-    const [weatherInfo, setWeatherInfo] = useState({});
-    const [transportationInfo, setTransportationInfo] = useState({});
     
     // Other existing states
     const [recommendations, setRecommendations] = useState({
@@ -80,8 +66,11 @@ const TripDetailView = () => {
         hiddenGems: [],
         shopping: []
     });
+    const [isRecommendationsLoading, setIsRecommendationsLoading] = useState(false);
+    const [recommendationsError, setRecommendationsError] = useState('');
     const [realTimeInfo, setRealTimeInfo] = useState(null);
-    const [routeData, setRouteData] = useState(null);
+    const [isRealTimeLoading, setIsRealTimeLoading] = useState(false);
+    const [realTimeError, setRealTimeError] = useState('');
 
     useEffect(() => {
         fetchTripDetails();
@@ -105,6 +94,7 @@ const TripDetailView = () => {
             
             if (response.data.success) {
                 dispatch(setCurrentTrip(response.data.trip));
+                setItineraryError('');
                 if (response.data.trip.itinerary && response.data.trip.itinerary.length > 0) {
                     setSelectedDay(0);
                 }
@@ -119,20 +109,22 @@ const TripDetailView = () => {
     };
 
     const fetchSmartRecommendations = async () => {
+        if (isRecommendationsLoading) return;
+
         try {
-            console.log('Fetching smart recommendations for trip:', tripId);
+            setIsRecommendationsLoading(true);
+            setRecommendationsError('');
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/recommendations`, {
                 withCredentials: true
             });
-            
-            console.log('Recommendations response:', response.data);
-            
+
             if (response.data.success) {
-                console.log('Setting recommendations state:', response.data.recommendations);
                 setRecommendations(response.data.recommendations);
             }
         } catch (error) {
             console.error('Error fetching recommendations:', error);
+            const message = error.response?.data?.message || 'Failed to fetch recommendations';
+            setRecommendationsError(message);
             
             if (error.response?.status === 429) {
                 toast.error('API quota exceeded. Please try again in 24 hours.');
@@ -141,62 +133,31 @@ const TripDetailView = () => {
             } else {
                 toast.error('Failed to fetch recommendations');
             }
+        } finally {
+            setIsRecommendationsLoading(false);
         }
     };
 
     const fetchRealTimeInfo = async () => {
+        if (isRealTimeLoading) return;
+
         try {
-            console.log('Attempting to fetch real-time info for trip:', tripId);
+            setIsRealTimeLoading(true);
+            setRealTimeError('');
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/realtime`, {
                 withCredentials: true
             });
-            
-            console.log('Real-time info response:', response.data);
-            
+
             if (response.data.success) {
                 setRealTimeInfo(response.data.realTimeInfo);
-                console.log('Real-time info set:', response.data.realTimeInfo);
-            } else {
-                console.error('Real-time info request unsuccessful:', response.data);
-                toast.error('Failed to fetch real-time information');
             }
         } catch (error) {
             console.error('Error fetching real-time info:', error);
-            console.error('Error details:', {
-                message: error.message,
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data
-            });
-            
-            if (error.response?.status === 404) {
-                toast.error('Trip not found');
-            } else if (error.response?.status === 500) {
-                toast.error('Server error - please try again later');
-            } else if (error.code === 'ECONNREFUSED') {
-                toast.error('Cannot connect to server - please check if backend is running');
-            } else {
-                toast.error('Failed to fetch real-time information');
-            }
-        }
-    };
-
-    const optimizeRoute = async (selectedDay, customLocations = []) => {
-        try {
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/optimize-route`, {
-                selectedDay,
-                customLocations
-            }, {
-                withCredentials: true
-            });
-            
-            if (response.data.success) {
-                setRouteData(response.data.routeData);
-                toast.success('Route optimized successfully!');
-            }
-        } catch (error) {
-            console.error('Error optimizing route:', error);
-            toast.error('Failed to optimize route');
+            const message = error?.response?.data?.message || 'Failed to fetch real-time information';
+            setRealTimeError(message);
+            toast.error(message);
+        } finally {
+            setIsRealTimeLoading(false);
         }
     };
 
@@ -226,7 +187,6 @@ const TripDetailView = () => {
             if (response.data.success) {
                 await fetchTripDetails(); // Refresh trip data
                 toast.success('Activity added successfully!');
-                setShowAddActivity(false);
             }
         } catch (error) {
             console.error('Error adding activity:', error);
@@ -246,7 +206,6 @@ const TripDetailView = () => {
                 await fetchTripDetails();
                 toast.success('Activity updated successfully!');
                 setEditMode(false);
-                setSelectedActivity(null);
             }
         } catch (error) {
             console.error('Error updating activity:', error);
@@ -318,10 +277,13 @@ const TripDetailView = () => {
 
     // Trip Management Functions
     const regenerateItinerary = async () => {
+        if (isGeneratingItinerary) return;
         if (!window.confirm('This will regenerate the entire itinerary. Are you sure?')) return;
 
         try {
-            toast.loading('Regenerating itinerary with AI...');
+            setIsGeneratingItinerary(true);
+            setItineraryError('');
+            toast.loading('Regenerating itinerary...');
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}/generate`, {}, {
                 withCredentials: true
             });
@@ -334,7 +296,11 @@ const TripDetailView = () => {
         } catch (error) {
             console.error('Error regenerating itinerary:', error);
             toast.dismiss();
-            toast.error('Failed to regenerate itinerary');
+            const message = error?.response?.data?.message || 'Failed to regenerate itinerary';
+            setItineraryError(message);
+            toast.error(message);
+        } finally {
+            setIsGeneratingItinerary(false);
         }
     };
 
@@ -346,9 +312,8 @@ const TripDetailView = () => {
                 responseType: 'blob'
             });
 
-            const blob = new Blob([response.data], { 
-                type: format === 'pdf' ? 'application/pdf' : 'application/json' 
-            });
+            const blobType = response.headers['content-type'] || 'application/octet-stream';
+            const blob = new Blob([response.data], { type: blobType });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -416,13 +381,87 @@ const TripDetailView = () => {
     const getEstimatedTime = (activities) => {
         if (!activities) return 0;
         return activities.reduce((total, activity) => {
-            const duration = parseInt(activity.duration) || 60;
+            const duration = parseInt(activity.estimatedDuration || activity.duration) || 60;
             return total + duration;
         }, 0);
     };
 
-    const getFilteredActivities = (activities) => {
+    const formatTotalDuration = (totalMinutes) => {
+        const safeMinutes = Number(totalMinutes) || 0;
+        const hours = Math.floor(safeMinutes / 60);
+        const minutes = safeMinutes % 60;
+        if (hours <= 0) return `${minutes}m`;
+        if (minutes === 0) return `${hours}h`;
+        return `${hours}h ${minutes}m`;
+    };
+
+    const addRecommendationToTrip = async (item, category) => {
+        try {
+            if (!currentTrip?.itinerary?.length) {
+                toast.error('Generate itinerary first to add recommendations.');
+                return;
+            }
+
+            const targetDayIndex = selectedDay !== null && selectedDay >= 0
+                ? selectedDay
+                : 0;
+
+            const updatedItinerary = currentTrip.itinerary.map((day, index) => {
+                if (index !== targetDayIndex) return day;
+
+                const activity = {
+                    time: '16:00',
+                    title: item?.name || 'Recommended Activity',
+                    description: item?.description || '',
+                    location: {
+                        type: 'Point',
+                        coordinates: currentTrip?.destination?.coordinates || [0, 0],
+                        name: typeof item?.location === 'string' ? item.location : `${currentTrip.destination.city}`,
+                        address: typeof item?.location === 'string' ? item.location : `${currentTrip.destination.city}, ${currentTrip.destination.country}`
+                    },
+                    estimatedDuration: 90,
+                    category: category === 'restaurants' ? 'food' : category === 'shopping' ? 'shopping' : category === 'events' ? 'nightlife' : 'sightseeing',
+                    estimatedCost: {
+                        budget: Number(item?.averageCost) || 20,
+                        midRange: Math.round((Number(item?.averageCost) || 20) * 1.7),
+                        luxury: Math.round((Number(item?.averageCost) || 20) * 2.4)
+                    }
+                };
+
+                return {
+                    ...day,
+                    activities: [...(day.activities || []), activity]
+                };
+            });
+
+            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/v1/trip/${tripId}`, {
+                itinerary: updatedItinerary
+            }, {
+                withCredentials: true
+            });
+
+            if (response.data?.success) {
+                dispatch(setCurrentTrip(response.data.trip));
+                toast.success(`Added to Day ${targetDayIndex + 1} itinerary.`);
+            }
+        } catch (error) {
+            console.error('Error adding recommendation to trip:', error);
+            toast.error('Failed to add recommendation to trip');
+        }
+    };
+
+    const getFilteredActivities = (activities, dayIndex = selectedDay) => {
+        if (!Array.isArray(activities)) return [];
         if (activityFilter === 'all') return activities;
+
+        if (activityFilter === 'completed' || activityFilter === 'pending') {
+            return activities.filter((_, index) => {
+                const activityId = `${dayIndex}-${index}`;
+                const isDone = completedActivities.has(activityId);
+                return activityFilter === 'completed' ? isDone : !isDone;
+            });
+        }
+
         return activities.filter(activity => activity.category === activityFilter);
     };
 
@@ -532,20 +571,6 @@ const TripDetailView = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" className="flex items-center gap-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <Share2 size={16} />
-                            Share
-                        </Button>
-                        <Button variant="outline" className="flex items-center gap-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <Download size={16} />
-                            Export
-                        </Button>
-                        <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-                            <Edit size={16} />
-                            Edit Trip
-                        </Button>
-                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -555,9 +580,7 @@ const TripDetailView = () => {
                             { id: 'itinerary', label: 'Itinerary', icon: <Calendar size={16} /> },
                             { id: 'recommendations', label: 'Smart Recommendations', icon: <Star size={16} /> },
                             { id: 'budget', label: 'Budget Breakdown', icon: <DollarSign size={16} /> },
-                            { id: 'realtime', label: 'Real-time Info', icon: <Navigation size={16} /> },
-                            { id: 'route', label: 'Route Optimization', icon: <Target size={16} /> },
-                            { id: 'intelligence', label: 'Travel Intelligence', icon: <Landmark size={16} /> }
+                            { id: 'realtime', label: 'Real-time Info', icon: <Navigation size={16} /> }
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -584,8 +607,6 @@ const TripDetailView = () => {
                     setSelectedDay={setSelectedDay}
                     editMode={editMode}
                     setEditMode={setEditMode}
-                    viewMode={viewMode}
-                    setViewMode={setViewMode}
                     activityFilter={activityFilter}
                     setActivityFilter={setActivityFilter}
                     completedActivities={completedActivities}
@@ -607,7 +628,10 @@ const TripDetailView = () => {
                     getActivityProgress={getActivityProgress}
                     getDayProgress={getDayProgress}
                     getEstimatedTime={getEstimatedTime}
+                    formatTotalDuration={formatTotalDuration}
                     getFilteredActivities={getFilteredActivities}
+                    isGeneratingItinerary={isGeneratingItinerary}
+                    itineraryError={itineraryError}
                 />
             )}
 
@@ -616,6 +640,9 @@ const TripDetailView = () => {
                     trip={currentTrip} 
                     recommendations={recommendations}
                     onRefresh={fetchSmartRecommendations}
+                    isLoading={isRecommendationsLoading}
+                    error={recommendationsError}
+                    onAddToTrip={addRecommendationToTrip}
                 />
             )}
 
@@ -624,24 +651,12 @@ const TripDetailView = () => {
             )}
 
             {activeTab === 'realtime' && (
-                <RealTimeInfoTab 
-                    trip={currentTrip} 
+                <RealTimeInfoTab
                     realTimeInfo={realTimeInfo}
+                    isLoading={isRealTimeLoading}
+                    error={realTimeError}
                     onRefresh={fetchRealTimeInfo}
                 />
-            )}
-
-            {activeTab === 'route' && (
-                <RouteOptimizationTab 
-                    trip={currentTrip} 
-                    routeData={routeData}
-                    onOptimize={optimizeRoute}
-                    selectedDay={selectedDay}
-                />
-            )}
-
-            {activeTab === 'intelligence' && (
-                <TravelIntelligenceTab trip={currentTrip} />
             )}
         </div>
     );
@@ -654,8 +669,6 @@ const EnhancedItinerarySection = ({
     setSelectedDay,
     editMode,
     setEditMode,
-    viewMode,
-    setViewMode,
     activityFilter,
     setActivityFilter,
     completedActivities,
@@ -677,7 +690,10 @@ const EnhancedItinerarySection = ({
     getActivityProgress,
     getDayProgress,
     getEstimatedTime,
-    getFilteredActivities
+    formatTotalDuration,
+    getFilteredActivities,
+    isGeneratingItinerary,
+    itineraryError
 }) => {
     const [showAddActivity, setShowAddActivity] = useState(false);
     const [selectedActivity, setSelectedActivity] = useState(null);
@@ -691,18 +707,78 @@ const EnhancedItinerarySection = ({
         time: '09:00'
     });
 
+    const getActivityDisplayTitle = (activity, activityIndex) => {
+        const sanitize = (value) => String(value || '')
+            .replace(/^activity\s*\d*\s*[:.\-–]\s*/i, '')
+            .replace(/^activity\s+/i, '')
+            .trim();
+
+        const normalizeComparable = (value) => String(value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        const isGeneric = (value) => {
+            const text = String(value || '').trim().toLowerCase();
+            if (!text) return true;
+            return /^activity(\s*\d+)?\s*$/.test(text) || /^activity\s*\d+\s*[:.\-–]?\s*$/.test(text);
+        };
+
+        const primary = sanitize(activity?.title || activity?.name || activity?.activity || '');
+        if (!isGeneric(primary)) {
+            return primary;
+        }
+
+        const locationText = typeof activity?.location === 'string'
+            ? activity.location
+            : (activity?.location?.name || activity?.location?.address || '');
+
+        if (locationText && !/city center/i.test(String(locationText))) {
+            return `Visit ${String(locationText).trim()}`;
+        }
+
+        const description = String(activity?.description || '')
+            .replace(/^activity\s*\d*\s*[:.\-–]?\s*/i, '')
+            .trim();
+
+        const routeMatch = description.match(/from\s+(.+?)\s+to\s+(.+?)(?:[,.]|$)/i);
+        const candidate = routeMatch
+            ? `Transfer: ${routeMatch[1].trim()} to ${routeMatch[2].trim()}`
+            : description.split(/,|;|\.|\s+then\s+/i)[0].trim();
+
+        if (candidate.length >= 6) {
+            const normalizedCandidate = normalizeComparable(candidate);
+            const normalizedDescription = normalizeComparable(description);
+            if (normalizedCandidate && normalizedCandidate !== normalizedDescription) {
+                return candidate.slice(0, 90);
+            }
+
+            const compact = candidate.split(/\s+/).filter(Boolean).slice(0, 6).join(' ');
+            if (compact.length >= 6) {
+                return compact.slice(0, 90);
+            }
+        }
+
+        return `Plan ${activityIndex + 1}`;
+    };
+
     if (!currentTrip.itinerary || currentTrip.itinerary.length === 0) {
         return (
             <div className="text-center py-12">
                 <Calendar size={48} className="text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No itinerary available</h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">Generate an itinerary to start planning your trip.</p>
+                {itineraryError && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mb-4">{itineraryError}</p>
+                )}
                 <Button 
                     onClick={regenerateItinerary} 
+                    disabled={isGeneratingItinerary}
                     className="flex items-center gap-2 mx-auto bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                    <RefreshCw size={16} />
-                    Generate Itinerary
+                    <RefreshCw size={16} className={isGeneratingItinerary ? 'animate-spin' : ''} />
+                    {isGeneratingItinerary ? 'Generating...' : 'Generate Itinerary'}
                 </Button>
             </div>
         );
@@ -720,32 +796,6 @@ const EnhancedItinerarySection = ({
                 </div>
                 
                 <div className="flex items-center gap-2">
-                    {/* View Mode Toggle */}
-                    <div className="flex bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`px-3 py-2 text-sm font-medium rounded-l-lg ${
-                                viewMode === 'list' 
-                                    ? 'bg-blue-600 text-white' 
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                            }`}
-                        >
-                            <List size={16} className="inline mr-1" />
-                            List
-                        </button>
-                        <button
-                            onClick={() => setViewMode('timeline')}
-                            className={`px-3 py-2 text-sm font-medium rounded-r-lg ${
-                                viewMode === 'timeline' 
-                                    ? 'bg-blue-600 text-white' 
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                            }`}
-                        >
-                            <Clock size={16} className="inline mr-1" />
-                            Timeline
-                        </button>
-                    </div>
-
                     {/* Edit Mode Toggle */}
                     <Button
                         variant={editMode ? "default" : "outline"}
@@ -762,7 +812,7 @@ const EnhancedItinerarySection = ({
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={exportItinerary} className="flex items-center gap-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Button variant="outline" onClick={() => exportItinerary('pdf')} className="flex items-center gap-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                             <Download size={14} />
                             Export
                         </Button>
@@ -831,7 +881,7 @@ const EnhancedItinerarySection = ({
                 {(selectedDay !== null ? [currentTrip.itinerary[selectedDay]] : currentTrip.itinerary).map((day, dayIndex) => {
                     const actualDayIndex = selectedDay !== null ? selectedDay : dayIndex;
                     const dayProgress = getDayProgress(actualDayIndex);
-                    const dayActivities = getFilteredActivities(day.activities);
+                    const dayActivities = getFilteredActivities(day.activities, actualDayIndex);
 
                     return (
                         <div key={actualDayIndex} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -867,7 +917,7 @@ const EnhancedItinerarySection = ({
                                                 Total Time
                                             </div>
                                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                {getEstimatedTime(day.activities)}
+                                                {formatTotalDuration(getEstimatedTime(day.activities))}
                                             </div>
                                         </div>
 
@@ -901,6 +951,11 @@ const EnhancedItinerarySection = ({
                                         {dayActivities.map((activity, activityIndex) => {
                                             const isCompleted = completedActivities.has(`${actualDayIndex}-${activityIndex}`);
                                             const activityNote = activityNotes[`${actualDayIndex}-${activityIndex}`] || '';
+                                            const activityTime = activity.time || '10:00';
+                                            const hour = Number(String(activityTime).split(':')[0]);
+                                            const timeBlock = Number.isFinite(hour)
+                                                ? (hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening')
+                                                : 'Daytime';
 
                                             return (
                                                 <div
@@ -934,7 +989,7 @@ const EnhancedItinerarySection = ({
                                                                                 ? 'text-green-700 dark:text-green-300 line-through' 
                                                                                 : 'text-gray-900 dark:text-white'
                                                                         }`}>
-                                                                            {activity.name}
+                                                                            {getActivityDisplayTitle(activity, activityIndex)}
                                                                         </h4>
                                                                         
                                                                         {activity.description && (
@@ -952,8 +1007,12 @@ const EnhancedItinerarySection = ({
                                                                             {/* Time */}
                                                                             <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                                                                                 <Clock size={14} />
-                                                                                {formatTime(activity.time)} ({activity.duration || 60}min)
+                                                                                {formatTime(activityTime)} ({activity.estimatedDuration || activity.duration || 60}min)
                                                                             </div>
+
+                                                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                                                {timeBlock}
+                                                                            </span>
 
                                                                             {/* Category */}
                                                                             <div className="flex items-center gap-1">
@@ -964,9 +1023,11 @@ const EnhancedItinerarySection = ({
                                                                             </div>
 
                                                                             {/* Priority */}
-                                                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(activity.priority)}`}>
-                                                                                {activity.priority}
-                                                                            </span>
+                                                                            {activity.priority && (
+                                                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(activity.priority)}`}>
+                                                                                    {activity.priority}
+                                                                                </span>
+                                                                            )}
 
                                                                             {/* Cost */}
                                                                             {activity.estimatedCost && (
@@ -980,12 +1041,22 @@ const EnhancedItinerarySection = ({
                                                                         </div>
 
                                                                         {/* Location */}
-                                                                        {activity.location && (
+                                                                        {(() => {
+                                                                            const locationLabel = typeof activity.location === 'string'
+                                                                                ? String(activity.location).trim()
+                                                                                : String(activity?.location?.name || activity?.location?.address || '').trim();
+
+                                                                            if (!locationLabel || /selected\s*location/i.test(locationLabel)) {
+                                                                                return null;
+                                                                            }
+
+                                                                            return (
                                                                             <div className="flex items-center gap-1 mt-2 text-sm text-gray-500 dark:text-gray-400">
                                                                                 <MapPin size={14} />
-                                                                                {typeof activity.location === 'string' ? activity.location : activity.location.name}
+                                                                                {locationLabel}
                                                                             </div>
-                                                                        )}
+                                                                            );
+                                                                        })()}
 
                                                                         {/* Activity Note */}
                                                                         {activityNote && (
@@ -1048,11 +1119,12 @@ const EnhancedItinerarySection = ({
             <div className="flex items-center justify-center gap-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                 <Button
                     onClick={regenerateItinerary}
+                    disabled={isGeneratingItinerary}
                     variant="outline"
                     className="flex items-center gap-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800"
                 >
-                    <RefreshCw size={16} />
-                    Regenerate Itinerary
+                    <RefreshCw size={16} className={isGeneratingItinerary ? 'animate-spin' : ''} />
+                    {isGeneratingItinerary ? 'Regenerating...' : 'Regenerate Itinerary'}
                 </Button>
                 <Button
                     onClick={() => setShowAddActivity(true)}
@@ -1316,11 +1388,11 @@ const EnhancedItinerarySection = ({
 };
 
 // Smart Recommendations Component
-const SmartRecommendationsTab = ({ trip, recommendations, onRefresh }) => {
+const SmartRecommendationsTab = ({ trip, recommendations, onRefresh, isLoading, error, onAddToTrip }) => {
     const [selectedCategory, setSelectedCategory] = useState('all');
-    const [sortBy, setSortBy] = useState('rating');
 
-    console.log('SmartRecommendationsTab rendered with:', { trip: trip?.title, recommendations });
+    const totalItems = ['restaurants', 'attractions', 'events', 'hiddenGems', 'shopping']
+        .reduce((sum, key) => sum + ((recommendations?.[key] || []).length), 0);
 
     return (
         <div>
@@ -1328,14 +1400,26 @@ const SmartRecommendationsTab = ({ trip, recommendations, onRefresh }) => {
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Smart Recommendations</h2>
                     <p className="text-gray-600">
-                        Personalized suggestions based on your interests and travel style
+                        Focused local suggestions for practical trip decisions
                     </p>
                 </div>
-                <Button onClick={onRefresh} className="flex items-center gap-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 text-white">
-                    <Star size={16} />
-                    Refresh Recommendations
+                <Button onClick={onRefresh} disabled={isLoading} className="flex items-center gap-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 text-white">
+                    <Star size={16} className={isLoading ? 'animate-spin' : ''} />
+                    {isLoading ? 'Refreshing...' : 'Refresh Recommendations'}
                 </Button>
             </div>
+
+            {error && (
+                <div className="mb-6 rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+                    {error}
+                </div>
+            )}
+
+            {!isLoading && !error && totalItems > 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Showing {totalItems} useful picks across categories.
+                </p>
+            )}
 
             {/* Filters */}
             <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -1371,14 +1455,49 @@ const SmartRecommendationsTab = ({ trip, recommendations, onRefresh }) => {
                 recommendations={recommendations} 
                 selectedCategory={selectedCategory}
                 trip={trip}
+                isLoading={isLoading}
+                error={error}
+                onAddToTrip={onAddToTrip}
             />
         </div>
     );
 };
 
 // Enhanced Recommendations List Component
-const EnhancedRecommendationsList = ({ recommendations, selectedCategory, trip }) => {
-    console.log('EnhancedRecommendationsList received:', { recommendations, selectedCategory });
+const EnhancedRecommendationsList = ({ recommendations, selectedCategory, trip, isLoading, error, onAddToTrip }) => {
+    const [likedRecommendations, setLikedRecommendations] = useState(new Set());
+
+    useEffect(() => {
+        const key = `trip-${trip?._id}-liked-recommendations`;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                setLikedRecommendations(new Set(JSON.parse(saved)));
+            } catch (error) {
+                console.warn('Could not parse liked recommendations', error);
+            }
+        }
+    }, [trip?._id]);
+
+    const toggleLikeRecommendation = (likeKey) => {
+        const key = `trip-${trip?._id}-liked-recommendations`;
+        const next = new Set(likedRecommendations);
+        if (next.has(likeKey)) {
+            next.delete(likeKey);
+        } else {
+            next.add(likeKey);
+        }
+        setLikedRecommendations(next);
+        localStorage.setItem(key, JSON.stringify(Array.from(next)));
+    };
+
+    const openLocation = (item) => {
+        const rawLocation = typeof item?.location === 'string'
+            ? item.location
+            : `${trip?.destination?.city || ''} ${trip?.destination?.country || ''}`;
+        const query = encodeURIComponent(rawLocation || `${trip?.destination?.city || ''}`);
+        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener,noreferrer');
+    };
     
     const getRecommendationIcon = (category) => {
         const iconMap = {
@@ -1414,21 +1533,26 @@ const EnhancedRecommendationsList = ({ recommendations, selectedCategory, trip }
         ? ['restaurants', 'attractions', 'events', 'hiddenGems', 'shopping'] 
         : [selectedCategory];
 
-    console.log('Categories to show:', categoriesToShow);
-    console.log('Available recommendation categories:', Object.keys(recommendations || {}));
-    console.log('Selected category:', selectedCategory);
-    console.log('Full recommendations object:', recommendations);
-
     // Check if recommendations is empty or all categories are empty
     const hasAnyRecommendations = categoriesToShow.some(category => 
         recommendations[category] && recommendations[category].length > 0
     );
 
-    if (!recommendations || Object.keys(recommendations).length === 0) {
+    if (isLoading) {
         return (
             <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-gray-600 dark:text-gray-400">Loading recommendations...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-12">
+                <AlertCircle size={48} className="text-red-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Unable to load recommendations</h3>
+                <p className="text-gray-600 dark:text-gray-400">Try refreshing in a moment.</p>
             </div>
         );
     }
@@ -1447,10 +1571,7 @@ const EnhancedRecommendationsList = ({ recommendations, selectedCategory, trip }
         <div className="space-y-8">
             {categoriesToShow.map((category) => {
                 const items = recommendations[category] || [];
-                console.log(`Category ${category}:`, items.length, 'items');
-                console.log(`Items for ${category}:`, items);
                 if (items.length === 0) {
-                    console.log(`No items found for category: ${category}`);
                     return (
                         <div key={category} className="text-center py-4 border border-gray-200 rounded-lg">
                             <p className="text-gray-500">No {category} recommendations available</p>
@@ -1584,8 +1705,8 @@ const EnhancedRecommendationsList = ({ recommendations, selectedCategory, trip }
                                                 <div className="flex items-center gap-1">
                                                     <DollarSign size={14} className="text-green-600" />
                                                     <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        ${typeof (item.averageCost || item.entranceFee || item.ticketPrice) === 'number' 
-                                                            ? (item.averageCost || item.entranceFee || item.ticketPrice)
+                                                        {typeof (item.averageCost || item.entranceFee || item.ticketPrice) === 'number'
+                                                            ? formatCurrency((item.averageCost || item.entranceFee || item.ticketPrice), resolveTripCurrency(trip))
                                                             : typeof (item.averageCost || item.entranceFee || item.ticketPrice) === 'string'
                                                                 ? (item.averageCost || item.entranceFee || item.ticketPrice)
                                                                 : 'Free'}
@@ -1605,6 +1726,7 @@ const EnhancedRecommendationsList = ({ recommendations, selectedCategory, trip }
                                             <Button 
                                                 variant="outline" 
                                                 size="sm" 
+                                                onClick={() => openLocation(item)}
                                                 className="flex-1 text-xs border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                                             >
                                                 📍 View Location
@@ -1612,6 +1734,7 @@ const EnhancedRecommendationsList = ({ recommendations, selectedCategory, trip }
                                             <Button 
                                                 variant="outline" 
                                                 size="sm" 
+                                                onClick={() => onAddToTrip?.(item, category)}
                                                 className="flex-1 text-xs border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                                             >
                                                 ➕ Add to Trip
@@ -1619,7 +1742,8 @@ const EnhancedRecommendationsList = ({ recommendations, selectedCategory, trip }
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm"
-                                                className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                onClick={() => toggleLikeRecommendation(`${category}-${index}-${item.name || 'item'}`)}
+                                                className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${likedRecommendations.has(`${category}-${index}-${item.name || 'item'}`) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'}`}
                                             >
                                                 <Heart size={16} />
                                             </Button>
@@ -1680,14 +1804,33 @@ const BudgetBreakdownTab = ({ trip }) => {
 
     const budgetTypes = ['budget', 'midRange', 'luxury'];
     const categories = ['accommodation', 'food', 'activities', 'transport'];
+    const selectedBudgetKey = (trip.preferences?.budgetType === 'mid-range' ? 'midRange' : trip.preferences?.budgetType) || 'midRange';
+    const selectedCurrency = resolveTripCurrency(trip);
+    const totalForSelected = trip.totalEstimatedCost[selectedBudgetKey]?.total || 0;
+    const perDay = trip.dates?.duration ? Math.round(totalForSelected / trip.dates.duration) : 0;
 
     return (
         <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Budget Breakdown</h2>
+
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 p-4">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">Selected budget</p>
+                    <p className="text-xl font-bold text-blue-900 dark:text-blue-100 capitalize">
+                        {selectedBudgetKey === 'midRange' ? 'Mid-Range' : selectedBudgetKey}
+                    </p>
+                </div>
+                <div className="rounded-lg border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20 p-4">
+                    <p className="text-sm text-green-700 dark:text-green-300">Approx. cost per day</p>
+                    <p className="text-xl font-bold text-green-900 dark:text-green-100">
+                        {formatCurrency(perDay, selectedCurrency)}
+                    </p>
+                </div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {budgetTypes.map((budgetType) => (
-                    <div key={budgetType} className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div key={budgetType} className={`bg-white border rounded-lg p-6 ${selectedBudgetKey === budgetType ? 'border-blue-400 dark:border-blue-600 ring-1 ring-blue-300 dark:ring-blue-700' : 'border-gray-200 dark:border-gray-700'}`}>
                         <div className="text-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-900 capitalize mb-2">
                                 {budgetType === 'midRange' ? 'Mid-Range' : budgetType}
@@ -1695,7 +1838,7 @@ const BudgetBreakdownTab = ({ trip }) => {
                             <div className="text-3xl font-bold text-blue-600">
                                 {formatCurrency(
                                     trip.totalEstimatedCost[budgetType]?.total || 0,
-                                    trip.preferences?.currency || 'USD'
+                                    selectedCurrency
                                 )}
                             </div>
                             <p className="text-sm text-gray-600">Total estimated cost</p>
@@ -1708,7 +1851,7 @@ const BudgetBreakdownTab = ({ trip }) => {
                                     <span className="font-medium">
                                         {formatCurrency(
                                             trip.totalEstimatedCost[budgetType]?.[category] || 0,
-                                            trip.preferences?.currency || 'USD'
+                                            selectedCurrency
                                         )}
                                     </span>
                                 </div>
@@ -1721,120 +1864,34 @@ const BudgetBreakdownTab = ({ trip }) => {
     );
 };
 
-// Recommendations List Component
-const RecommendationsList = ({ recommendations, selectedCategory, trip }) => {
-    // Get category icon
-    const getCategoryIcon = (type) => {
-        switch (type) {
-            case 'restaurants':
-                return <Utensils size={16} className="text-green-600" />;
-            case 'attractions':
-                return <Landmark size={16} className="text-blue-600" />;
-            case 'events':
-                return <PartyPopper size={16} className="text-purple-600" />;
-            case 'hiddenGems':
-                return <Eye size={16} className="text-orange-600" />;
-            case 'shopping':
-                return <ShoppingBag size={16} className="text-pink-600" />;
-            default:
-                return <Target size={16} className="text-gray-600" />;
-        }
-    };
-
-    // Filter recommendations based on selected category
-    const getFilteredRecommendations = () => {
-        if (selectedCategory === 'all') {
-            return Object.entries(recommendations).flatMap(([type, items]) => 
-                items.map(item => ({ ...item, type }))
-            );
-        }
-        return recommendations[selectedCategory] || [];
-    };
-
-    const filteredRecommendations = getFilteredRecommendations();
-
-    if (filteredRecommendations.length === 0) {
+const RealTimeInfoTab = ({ realTimeInfo, isLoading, error, onRefresh }) => {
+    if (isLoading) {
         return (
             <div className="text-center py-12">
-                <Star size={48} className="text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recommendations yet</h3>
-                <p className="text-gray-600">Click "Refresh Recommendations" to get personalized suggestions.</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400">Loading real-time info...</p>
             </div>
         );
     }
 
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRecommendations.map((item, index) => (
-                <div key={`${item.type}-${index}`} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                    <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                        {getCategoryIcon(item.type)}
-                    </div>
-                    <div className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                            <div className="flex items-center gap-1">
-                                <Star size={14} className="text-yellow-500 fill-current" />
-                                <span className="text-sm text-gray-600">{item.rating}</span>
-                            </div>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                        
-                        {/* Location and Price */}
-                        <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                                <MapPin size={12} />
-                                <span>
-                                    {typeof item.location === 'string' 
-                                        ? item.location 
-                                        : 'Location not specified'
-                                    }
-                                </span>
-                            </div>
-                            {item.priceRange && (
-                                <div className="flex items-center gap-1">
-                                    <DollarSign size={12} />
-                                    <span className="capitalize">{item.priceRange.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <div className="flex gap-1">
-                                {item.tags?.slice(0, 2).map((tag, tagIndex) => (
-                                    <Badge key={tagIndex} variant="secondary" className="text-xs">
-                                        {tag}
-                                    </Badge>
-                                ))}
-                            </div>
-                            <Button size="sm" variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                Add to Trip
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-// Real-time Information Component
-const RealTimeInfoTab = ({ trip, realTimeInfo, onRefresh }) => {
-    const handleRefresh = () => {
-        console.log('Real-time info refresh button clicked');
-        onRefresh();
-    };
+    if (error) {
+        return (
+            <div className="text-center py-12">
+                <AlertCircle size={48} className="text-red-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Unable to fetch real-time info</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+                <Button onClick={onRefresh} className="bg-blue-600 hover:bg-blue-700 text-white">Try Again</Button>
+            </div>
+        );
+    }
 
     if (!realTimeInfo) {
         return (
             <div className="text-center py-12">
-                <Navigation size={48} className="text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No real-time data</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">Get current weather, traffic, and local updates for your destination.</p>
-                <Button onClick={handleRefresh} className="flex items-center gap-2">
-                    <Navigation size={16} />
-                    Get Real-time Info
-                </Button>
+                <Navigation size={48} className="text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No real-time updates yet</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">Fetch current weather, transport, and local alerts for your destination.</p>
+                <Button onClick={onRefresh} className="bg-blue-600 hover:bg-blue-700 text-white">Get Updates</Button>
             </div>
         );
     }
@@ -1842,370 +1899,58 @@ const RealTimeInfoTab = ({ trip, realTimeInfo, onRefresh }) => {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Real-time Information</h2>
-                <Button onClick={handleRefresh} variant="outline" className="flex items-center gap-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <Navigation size={16} />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Real-time Info</h2>
+                <Button onClick={onRefresh} variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                     Refresh
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Weather Card */}
-                {realTimeInfo.weather && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Star size={20} className="text-yellow-500" />
-                            Current Weather
-                        </h3>
-                        <div className="space-y-3">
-                            <div className="text-3xl font-bold text-blue-600">
-                                {realTimeInfo.weather.current.temperature}
-                            </div>
-                            <div className="text-gray-600">{realTimeInfo.weather.current.condition}</div>
-                            <div className="text-sm text-gray-500">
-                                Humidity: {realTimeInfo.weather.current.humidity} | 
-                                Wind: {realTimeInfo.weather.current.windSpeed}
-                            </div>
-                        </div>
-                    </div>
-                )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Weather</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{realTimeInfo.weather?.current?.condition || 'N/A'}</p>
+                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{realTimeInfo.weather?.current?.temperature || 'N/A'}</p>
+                </div>
 
-                {/* Traffic Card */}
-                {realTimeInfo.transportation && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Navigation size={20} className="text-blue-500" />
-                            Transportation
-                        </h3>
-                        <div className="space-y-3">
-                            <div>
-                                <span className="text-sm font-medium">Public Transport: </span>
-                                <Badge variant={realTimeInfo.transportation.publicTransport.status === 'operational' ? 'default' : 'destructive'}>
-                                    {realTimeInfo.transportation.publicTransport.status}
-                                </Badge>
-                            </div>
-                            <div>
-                                <span className="text-sm font-medium">Traffic: </span>
-                                <span className="text-gray-600">{realTimeInfo.transportation.traffic.currentCondition}</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Safety Alerts Card */}
-                {realTimeInfo.safetyAlerts && realTimeInfo.safetyAlerts.length > 0 && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Target size={20} className="text-red-500" />
-                            Safety Alerts
-                        </h3>
-                        <div className="space-y-2">
-                            {realTimeInfo.safetyAlerts.map((alert, index) => (
-                                <div key={index} className="p-2 bg-yellow-50 border border-yellow-200 rounded">
-                                    <div className="font-medium text-yellow-800">{alert.type}</div>
-                                    <div className="text-sm text-yellow-700">{alert.description}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Transport</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Public: {realTimeInfo.transportation?.publicTransport?.status || 'N/A'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Traffic: {realTimeInfo.transportation?.traffic?.currentCondition || 'N/A'}</p>
+                </div>
             </div>
 
-            {/* Local Events */}
-            {realTimeInfo.localEvents && realTimeInfo.localEvents.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold mb-4">Local Events</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {realTimeInfo.localEvents.map((event, index) => (
-                            <div key={index} className="p-4 border border-gray-100 rounded-lg">
-                                <div className="font-medium">{event.name}</div>
-                                <div className="text-sm text-gray-600">{event.date} • {event.type}</div>
-                                <div className="text-sm text-gray-500 mt-1">{event.description}</div>
-                            </div>
+            {Array.isArray(realTimeInfo.safetyAlerts) && realTimeInfo.safetyAlerts.length > 0 && (
+                <div className="rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-4">
+                    <h4 className="font-semibold text-red-800 dark:text-red-300 mb-2">Safety Alerts</h4>
+                    <ul className="space-y-2 text-sm text-red-700 dark:text-red-300">
+                        {realTimeInfo.safetyAlerts.slice(0, 4).map((alert, idx) => (
+                            <li key={idx}>• {alert.type}: {alert.description}</li>
                         ))}
-                    </div>
+                    </ul>
                 </div>
             )}
-        </div>
-    );
-};
 
-// Route Optimization Component
-const RouteOptimizationTab = ({ trip, routeData, onOptimize, selectedDay }) => {
-    const [optimizing, setOptimizing] = useState(false);
-
-    const handleOptimize = async () => {
-        setOptimizing(true);
-        await onOptimize(selectedDay);
-        setOptimizing(false);
-    };
-
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Route Optimization</h2>
-                    <p className="text-gray-600">Optimize your daily routes for minimum travel time and maximum efficiency.</p>
-                </div>
-                <Button 
-                    onClick={handleOptimize} 
-                    disabled={optimizing}
-                    className="flex items-center gap-2"
-                >
-                    <Target size={16} />
-                    {optimizing ? 'Optimizing...' : 'Optimize Route'}
-                </Button>
-            </div>
-
-            {/* Day Selection */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">Select Day to Optimize</h3>
-                <div className="flex gap-2 flex-wrap">
-                    {trip.itinerary?.map((day) => (
-                        <Button
-                            key={day.day}
-                            variant={selectedDay === day.day ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedDay(day.day)}
-                        >
-                            Day {day.day}
-                        </Button>
-                    ))}
-                </div>
-            </div>
-
-            {routeData ? (
-                <div className="space-y-6">
-                    {/* Route Summary */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold mb-4">Route Summary</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">{routeData.routeSummary.totalDistance}</div>
-                                <div className="text-sm text-gray-600">Total Distance</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600">{routeData.routeSummary.totalTravelTime}</div>
-                                <div className="text-sm text-gray-600">Travel Time</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-600">{routeData.routeSummary.startTime}</div>
-                                <div className="text-sm text-gray-600">Start Time</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-orange-600">{routeData.routeSummary.endTime}</div>
-                                <div className="text-sm text-gray-600">End Time</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Optimized Route */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold mb-4">Optimized Route</h3>
-                        <div className="space-y-4">
-                            {routeData.optimizedRoute.map((stop, index) => (
-                                <div key={index} className="flex items-center gap-4 p-3 border border-gray-100 rounded-lg">
-                                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                                        {stop.order}
-                                    </div>
-                                    <div className="flex-grow">
-                                        <div className="font-medium">{stop.location}</div>
-                                        <div className="text-sm text-gray-600">{stop.address}</div>
-                                        <div className="text-sm text-gray-500">
-                                            {stop.arrivalTime} - {stop.departureTime} ({stop.duration})
-                                        </div>
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                        {stop.travelTimeToNext && `${stop.travelTimeToNext} to next`}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Optimizations Made */}
-                    {routeData.routeOptimizations && routeData.routeOptimizations.length > 0 && (
-                        <div className="bg-white border border-gray-200 rounded-lg p-6">
-                            <h3 className="text-lg font-semibold mb-4">Optimizations Made</h3>
-                            <div className="space-y-3">
-                                {routeData.routeOptimizations.map((optimization, index) => (
-                                    <div key={index} className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                                        <div className="font-medium text-green-800">{optimization.type}</div>
-                                        <div className="text-sm text-green-700">{optimization.description}</div>
-                                        <div className="text-sm text-green-600 mt-1">{optimization.benefit}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                <div className="text-center py-12">
-                    <Target size={48} className="text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No route optimized yet</h3>
-                    <p className="text-gray-600">Click "Optimize Route" to get the most efficient path for your selected day.</p>
+            {Array.isArray(realTimeInfo.nearbyEvents) && realTimeInfo.nearbyEvents.length > 0 && (
+                <div className="rounded-lg border border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 p-4">
+                    <h4 className="font-semibold text-purple-800 dark:text-purple-300 mb-2">Nearby Events</h4>
+                    <ul className="space-y-2 text-sm text-purple-700 dark:text-purple-200">
+                        {realTimeInfo.nearbyEvents.slice(0, 5).map((event, idx) => (
+                            <li key={idx}>• {event.name} {event.date ? `(${event.date})` : ''} {event.location ? `- ${event.location}` : ''}</li>
+                        ))}
+                    </ul>
                 </div>
             )}
-        </div>
-    );
-};
 
-// Travel Intelligence Component
-const TravelIntelligenceTab = ({ trip }) => {
-    const travelIntelligence = trip.travel_intelligence || {};
-
-    return (
-        <div className="space-y-6">
-            <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                    🧠 Travel Intelligence
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                    Expert insights and local knowledge for your trip to {trip.destination.city}
-                </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Best Time to Visit */}
-                {travelIntelligence.best_time_to_visit && (
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-700 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                                <Calendar className="text-white" size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-blue-900 dark:text-blue-100">Best Time to Visit</h3>
-                        </div>
-                        <p className="text-blue-800 dark:text-blue-200 leading-relaxed">
-                            {travelIntelligence.best_time_to_visit}
-                        </p>
-                    </div>
-                )}
-
-                {/* Cultural Etiquette */}
-                {travelIntelligence.cultural_etiquette && (
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-200 dark:border-purple-700 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                                <Users className="text-white" size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-purple-900 dark:text-purple-100">Cultural Etiquette</h3>
-                        </div>
-                        <p className="text-purple-800 dark:text-purple-200 leading-relaxed">
-                            {travelIntelligence.cultural_etiquette}
-                        </p>
-                    </div>
-                )}
-
-                {/* Packing Essentials */}
-                {travelIntelligence.packing_essentials && (
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-200 dark:border-green-700 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                                <ShoppingBag className="text-white" size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-green-900 dark:text-green-100">Packing Essentials</h3>
-                        </div>
-                        <p className="text-green-800 dark:text-green-200 leading-relaxed">
-                            {travelIntelligence.packing_essentials}
-                        </p>
-                    </div>
-                )}
-
-                {/* Language Basics */}
-                {travelIntelligence.language_basics && (
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
-                                <Music className="text-white" size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-amber-900 dark:text-amber-100">Language Basics</h3>
-                        </div>
-                        <p className="text-amber-800 dark:text-amber-200 leading-relaxed">
-                            {travelIntelligence.language_basics}
-                        </p>
-                    </div>
-                )}
-
-                {/* Currency & Payment */}
-                {travelIntelligence.currency_wisdom && (
-                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-700 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                                <DollarSign className="text-white" size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100">Currency & Payment</h3>
-                        </div>
-                        <p className="text-emerald-800 dark:text-emerald-200 leading-relaxed">
-                            {travelIntelligence.currency_wisdom}
-                        </p>
-                    </div>
-                )}
-
-                {/* Safety Insights */}
-                {travelIntelligence.safety_insights && (
-                    <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-700 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-                                <Heart className="text-white" size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-red-900 dark:text-red-100">Safety Insights</h3>
-                        </div>
-                        <p className="text-red-800 dark:text-red-200 leading-relaxed">
-                            {travelIntelligence.safety_insights}
-                        </p>
-                    </div>
-                )}
-            </div>
-
-            {/* Local Apps and Hidden Gems */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-                {travelIntelligence.local_apps && (
-                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                                <Camera className="text-white" size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-indigo-900 dark:text-indigo-100">Essential Local Apps</h3>
-                        </div>
-                        <p className="text-indigo-800 dark:text-indigo-200 leading-relaxed">
-                            {travelIntelligence.local_apps}
-                        </p>
-                    </div>
-                )}
-
-                {travelIntelligence.hidden_gems && (
-                    <div className="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border border-pink-200 dark:border-pink-700 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-pink-600 rounded-lg flex items-center justify-center">
-                                <Eye className="text-white" size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-pink-900 dark:text-pink-100">Hidden Gems</h3>
-                        </div>
-                        <p className="text-pink-800 dark:text-pink-200 leading-relaxed">
-                            {travelIntelligence.hidden_gems}
-                        </p>
-                    </div>
-                )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mt-8">
-                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4">📱 Travel Preparation</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Button variant="outline" className="flex items-center gap-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <Download size={16} />
-                        Download Offline Map
-                    </Button>
-                    <Button variant="outline" className="flex items-center gap-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <Share2 size={16} />
-                        Share Travel Tips
-                    </Button>
-                    <Button variant="outline" className="flex items-center gap-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <Camera size={16} />
-                        Save to Notes
-                    </Button>
+            {Array.isArray(realTimeInfo.currentNews) && realTimeInfo.currentNews.length > 0 && (
+                <div className="rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-4">
+                    <h4 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">Current News & Affairs</h4>
+                    <ul className="space-y-2 text-sm text-amber-700 dark:text-amber-200">
+                        {realTimeInfo.currentNews.slice(0, 5).map((news, idx) => (
+                            <li key={idx}>• {news.headline || news.title} {news.impact ? `(${news.impact})` : ''}</li>
+                        ))}
+                    </ul>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

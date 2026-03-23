@@ -150,12 +150,29 @@ const Messages = ({ selectedUser }) => {
                                                                                                                         {msg.sharedPost.author?.username}
                                                                                                                     </span>
                                                                                                                 </div>
-                                                                                                                {msg.sharedPost.image && (
-                                                                                                                    <img 
-                                                                                                                        src={msg.sharedPost.image} 
-                                                                                                                        alt="Shared post" 
-                                                                                                                        className="w-full h-32 object-cover rounded mb-2"
-                                                                                                                    />
+                                                                                                                {(msg.sharedPost.image || msg.sharedPost.video) && (
+                                                                                                                    <div className="relative w-full h-32 rounded mb-2 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                                                                                                        {msg.sharedPost.mediaType === 'video' ? (
+                                                                                                                            <>
+                                                                                                                                <video 
+                                                                                                                                    src={msg.sharedPost.video} 
+                                                                                                                                    alt="Shared post" 
+                                                                                                                                    className="w-full h-full object-cover"
+                                                                                                                                />
+                                                                                                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                                                                                                    <div className="w-12 h-12 bg-white/80 rounded-full flex items-center justify-center">
+                                                                                                                                        <span className="text-xl">▶</span>
+                                                                                                                                    </div>
+                                                                                                                                </div>
+                                                                                                                            </>
+                                                                                                                        ) : (
+                                                                                                                            <img 
+                                                                                                                                src={msg.sharedPost.image} 
+                                                                                                                                alt="Shared post" 
+                                                                                                                                className="w-full h-full object-cover"
+                                                                                                                            />
+                                                                                                                        )}
+                                                                                                                    </div>
                                                                                                                 )}
                                                                                                                 {msg.sharedPost.caption && (
                                                                                                                     <p className="text-sm text-gray-600 dark:text-gray-300">

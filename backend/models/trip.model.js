@@ -91,6 +91,10 @@ const tripSchema = new mongoose.Schema({
             enum: ['budget', 'mid-range', 'luxury'],
             default: 'mid-range'
         },
+        currency: {
+            type: String,
+            default: 'USD'
+        },
         interests: [{
             type: String,
             enum: ['culture', 'history', 'food', 'adventure', 'relaxation', 'shopping', 'nightlife', 'nature', 'art', 'museums']

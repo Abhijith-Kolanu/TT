@@ -1,6 +1,6 @@
 import express from "express";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
-import upload from "../middlewares/multer.js";
+import upload, { handleMulterError } from "../middlewares/multer.js";
 // 1. ADD 'getExplorePosts' TO THIS IMPORT LIST
 import {
     addComment,
@@ -22,7 +22,7 @@ import {
 
 const router = express.Router();
 
-router.route("/addpost").post(isAuthenticated, upload.single('image'), addNewPost);
+router.route("/addpost").post(isAuthenticated, upload.single('image'), handleMulterError, addNewPost);
 router.route("/all").get(isAuthenticated, getAllPost);
 router.route("/userpost/all").get(isAuthenticated, getUserPost);
 router.route("/footsteps").get(isAuthenticated, getFootstepsPosts);

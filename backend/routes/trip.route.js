@@ -8,7 +8,9 @@ import {
     updateTrip, 
     deleteTrip,
     getRealTimeInfo,
-    optimizeRoute
+    optimizeRoute,
+    shareTrip,
+    exportTrip
 } from "../controllers/trip.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 
@@ -20,6 +22,8 @@ router.post("/:tripId/generate", isAuthenticated, generateItinerary);
 router.get("/:tripId/recommendations", isAuthenticated, getSmartRecommendations);
 router.get("/:tripId/realtime", isAuthenticated, getRealTimeInfo);
 router.post("/:tripId/optimize-route", isAuthenticated, optimizeRoute);
+router.post("/:tripId/share", isAuthenticated, shareTrip);
+router.get("/:tripId/export/:format", isAuthenticated, exportTrip);
 router.get("/my-trips", isAuthenticated, getUserTrips);
 router.get("/:tripId", isAuthenticated, getTripById);
 router.put("/:tripId", isAuthenticated, updateTrip);

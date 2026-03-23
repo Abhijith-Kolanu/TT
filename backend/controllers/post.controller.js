@@ -9,10 +9,24 @@ import { Notification } from "../models/notification.model.js";
 export const addNewPost = async (req, res) => {
     try {
         const { caption, coordinates, locationName } = req.body;
-        const image = req.file;
+        const file = req.file;
         const authorId = req.user._id;
 
-        if (!image) return res.status(400).json({ message: 'Image required' });
+        if (!file) return res.status(400).json({ message: 'Image or video required' });
+
+        // Check file size (max 50MB)
+        const maxFileSize = 50 * 1024 * 1024;
+        if (file.size > maxFileSize) {
+            return res.status(400).json({ message: 'File size too large. Maximum 50MB allowed.' });
+        }
+
+        // Determine file type
+        const isVideo = file.mimetype.startsWith('video/');
+        const isImage = file.mimetype.startsWith('image/');
+
+        if (!isVideo && !isImage) {
+            return res.status(400).json({ message: 'Only image and video files are allowed' });
+        }
 
         // Parse coordinates safely (make it optional)
         let locationData = null;
@@ -32,25 +46,46 @@ export const addNewPost = async (req, res) => {
                     };
                 }
             } catch (e) {
-                console.log("Invalid coordinates format, creating post without location");
+                locationData = null;
             }
         }
 
-        // Resize + upload image
-        const optimizedImageBuffer = await sharp(image.buffer)
-            .resize({ width: 800, height: 800, fit: 'inside' })
-            .toFormat('jpeg', { quality: 80 })
-            .toBuffer();
+        let cloudResponse;
 
-        const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString('base64')}`;
-        const cloudResponse = await cloudinary.uploader.upload(fileUri);
+        if (isImage) {
+            const optimizedImageBuffer = await sharp(file.buffer)
+                .resize({ width: 800, height: 800, fit: 'inside' })
+                .toFormat('jpeg', { quality: 80 })
+                .toBuffer();
+
+            const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString('base64')}`;
+            cloudResponse = await cloudinary.uploader.upload(fileUri);
+        } else if (isVideo) {
+            const fileUri = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            cloudResponse = await cloudinary.uploader.upload(fileUri, {
+                resource_type: 'video',
+                folder: 'travel_app/videos',
+                timeout: 600000
+            });
+        }
 
         // Create the post with optional location
         const postData = {
             caption,
-            image: cloudResponse.secure_url,
+            mediaType: isImage ? 'image' : 'video',
             author: authorId,
         };
+
+        if (isImage) {
+            postData.image = cloudResponse.secure_url;
+        } else {
+            const playableVideoUrl = cloudinary.url(cloudResponse.public_id, {
+                resource_type: 'video',
+                secure: true,
+                format: 'mp4'
+            });
+            postData.video = playableVideoUrl || cloudResponse.secure_url;
+        }
         
         if (locationData) {
             postData.location = locationData;
@@ -73,8 +108,11 @@ export const addNewPost = async (req, res) => {
             success: true,
         });
     } catch (error) {
-        console.log("Error in addNewPost:", error);
-        return res.status(500).json({ message: "Internal server error", success: false });
+        console.error("Error in addNewPost:", error.message);
+        return res.status(500).json({ 
+            message: "Internal server error", 
+            success: false 
+        });
     }
 };
 
