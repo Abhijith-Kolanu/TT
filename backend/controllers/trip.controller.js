@@ -117,6 +117,39 @@ const normalizeComparableText = (value) => String(value || '')
     .replace(/\s+/g, ' ')
     .trim();
 
+const COUNTRY_CANONICAL_LABELS = new Map([
+    ['united kingdom', 'UK'],
+    ['uk', 'UK'],
+    ['u k', 'UK'],
+    ['great britain', 'UK'],
+    ['britain', 'UK'],
+    ['england', 'UK'],
+    ['scotland', 'UK'],
+    ['wales', 'UK'],
+    ['northern ireland', 'UK']
+]);
+
+const normalizeCountryName = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return raw;
+
+    const key = raw
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return COUNTRY_CANONICAL_LABELS.get(key) || raw;
+};
+
+const normalizeDestination = (destination) => {
+    if (!destination || typeof destination !== 'object') return destination;
+    return {
+        ...destination,
+        country: normalizeCountryName(destination.country)
+    };
+};
+
 const buildTitleFromDescription = (description, category) => {
     const base = String(description || '')
         .replace(/^activity\s*\d*\s*[:.\-–]?\s*/i, '')
@@ -334,7 +367,7 @@ export const createTrip = async (req, res) => {
         const tripData = {
             user: userId, // Changed from userId to user
             title,
-            destination,
+            destination: normalizeDestination(destination),
             dates: {
                 ...dates,
                 duration
@@ -670,10 +703,19 @@ export const updateTrip = async (req, res) => {
         const { tripId } = req.params;
         const userId = req.user._id;
         const updates = req.body;
+        const normalizedUpdates = { ...updates };
+
+        if (normalizedUpdates.destination && typeof normalizedUpdates.destination === 'object') {
+            normalizedUpdates.destination = normalizeDestination(normalizedUpdates.destination);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(normalizedUpdates, 'destination.country')) {
+            normalizedUpdates['destination.country'] = normalizeCountryName(normalizedUpdates['destination.country']);
+        }
 
         const trip = await Trip.findOneAndUpdate(
             { _id: tripId, user: userId },
-            updates,
+            normalizedUpdates,
             { new: true }
         );
 

@@ -19,6 +19,23 @@ import axios from 'axios';
 import { removeTrip } from '@/redux/tripSlice';
 import { formatCurrency } from '@/utils/currency';
 
+const normalizeCountryLabel = (country) => {
+    const raw = String(country || '').trim();
+    if (!raw) return raw;
+
+    const key = raw
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (['uk', 'u k', 'united kingdom', 'great britain', 'britain', 'england', 'scotland', 'wales', 'northern ireland'].includes(key)) {
+        return 'UK';
+    }
+
+    return raw;
+};
+
 const TripCard = ({ trip }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -203,7 +220,7 @@ const TripCard = ({ trip }) => {
                     
                     <div className="flex items-center text-white/90 text-sm mb-2">
                         <MapPin size={16} className="mr-2" />
-                        <span>{trip.destination.city}, {trip.destination.country}</span>
+                        <span>{trip.destination.city}, {normalizeCountryLabel(trip.destination.country)}</span>
                     </div>
 
                     {/* Progress Bar */}
@@ -265,10 +282,10 @@ const TripCard = ({ trip }) => {
                 </div>
 
                 {/* Enhanced Interests */}
-                <div className="min-h-[62px]">
+                <div className="min-h-[84px]">
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🎯 Interests:</p>
-                    <div className="flex flex-wrap gap-2">
-                        {trip.preferences?.interests?.slice(0, 2).map((interest) => (
+                    <div className="flex flex-wrap gap-2 max-h-[60px] overflow-hidden">
+                        {trip.preferences?.interests?.map((interest) => (
                             <span
                                 key={interest}
                                 className="px-3 py-1 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-800 dark:text-blue-200 text-xs rounded-full capitalize font-medium border border-blue-200 dark:border-blue-700"
@@ -276,11 +293,6 @@ const TripCard = ({ trip }) => {
                                 {interest}
                             </span>
                         ))}
-                        {trip.preferences?.interests?.length > 2 && (
-                            <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full font-medium">
-                                +{trip.preferences.interests.length - 2} more
-                            </span>
-                        )}
                     </div>
                 </div>
 

@@ -20,7 +20,7 @@ const MainLayout = () => {
   const isTripRelatedPage = isTripPlannerPage || isTripDetailPage;
   
   // Pages that should not have padding (they handle their own layout)
-  const isFullLayoutPage = isFootstepsPage || isHomePage || isScrapbookPage || isJournalPage;
+  const isFullLayoutPage = isFootstepsPage || isHomePage || isScrapbookPage || isJournalPage || isGuideConnectPage;
 
   return (
     // Use Flexbox to create a row layout with proper overflow handling
@@ -43,7 +43,7 @@ const MainLayout = () => {
         and right margin for the right sidebar (w-72) to prevent overlapping.
         On Messages page, Footsteps page, Profile pages, Edit Profile page, Scrapbook page, and all Trip-related pages, we don't add right margin since RightSidebar is hidden
       */}
-      <main className={`flex-1 lg:ml-64 ${!isMessagesPage && !isFootstepsPage && !isProfilePage && !isEditProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage ? 'xl:mr-72' : ''} overflow-y-auto scrollbar-hide`}>  
+      <main className={`flex-1 lg:ml-64 ${!isMessagesPage && !isFootstepsPage && !isProfilePage && !isEditProfilePage && !isScrapbookPage && !isJournalPage && !isTripRelatedPage && !isGuideConnectPage ? 'xl:mr-72' : ''} overflow-y-auto scrollbar-hide`}>  
         {/* 
           lg:ml-64 adds left margin only on large screens when LeftSidebar is visible (w-64).
           xl:mr-72 adds right margin only on extra large screens when RightSidebar is visible (w-72).

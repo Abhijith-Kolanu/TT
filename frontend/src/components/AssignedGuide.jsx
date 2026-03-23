@@ -6,7 +6,17 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
 import { getUserInitials } from '@/lib/utils';
 import { setSelectedUser } from '@/redux/authSlice';
-import { UserCheck, Calendar, MessageCircle } from 'lucide-react';
+import { UserCheck, Calendar, MessageCircle, Loader2, X } from 'lucide-react';
+
+const formatDateDDMMYYYY = (value) => {
+  if (!value) return '--/--/----';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '--/--/----';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 const AssignedGuide = () => {
   const { user } = useSelector(store => store.auth);
@@ -14,20 +24,25 @@ const AssignedGuide = () => {
   const navigate = useNavigate();
   const [assigned, setAssigned] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetchAssigned = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/booking`, { withCredentials: true });
+      const accepted = (res.data.asTraveller || []).find(b => b.status === 'accepted');
+      setAssigned(accepted || null);
+    } catch (err) {
+      setAssigned(null);
+      setError(err?.response?.data?.message || 'Unable to load assigned guide.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAssigned = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/booking`, { withCredentials: true });
-        const accepted = (res.data.asTraveller || []).find(b => b.status === 'accepted');
-        setAssigned(accepted || null);
-      } catch {
-        setAssigned(null);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchAssigned();
   }, [user]);
 
@@ -55,22 +70,50 @@ const AssignedGuide = () => {
             <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
               <Calendar className="w-3.5 h-3.5" />
               {assigned.startDate && assigned.endDate 
-                ? `${new Date(assigned.startDate).toLocaleDateString()} - ${new Date(assigned.endDate).toLocaleDateString()}` 
+                ? `${formatDateDDMMYYYY(assigned.startDate)} - ${formatDateDDMMYYYY(assigned.endDate)}` 
                 : 'Dates not set'}
             </div>
           </div>
         </div>
-        <Button 
-          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
-          onClick={() => {
-            dispatch(setSelectedUser(assigned.guide));
-            navigate('/chat', { state: { selectedUser: assigned.guide } });
-          }}
-        >
-          <MessageCircle className="w-4 h-4 mr-2" />
-          Message
-        </Button>
+        <div className="flex gap-2 sm:ml-auto">
+          <Button 
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+            onClick={() => {
+              dispatch(setSelectedUser(assigned.guide));
+              navigate('/chat', { state: { selectedUser: assigned.guide } });
+            }}
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Message
+          </Button>
+          <Button
+            variant="outline"
+            className="border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+            disabled={cancelling}
+            onClick={async () => {
+              if (!window.confirm('Are you sure you want to cancel your assigned guide booking?')) return;
+              setCancelling(true);
+              setError('');
+              try {
+                await axios.put(
+                  `${import.meta.env.VITE_API_URL}/api/v1/booking/${assigned._id}`,
+                  { status: 'cancelled' },
+                  { withCredentials: true }
+                );
+                setAssigned(null);
+              } catch (err) {
+                setError(err?.response?.data?.message || 'Failed to cancel assigned guide booking.');
+              } finally {
+                setCancelling(false);
+              }
+            }}
+          >
+            {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4 mr-1" />}
+            {cancelling ? 'Cancelling...' : 'Cancel'}
+          </Button>
+        </div>
       </div>
+      {error && <p className="text-sm text-red-600 dark:text-red-400 mt-3">{error}</p>}
     </div>
   );
 };

@@ -7,16 +7,42 @@ const LANGUAGES = ['English', 'Hindi', 'Spanish', 'French', 'German', 'Mandarin'
 const EXPERTISE = ['Trekking', 'City Tours', 'Wildlife', 'Cultural', 'Adventure', 'Food', 'Other'];
 
 const GuideRegistrationForm = ({ profile, onSuccess, onCancel }) => {
+  const initialLanguages = profile?.languages || [];
+  const initialExpertise = profile?.expertise || [];
+  const initialCustomLanguages = initialLanguages.filter(lang => !LANGUAGES.includes(lang));
+  const initialCustomExpertise = initialExpertise.filter(exp => !EXPERTISE.includes(exp));
+
   const [form, setForm] = useState({
     bio: profile?.bio || '',
-    languages: profile?.languages || [],
-    expertise: profile?.expertise || [],
+    languages: [
+      ...new Set([
+        ...initialLanguages.filter(lang => LANGUAGES.includes(lang)),
+        ...(initialCustomLanguages.length ? ['Other'] : [])
+      ])
+    ],
+    expertise: [
+      ...new Set([
+        ...initialExpertise.filter(exp => EXPERTISE.includes(exp)),
+        ...(initialCustomExpertise.length ? ['Other'] : [])
+      ])
+    ],
     locations: profile?.locations?.join(', ') || '',
     pricing: profile?.pricing || '',
   });
+  const [customLanguageInput, setCustomLanguageInput] = useState(initialCustomLanguages.join(', '));
+  const [customExpertiseInput, setCustomExpertiseInput] = useState(initialCustomExpertise.join(', '));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const parseCustomValues = (value) => {
+    return [...new Set(
+      String(value || '')
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean)
+    )];
+  };
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -38,9 +64,33 @@ const GuideRegistrationForm = ({ profile, onSuccess, onCancel }) => {
     setError('');
     setSuccess('');
     try {
+      const manualLanguages = form.languages.includes('Other') ? parseCustomValues(customLanguageInput) : [];
+      const manualExpertise = form.expertise.includes('Other') ? parseCustomValues(customExpertiseInput) : [];
+      const normalizedLanguages = [
+        ...new Set([...form.languages.filter(lang => lang !== 'Other'), ...manualLanguages])
+      ];
+      const normalizedExpertise = [
+        ...new Set([...form.expertise.filter(exp => exp !== 'Other'), ...manualExpertise])
+      ];
+
+      if (normalizedLanguages.length === 0) {
+        setError('Please add at least one language.');
+        setLoading(false);
+        return;
+      }
+
+      if (normalizedExpertise.length === 0) {
+        setError('Please add at least one expertise area.');
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         ...form,
+        languages: normalizedLanguages,
+        expertise: normalizedExpertise,
         locations: form.locations.split(',').map(s => s.trim()).filter(Boolean),
+        bio: form.bio.trim(),
       };
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/guide/profile`, payload, { withCredentials: true });
       if (res.data.success) {
@@ -49,10 +99,10 @@ const GuideRegistrationForm = ({ profile, onSuccess, onCancel }) => {
           onSuccess && onSuccess(res.data.profile);
         }, 1000);
       } else {
-        setError('Failed to save profile.');
+        setError(res.data.message || 'Failed to save profile.');
       }
     } catch (err) {
-      setError('Failed to save profile.');
+      setError(err?.response?.data?.message || 'Failed to save profile.');
     } finally {
       setLoading(false);
     }
@@ -125,6 +175,14 @@ const GuideRegistrationForm = ({ profile, onSuccess, onCancel }) => {
           {form.languages.length === 0 && (
             <p className="text-xs text-gray-400 mt-1">Select at least one language</p>
           )}
+          {form.languages.includes('Other') && (
+            <input
+              value={customLanguageInput}
+              onChange={e => setCustomLanguageInput(e.target.value)}
+              className="mt-3 w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white placeholder-gray-400"
+              placeholder="Enter language(s), comma separated"
+            />
+          )}
         </div>
 
         {/* Expertise */}
@@ -152,6 +210,14 @@ const GuideRegistrationForm = ({ profile, onSuccess, onCancel }) => {
           </div>
           {form.expertise.length === 0 && (
             <p className="text-xs text-gray-400 mt-1">Select at least one expertise</p>
+          )}
+          {form.expertise.includes('Other') && (
+            <input
+              value={customExpertiseInput}
+              onChange={e => setCustomExpertiseInput(e.target.value)}
+              className="mt-3 w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white placeholder-gray-400"
+              placeholder="Enter expertise area(s), comma separated"
+            />
           )}
         </div>
 
@@ -207,7 +273,7 @@ const GuideRegistrationForm = ({ profile, onSuccess, onCancel }) => {
           <Button 
             type="submit" 
             className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3"
-            disabled={loading || form.languages.length === 0 || form.expertise.length === 0}
+            disabled={loading}
           >
             {loading ? (
               <>

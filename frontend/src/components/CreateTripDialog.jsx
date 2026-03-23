@@ -48,6 +48,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
 
     const [errors, setErrors] = useState({});
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isTitleManuallyEdited, setIsTitleManuallyEdited] = useState(false);
 
     const budgetOptions = [
         { id: 'budget',    label: 'Budget',    sub: 'Economical',  emoji: '💰' },
@@ -88,12 +89,22 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
             [field]: value
         }));
 
+        if (field === 'title') {
+            setIsTitleManuallyEdited(true);
+        }
+
         if (errors[field]) {
             setErrors(prev => ({
                 ...prev,
                 [field]: null
             }));
         }
+    };
+
+    const buildTitleSuggestion = (destinationText) => {
+        const [cityRaw] = String(destinationText || '').split(',').map(part => part.trim());
+        if (!cityRaw) return '';
+        return `${cityRaw} Trip`;
     };
 
     const handleNestedInputChange = (parent, field, value) => {
@@ -122,16 +133,20 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
     }, [formData.destinationQuery, popularDestinations]);
 
     const handleDestinationInput = (value) => {
-        setFormData(prev => ({
-            ...prev,
-            destinationQuery: value,
-            destination: {
-                ...prev.destination,
-                city: '',
-                country: '',
-                coordinates: [0, 0]
-            }
-        }));
+        setFormData(prev => {
+            const shouldSuggestTitle = !isTitleManuallyEdited || !String(prev.title || '').trim();
+            return {
+                ...prev,
+                title: shouldSuggestTitle ? buildTitleSuggestion(value) : prev.title,
+                destinationQuery: value,
+                destination: {
+                    ...prev.destination,
+                    city: '',
+                    country: '',
+                    coordinates: [0, 0]
+                }
+            };
+        });
         setShowSuggestions(true);
         if (errors.destinationQuery) {
             setErrors(prev => ({ ...prev, destinationQuery: null }));
@@ -139,15 +154,20 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
     };
 
     const applyDestinationSuggestion = (item) => {
-        setFormData(prev => ({
-            ...prev,
-            destinationQuery: `${item.city}, ${item.country}`,
-            destination: {
-                city: item.city,
-                country: item.country,
-                coordinates: item.coordinates
-            }
-        }));
+        const destinationText = `${item.city}, ${item.country}`;
+        setFormData(prev => {
+            const shouldSuggestTitle = !isTitleManuallyEdited || !String(prev.title || '').trim();
+            return {
+                ...prev,
+                title: shouldSuggestTitle ? buildTitleSuggestion(destinationText) : prev.title,
+                destinationQuery: destinationText,
+                destination: {
+                    city: item.city,
+                    country: item.country,
+                    coordinates: item.coordinates
+                }
+            };
+        });
         setShowSuggestions(false);
     };
 
@@ -285,6 +305,7 @@ const CreateTripDialog = ({ open, onClose, onSubmit }) => {
         });
         setErrors({});
         setShowSuggestions(false);
+        setIsTitleManuallyEdited(false);
     };
 
     const handleClose = () => {

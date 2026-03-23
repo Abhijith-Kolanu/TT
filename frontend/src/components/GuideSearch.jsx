@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { getUserInitials } from '@/lib/utils';
-import { Search, MapPin, Globe, Briefcase, IndianRupee, Star, Loader2 } from 'lucide-react';
+import { Search, MapPin, Globe, Briefcase, IndianRupee, Star, Loader2, ShieldCheck } from 'lucide-react';
 
 const GuideSearch = ({ onSelectGuide }) => {
   const { user } = useSelector(store => store.auth);
@@ -24,11 +24,12 @@ const GuideSearch = ({ onSelectGuide }) => {
         if (filters.language) params.language = filters.language;
         if (filters.expertise) params.expertise = filters.expertise;
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/guide`, { params });
+        const validGuides = (res.data.guides || []).filter(guide => guide?.user?._id);
         // Filter out the current user's profile
-        const filteredGuides = (res.data.guides || []).filter(guide => guide.user._id !== user?._id);
+        const filteredGuides = validGuides.filter(guide => guide.user._id !== user?._id);
         setGuides(filteredGuides);
       } catch (err) {
-        setError('Failed to load guides.');
+        setError(err?.response?.data?.message || 'Failed to load guides.');
       } finally {
         setLoading(false);
       }
@@ -100,8 +101,14 @@ const GuideSearch = ({ onSelectGuide }) => {
             <div 
               key={guide._id} 
               className="p-4 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-200 group"
-              onClick={() => onSelectGuide(guide)}
+              onClick={() => guide?.user?._id && onSelectGuide(guide)}
             >
+              {(() => {
+                const locations = Array.isArray(guide.locations) ? guide.locations : [];
+                const languages = Array.isArray(guide.languages) ? guide.languages : [];
+                const expertise = Array.isArray(guide.expertise) ? guide.expertise : [];
+                const rating = Number(guide.rating || 0);
+                return (
               <div className="flex items-start gap-4">
                 <Avatar className="w-14 h-14 ring-2 ring-white dark:ring-gray-600 shadow-md flex-shrink-0">
                   <AvatarImage src={guide.user.profilePicture} alt="avatar" />
@@ -114,37 +121,51 @@ const GuideSearch = ({ onSelectGuide }) => {
                     <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                       {guide.user.username}
                     </h3>
-                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-semibold text-sm flex-shrink-0">
-                      <IndianRupee className="w-3.5 h-3.5" />
-                      {guide.pricing}/day
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {guide.isVerified && (
+                        <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">
+                          <ShieldCheck className="w-3 h-3" />
+                          Verified
+                        </span>
+                      )}
+                      <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-semibold text-sm">
+                        <IndianRupee className="w-3.5 h-3.5" />
+                        {guide.pricing || 'Custom'}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                      <Star className="w-3 h-3 fill-current" />
+                      {rating > 0 ? rating.toFixed(1) : 'New'}
+                    </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
-                      {guide.locations.slice(0, 2).join(', ')}{guide.locations.length > 2 && '...'}
+                      {locations.slice(0, 2).join(', ') || 'N/A'}{locations.length > 2 && '...'}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Globe className="w-3 h-3" />
-                      {guide.languages.slice(0, 2).join(', ')}{guide.languages.length > 2 && '...'}
+                      {languages.slice(0, 2).join(', ') || 'N/A'}{languages.length > 2 && '...'}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1 mb-2">{guide.bio}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {guide.expertise.slice(0, 3).map(exp => (
+                    {expertise.slice(0, 3).map(exp => (
                       <span key={exp} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs rounded-full">
                         {exp}
                       </span>
                     ))}
-                    {guide.expertise.length > 3 && (
+                    {expertise.length > 3 && (
                       <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-xs rounded-full">
-                        +{guide.expertise.length - 3}
+                        +{expertise.length - 3}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
+                );
+              })()}
             </div>
           ))}
         </div>

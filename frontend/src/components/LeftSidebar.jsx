@@ -24,12 +24,54 @@ const LeftSidebar = () => {
     const { unreadCount: notificationUnreadCount, notifications } = useSelector(store => store.notification);
     const dispatch = useDispatch();
     const [open, setOpen] = useState(false);
+    const [pendingGuideRequestsCount, setPendingGuideRequestsCount] = useState(0);
     
     // Fetch notifications
     useGetAllNotifications();
     
     // Calculate total unread count from unreadMessages object
     const unreadCount = unreadMessages ? Object.values(unreadMessages).reduce((total, count) => total + count, 0) : 0;
+
+    useEffect(() => {
+        if (!user?._id) {
+            setPendingGuideRequestsCount(0);
+            return;
+        }
+
+        let isMounted = true;
+
+        const fetchPendingGuideRequests = async () => {
+            try {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/booking`, { withCredentials: true });
+                const pending = (res.data?.asGuide || []).filter(booking => {
+                    return booking?.status === 'pending' && Boolean(booking?.traveller?._id || booking?.traveller);
+                }).length;
+                if (isMounted) {
+                    setPendingGuideRequestsCount(pending);
+                }
+            } catch {
+                if (isMounted) {
+                    setPendingGuideRequestsCount(0);
+                }
+            }
+        };
+
+        fetchPendingGuideRequests();
+    const intervalId = window.setInterval(fetchPendingGuideRequests, 10000);
+
+        const handleGuideBookingsUpdated = () => fetchPendingGuideRequests();
+        const handleWindowFocus = () => fetchPendingGuideRequests();
+
+        window.addEventListener('guide-bookings-updated', handleGuideBookingsUpdated);
+        window.addEventListener('focus', handleWindowFocus);
+
+        return () => {
+            isMounted = false;
+            window.clearInterval(intervalId);
+            window.removeEventListener('guide-bookings-updated', handleGuideBookingsUpdated);
+            window.removeEventListener('focus', handleWindowFocus);
+        };
+    }, [user?._id]);
 
     // Function to determine if a navigation item is active
     const isActiveRoute = (itemText) => {
@@ -227,6 +269,12 @@ const LeftSidebar = () => {
                                 }`}>
                                     {item.text}
                                 </span>
+
+                                {item.text === 'Guide Connect' && pendingGuideRequestsCount > 0 && (
+                                    <span className='ml-auto flex-shrink-0 bg-blue-500 text-white text-[11px] font-bold rounded-full px-2 py-0.5 min-w-[22px] text-center leading-tight shadow-sm'>
+                                        {pendingGuideRequestsCount > 99 ? '99+' : pendingGuideRequestsCount}
+                                    </span>
+                                )}
 
                                 {/* Notification count pill next to label */}
                                 {item.text === 'Notifications' && notificationUnreadCount > 0 && (

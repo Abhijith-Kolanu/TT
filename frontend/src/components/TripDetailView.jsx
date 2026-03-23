@@ -42,6 +42,23 @@ const resolveTripCurrency = (trip) => {
     return candidate || 'USD';
 };
 
+const normalizeCountryLabel = (country) => {
+    const raw = String(country || '').trim();
+    if (!raw) return raw;
+
+    const key = raw
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (['uk', 'u k', 'united kingdom', 'great britain', 'britain', 'england', 'scotland', 'wales', 'northern ireland'].includes(key)) {
+        return 'UK';
+    }
+
+    return raw;
+};
+
 const TripDetailView = () => {
     const { tripId } = useParams();
     const navigate = useNavigate();
@@ -417,7 +434,7 @@ const TripDetailView = () => {
                         type: 'Point',
                         coordinates: currentTrip?.destination?.coordinates || [0, 0],
                         name: typeof item?.location === 'string' ? item.location : `${currentTrip.destination.city}`,
-                        address: typeof item?.location === 'string' ? item.location : `${currentTrip.destination.city}, ${currentTrip.destination.country}`
+                        address: typeof item?.location === 'string' ? item.location : `${currentTrip.destination.city}, ${normalizeCountryLabel(currentTrip.destination.country)}`
                     },
                     estimatedDuration: 90,
                     category: category === 'restaurants' ? 'food' : category === 'shopping' ? 'shopping' : category === 'events' ? 'nightlife' : 'sightseeing',
@@ -558,7 +575,7 @@ const TripDetailView = () => {
                             <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400 mt-2">
                                 <div className="flex items-center gap-1">
                                     <MapPin size={16} />
-                                    <span>{currentTrip.destination.city}, {currentTrip.destination.country}</span>
+                                    <span>{currentTrip.destination.city}, {normalizeCountryLabel(currentTrip.destination.country)}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Calendar size={16} />
