@@ -31,6 +31,14 @@ const PORT = process.env.PORT || 8001;
 
 const __dirname = path.resolve();
 
+const allowedOrigins = [
+    "https://trek-tales.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    process.env.FRONTEND_URL,
+    process.env.URL,
+].filter(Boolean);
+
 //middlewares
 app.use(express.json());
 app.use(cookieParser());
@@ -41,12 +49,13 @@ app.use(urlencoded({ extended: true }));
 // }
 // app.use(cors(corsOptions));
 const corsOptions = {
-    // Allow only the correct production frontend and localhost for dev
-    origin: [
-        "https://trek-tales.vercel.app", // production (with dash)
-        "http://localhost:5173",
-        "http://localhost:5174"
-    ],
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error("Not allowed by CORS"));
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 };
@@ -54,11 +63,6 @@ app.use(cors(corsOptions));
 
 // Set custom CORS headers for preflight and credentials
 app.use((req, res, next) => {
-    const allowedOrigins = [
-        "https://trek-tales.vercel.app",
-        "http://localhost:5173",
-        "http://localhost:5174"
-    ];
     const origin = req.headers.origin;
     if (allowedOrigins.includes(origin)) {
         res.header("Access-Control-Allow-Origin", origin);

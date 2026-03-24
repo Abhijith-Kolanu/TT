@@ -15,12 +15,20 @@ const ForgotPassword = () => {
         e.preventDefault();
         try {
             setLoading(true);
+
+            const apiBaseUrl = import.meta.env.VITE_API_URL;
+            if (!apiBaseUrl) {
+                toast.error('API URL is not configured. Please contact support.');
+                return;
+            }
+
             const res = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/v1/user/forgot-password`,
+                `${apiBaseUrl}/api/v1/user/forgot-password`,
                 { email },
                 {
                     headers: { 'Content-Type': 'application/json' },
-                    withCredentials: true
+                    withCredentials: true,
+                    timeout: 15000
                 }
             );
 
@@ -32,7 +40,11 @@ const ForgotPassword = () => {
             });
         } catch (error) {
             console.log(error);
-            toast.error(error.response?.data?.message || 'Failed to submit request');
+            if (error.code === 'ECONNABORTED') {
+                toast.error('Request timed out. Please check backend URL and try again.');
+            } else {
+                toast.error(error.response?.data?.message || 'Failed to submit request');
+            }
         } finally {
             setLoading(false);
         }
