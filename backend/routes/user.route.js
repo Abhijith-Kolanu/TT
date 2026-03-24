@@ -3,11 +3,13 @@ import express from "express";
 import { 
     editProfile, 
     followOrUnfollow, 
+    forgotPassword,
     getProfile, 
     getSuggestedUsers, 
     login, 
     logout, 
     register, 
+    resetPassword,
     searchUsers,
     getFollowersFollowing,
     getCurrentUser,
@@ -21,6 +23,8 @@ const router = express.Router();
 
 router.route('/register').post(register);
 router.route('/login').post(login);
+router.route('/forgot-password').post(forgotPassword);
+router.route('/reset-password/:token').post(resetPassword);
 router.route('/logout').get(logout);
 router.route('/me').get(isAuthenticated, getCurrentUser);
 router.route('/profile/edit').post(isAuthenticated, upload.single('profilePhoto'), editProfile);

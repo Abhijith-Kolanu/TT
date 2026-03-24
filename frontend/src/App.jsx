@@ -6,6 +6,9 @@ import Login from './components/Login';
 import MainLayout from './components/MainLayout';
 import Profile from './components/Profile';
 import Signup from './components/Signup';
+import ForgotPassword from './components/ForgotPassword';
+import ForgotPasswordSent from './components/ForgotPasswordSent';
+import ResetPassword from './components/ResetPassword';
 import PostDetail from './components/PostDetail';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { io } from "socket.io-client";
@@ -92,6 +95,18 @@ const browserRouter = createBrowserRouter([
   {
     path: '/signup',
     element: <Signup />
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />
+  },
+  {
+    path: '/forgot-password/sent',
+    element: <ForgotPasswordSent />
+  },
+  {
+    path: '/reset-password/:token',
+    element: <ResetPassword />
   },
 
 ]);

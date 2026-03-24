@@ -194,6 +194,14 @@ const Login = () => {
                                 style={{ borderRadius: '0px 8px 0px 8px' }}
                                 required
                             />
+                            <div className='mt-2 text-right'>
+                                <Link
+                                    to="/forgot-password"
+                                    className='text-xs font-semibold text-red-500 dark:text-cyan-400 hover:text-red-600 dark:hover:text-cyan-300 transition-colors hover:underline'
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
                         </div>
 
                         {/* Login Button */}

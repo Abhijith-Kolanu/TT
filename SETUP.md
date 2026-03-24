@@ -19,7 +19,20 @@
    MONGO_URI=mongodb://localhost:27017/trektales
 
    # JWT
+   SECRET_KEY=your_jwt_secret_key_here
+   # (Optional compatibility alias)
    JWT_SECRET=your_jwt_secret_key_here
+
+   # Frontend URL (used in reset links)
+   FRONTEND_URL=http://localhost:5173
+
+   # SMTP (for sign-up/sign-in/reset emails)
+   MAIL_HOST=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_SECURE=false
+   MAIL_USER=your_email@gmail.com
+   MAIL_PASS=your_app_password
+   MAIL_FROM="TrekTales <your_email@gmail.com>"
 
    # Gemini AI API
    GEMINI_API_KEY=your_gemini_api_key_here
@@ -33,6 +46,12 @@
    ```bash
    npm start
    ```
+
+4. **Forgot Password Email Troubleshooting**:
+   - `MAIL_*` values are required for reset emails to be sent.
+   - For Gmail, use an App Password (not your normal Gmail password).
+   - If SMTP is not configured, the API now returns `503 Password reset email service is not configured.`
+   - Ensure `FRONTEND_URL` matches your running frontend port (for example `http://localhost:5173`).
 
 ## Frontend Setup
 

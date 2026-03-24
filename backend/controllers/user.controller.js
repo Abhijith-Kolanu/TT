@@ -1,8 +1,10 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import getDataUri from "../utils/datauri.js";
 import cloudinary from "../utils/cloudinary.js";
+import { isMailConfigured, sendEmail } from "../utils/email.js";
 import { io, getReceiverSocketId } from "../socket/socket.js";
 import { Post } from "../models/post.model.js";
 import { Notification } from "../models/notification.model.js";
@@ -13,13 +15,14 @@ import Journal from "../models/journal.model.js";
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
+        const normalizedEmail = email?.toLowerCase().trim();
         if (!username || !email || !password) {
             return res.status(401).json({
                 message: "Something is missing, please check!",
                 success: false,
             });
         }
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
             return res.status(401).json({
                 message: "Try different email",
@@ -29,9 +32,20 @@ export const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await User.create({
             username,
-            email,
+            email: normalizedEmail,
             password: hashedPassword
         });
+
+        try {
+            await sendEmail({
+                to: normalizedEmail,
+                subject: "Welcome to TrekTales!",
+                text: `Hi ${username}, welcome to TrekTales. Your account has been created successfully.`,
+                html: `<p>Hi <strong>${username}</strong>,</p><p>Welcome to <strong>TrekTales</strong>! Your account has been created successfully.</p>`,
+            });
+        } catch (mailError) {
+            console.log("Signup email failed:", mailError.message);
+        }
 
         // Automatically log in the user after successful registration
         const token = await jwt.sign({ userId: newUser._id }, process.env.SECRET_KEY, { expiresIn: '1d' });
@@ -65,13 +79,14 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
+        const normalizedEmail = email?.toLowerCase().trim();
         if (!email || !password) {
             return res.status(401).json({
                 message: "Something is missing, please check!",
                 success: false,
             });
         }
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(401).json({
                 message: "Incorrect email or password",
@@ -87,6 +102,17 @@ export const login = async (req, res) => {
         };
 
         const token = await jwt.sign({ userId: user._id }, process.env.SECRET_KEY, { expiresIn: '1d' });
+
+        try {
+            await sendEmail({
+                to: normalizedEmail,
+                subject: "New sign-in to your TrekTales account",
+                text: `Hi ${user.username}, we detected a sign-in to your TrekTales account. If this wasn't you, please reset your password immediately.`,
+                html: `<p>Hi <strong>${user.username}</strong>,</p><p>We detected a sign-in to your TrekTales account.</p><p>If this wasn’t you, please reset your password immediately.</p>`,
+            });
+        } catch (mailError) {
+            console.log("Signin alert email failed:", mailError.message);
+        }
 
         // populate each post if in the posts array
         const populatedPosts = await Promise.all(
@@ -124,6 +150,133 @@ export const login = async (req, res) => {
         console.log(error);
     }
 };
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required",
+                success: false,
+            });
+        }
+
+        if (!isMailConfigured()) {
+            return res.status(503).json({
+                message: "Password reset email service is not configured.",
+                success: false,
+            });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+        if (user) {
+            const resetToken = crypto.randomBytes(32).toString("hex");
+            const hashedResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+            user.resetPasswordToken = hashedResetToken;
+            user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+            await user.save();
+
+            const frontendUrl = req.get("origin") || process.env.FRONTEND_URL || process.env.URL || "http://localhost:5173";
+            const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+            try {
+                const mailResult = await sendEmail({
+                    to: user.email,
+                    subject: "Reset your TrekTales password",
+                    text: `We received a request to reset your TrekTales password. Use this link within 15 minutes: ${resetUrl}`,
+                    html: `<p>We received a request to reset your TrekTales password.</p><p><a href="${resetUrl}">Click here to reset your password</a> (valid for 15 minutes).</p>`,
+                });
+
+                if (!mailResult?.success) {
+                    user.resetPasswordToken = null;
+                    user.resetPasswordExpires = null;
+                    await user.save();
+
+                    return res.status(503).json({
+                        message: "Password reset email service is unavailable. Please try again later.",
+                        success: false,
+                    });
+                }
+            } catch (mailError) {
+                console.log("Reset password email failed:", mailError.message);
+                user.resetPasswordToken = null;
+                user.resetPasswordExpires = null;
+                await user.save();
+
+                return res.status(500).json({
+                    message: "Unable to send reset email right now. Please try again later.",
+                    success: false,
+                });
+            }
+        }
+
+        return res.status(200).json({
+            message: "If an account exists with this email, a reset link has been generated.",
+            success: true,
+        });
+    } catch (error) {
+        console.log("Error in forgotPassword:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+        });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        if (!token || !password) {
+            return res.status(400).json({
+                message: "Token and new password are required",
+                success: false,
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters",
+                success: false,
+            });
+        }
+
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: { $gt: new Date() },
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid or expired reset link",
+                success: false,
+            });
+        }
+
+        user.password = await bcrypt.hash(password, 10);
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Password reset successful. Please sign in.",
+            success: true,
+        });
+    } catch (error) {
+        console.log("Error in resetPassword:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+        });
+    }
+};
+
 export const logout = async (_, res) => {
     try {
         return res.cookie("token", "", { maxAge: 0 }).json({
