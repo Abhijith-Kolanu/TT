@@ -42,7 +42,6 @@ const ResetPassword = () => {
                 { password: input.password },
                 {
                     headers: { 'Content-Type': 'application/json' },
-                    withCredentials: true,
                     timeout: 60000
                 }
             );
@@ -54,7 +53,9 @@ const ResetPassword = () => {
             if (error.code === 'ECONNABORTED') {
                 toast.error('Request timed out. Backend may be waking up. Please try once more.');
             } else {
-                toast.error(error.response?.data?.message || 'Failed to reset password');
+                const backendMessage = error.response?.data?.message;
+                const networkMessage = error.message;
+                toast.error(backendMessage || networkMessage || 'Failed to reset password');
             }
         } finally {
             setLoading(false);
