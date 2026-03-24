@@ -28,7 +28,7 @@ const ForgotPassword = () => {
                 {
                     headers: { 'Content-Type': 'application/json' },
                     withCredentials: true,
-                    timeout: 15000
+                    timeout: 60000
                 }
             );
 
@@ -41,7 +41,7 @@ const ForgotPassword = () => {
         } catch (error) {
             console.log(error);
             if (error.code === 'ECONNABORTED') {
-                toast.error('Request timed out. Please check backend URL and try again.');
+                toast.error('Request timed out. Backend may be waking up. Please try once more.');
             } else {
                 toast.error(error.response?.data?.message || 'Failed to submit request');
             }
