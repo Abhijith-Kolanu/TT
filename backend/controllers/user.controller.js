@@ -201,13 +201,27 @@ export const forgotPassword = async (req, res) => {
                     });
                 }
             } catch (mailError) {
-                console.log("Reset password email failed:", mailError.message);
+                const errorCode = mailError?.code || mailError?.responseCode || "UNKNOWN";
+                const errorMessage = mailError?.message || "Unknown mail error";
+                console.log("Reset password email failed:", errorCode, errorMessage);
                 user.resetPasswordToken = null;
                 user.resetPasswordExpires = null;
                 await user.save();
 
+                const normalizedMessage = String(errorMessage).toLowerCase();
+                const isAuthError = errorCode === "EAUTH" || normalizedMessage.includes("authentication") || normalizedMessage.includes("invalid login");
+                const isTimeoutError = errorCode === "ETIMEDOUT" || errorCode === "ESOCKET" || normalizedMessage.includes("timeout");
+                const isConnectionError = errorCode === "ECONNECTION" || errorCode === "ENOTFOUND" || normalizedMessage.includes("connect");
+
+                let responseMessage = "Unable to send reset email right now. Please try again later.";
+                if (isAuthError) {
+                    responseMessage = "Email service authentication failed. Check MAIL_USER/MAIL_PASS in deployment environment.";
+                } else if (isTimeoutError || isConnectionError) {
+                    responseMessage = "Email service is unreachable right now. Please try again shortly.";
+                }
+
                 return res.status(500).json({
-                    message: "Unable to send reset email right now. Please try again later.",
+                    message: `${responseMessage} (code: ${errorCode})`,
                     success: false,
                 });
             }
