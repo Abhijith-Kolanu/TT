@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
 
-let transporter;
 let resolvedMailConfig;
 
 const getMailConfig = () => {
@@ -33,8 +32,6 @@ export const isMailConfigured = () => {
 };
 
 const getTransporter = async () => {
-    if (transporter) return transporter;
-
     const config = getMailConfig();
 
     const transportOptions = config.service
@@ -62,9 +59,24 @@ const getTransporter = async () => {
             },
         };
 
-    transporter = nodemailer.createTransport(transportOptions);
+    return nodemailer.createTransport(transportOptions);
+};
 
-    return transporter;
+const getGmailSslTransporter = async () => {
+    const config = getMailConfig();
+
+    return nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+        auth: {
+            user: config.user,
+            pass: config.pass,
+        },
+    });
 };
 
 export const sendEmail = async ({ to, subject, text, html }) => {
@@ -73,16 +85,32 @@ export const sendEmail = async ({ to, subject, text, html }) => {
         return { success: false, skipped: true, reason: "smtp_not_configured" };
     }
 
-    const mailTransporter = await getTransporter();
     const config = getMailConfig();
 
-    await mailTransporter.sendMail({
+    const message = {
         from: config.from,
         to,
         subject,
         text,
         html,
-    });
+    };
+
+    try {
+        const mailTransporter = await getTransporter();
+        await mailTransporter.sendMail(message);
+    } catch (error) {
+        const errorCode = error?.code;
+        const host = String(config.host || "").toLowerCase();
+        const isGmailHost = host === "smtp.gmail.com";
+        const isSocketError = errorCode === "ESOCKET" || errorCode === "ETIMEDOUT" || errorCode === "ECONNECTION";
+
+        if (!isGmailHost || !isSocketError) {
+            throw error;
+        }
+
+        const fallbackTransporter = await getGmailSslTransporter();
+        await fallbackTransporter.sendMail(message);
+    }
 
     return { success: true };
 };
