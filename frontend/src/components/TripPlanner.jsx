@@ -151,7 +151,7 @@ const TripPlanner = () => {
                                     <Sparkles className="text-white" size={32} />
                                 </div>
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent mb-4 tracking-tight">
+                            <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent mb-4 tracking-tight leading-[1.15] pb-1">
                                 AI Trip Planner
                             </h1>
                             <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-7 leading-relaxed">
