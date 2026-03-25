@@ -103,7 +103,9 @@ const TripPlanner = () => {
 
     const getEnhancedStats = () => {
         const countries = new Set();
-        trips.forEach(trip => {
+        const completedTrips = trips.filter(trip => trip.status === 'completed');
+
+        completedTrips.forEach(trip => {
             if (trip.destination?.country) {
                 countries.add(trip.destination.country);
             }

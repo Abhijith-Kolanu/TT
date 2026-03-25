@@ -32,6 +32,27 @@ const ChatPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const normalizeObjectId = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string') {
+            const match = value.match(/[a-f\d]{24}/i);
+            return match ? match[0] : value;
+        }
+        if (typeof value === 'number') return String(value);
+        if (typeof value === 'object') {
+            if (value.$oid) return String(value.$oid);
+            if (value._id) return normalizeObjectId(value._id);
+            if (value.id) return normalizeObjectId(value.id);
+            if (typeof value.toHexString === 'function') return value.toHexString();
+            if (typeof value.toString === 'function') {
+                const text = value.toString();
+                const match = text.match(/[a-f\d]{24}/i);
+                return match ? match[0] : text;
+            }
+        }
+        return String(value);
+    };
+
     // Delete conversation handler
     const handleDeleteChat = async () => {
         if (!selectedUser || deleting) return;
@@ -136,13 +157,14 @@ const ChatPage = () => {
                         {
                             suggestedUsers.map((suggestedUser) => {
                                 const isOnline = onlineUsers.includes(suggestedUser?._id);
-                                const unreadCount = unreadMessages?.[suggestedUser._id] || 0;
-                                const isSelected = selectedUser?._id === suggestedUser._id;
+                                const suggestedUserId = normalizeObjectId(suggestedUser?._id);
+                                const unreadCount = unreadMessages?.[suggestedUserId] || 0;
+                                const isSelected = normalizeObjectId(selectedUser?._id) === suggestedUserId;
                                 return (
                                     <div key={suggestedUser._id} onClick={() => {
                                         dispatch(setSelectedUser(suggestedUser));
                                         // Mark messages from this user as read
-                                        dispatch(markMessagesAsRead(suggestedUser._id));
+                                        dispatch(markMessagesAsRead(suggestedUserId));
                                     }} className={`group relative p-4 mb-3 rounded-2xl cursor-pointer transition-all duration-300 border ${
                                         isSelected 
                                             ? 'bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 border-blue-300/50 dark:border-blue-600/50 shadow-lg transform scale-[1.02]' 

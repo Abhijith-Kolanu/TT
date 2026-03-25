@@ -250,13 +250,6 @@ const LeftSidebar = () => {
                                         : 'text-gray-500 dark:text-gray-400 group-hover:bg-blue-100/60 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                                 }`}>
                                     <span className='w-4 h-4 flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4 [&>svg]:flex-shrink-0'>{item.icon}</span>
-
-                                    {/* Messages badge */}
-                                    {item.text === 'Messages' && unreadCount > 0 && (
-                                        <div className='absolute -top-1.5 -right-1.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold shadow border-2 border-white dark:border-gray-900'>
-                                            {unreadCount > 99 ? '99+' : unreadCount}
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Label */}
@@ -269,6 +262,12 @@ const LeftSidebar = () => {
                                 }`}>
                                     {item.text}
                                 </span>
+
+                                {item.text === 'Messages' && unreadCount > 0 && (
+                                    <span className='ml-auto flex-shrink-0 bg-blue-500 text-white text-[11px] font-bold rounded-full px-2 py-0.5 min-w-[22px] text-center leading-tight shadow-sm'>
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                )}
 
                                 {item.text === 'Guide Connect' && pendingGuideRequestsCount > 0 && (
                                     <span className='ml-auto flex-shrink-0 bg-blue-500 text-white text-[11px] font-bold rounded-full px-2 py-0.5 min-w-[22px] text-center leading-tight shadow-sm'>

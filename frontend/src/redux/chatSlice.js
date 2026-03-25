@@ -1,5 +1,34 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const normalizeObjectId = (value) => {
+    if (!value) return '';
+
+    if (typeof value === 'string') {
+        const match = value.match(/[a-f\d]{24}/i);
+        return match ? match[0] : value;
+    }
+
+    if (typeof value === 'number') {
+        return String(value);
+    }
+
+    if (typeof value === 'object') {
+        if (value.$oid) return String(value.$oid);
+        if (value._id) return normalizeObjectId(value._id);
+        if (value.id) return normalizeObjectId(value.id);
+        if (typeof value.toHexString === 'function') {
+            return value.toHexString();
+        }
+        if (typeof value.toString === 'function') {
+            const text = value.toString();
+            const match = text.match(/[a-f\d]{24}/i);
+            return match ? match[0] : text;
+        }
+    }
+
+    return String(value);
+};
+
 const chatSlice = createSlice({
     name:"chat",
     initialState:{
@@ -29,28 +58,13 @@ const chatSlice = createSlice({
         },
         addNewMessage:(state,action) => {
             const { newMessage, currentUserId, selectedUserId } = action.payload;
-            
-            // Helper function to extract ID as string from various formats
-            const extractId = (id) => {
-                if (!id) return '';
-                if (typeof id === 'string') return id;
-                if (typeof id === 'object') {
-                    // Handle MongoDB ObjectId serialization formats
-                    if (id._id) return String(id._id);
-                    if (id.$oid) return id.$oid;
-                    if (id.toString && typeof id.toString === 'function') {
-                        const str = id.toString();
-                        // Check if it's a valid ObjectId string (24 hex chars)
-                        if (/^[a-f\d]{24}$/i.test(str)) return str;
-                    }
-                }
-                return String(id);
-            };
-            
-            const senderId = extractId(newMessage.senderId);
-            const receiverId = extractId(newMessage.receiverId);
-            const currentUserIdStr = extractId(currentUserId);
-            const selectedUserIdStr = selectedUserId ? extractId(selectedUserId) : (state.selectedChatUserId ? extractId(state.selectedChatUserId) : null);
+
+            const senderId = normalizeObjectId(newMessage.senderId);
+            const receiverId = normalizeObjectId(newMessage.receiverId);
+            const currentUserIdStr = normalizeObjectId(currentUserId);
+            const selectedUserIdStr = selectedUserId
+                ? normalizeObjectId(selectedUserId)
+                : (state.selectedChatUserId ? normalizeObjectId(state.selectedChatUserId) : null);
             
             // Determine if this message belongs to the currently open conversation
             const isFromSelectedUser = senderId === selectedUserIdStr;
@@ -71,8 +85,8 @@ const chatSlice = createSlice({
                     const isDuplicateContent = state.messages.some(msg => 
                         msg.optimistic && 
                         msg.message === newMessage.message && 
-                        extractId(msg.senderId) === senderId &&
-                        extractId(msg.receiverId) === receiverId
+                        normalizeObjectId(msg.senderId) === senderId &&
+                        normalizeObjectId(msg.receiverId) === receiverId
                     );
                     
                     if (!isDuplicateContent) {
@@ -94,7 +108,7 @@ const chatSlice = createSlice({
             }
         },
         markMessagesAsRead:(state,action) => {
-            const userId = action.payload;
+            const userId = normalizeObjectId(action.payload);
             if (state.unreadMessages && state.unreadMessages[userId]) {
                 delete state.unreadMessages[userId];
             }
@@ -109,7 +123,7 @@ const chatSlice = createSlice({
             state.selectedChatUserId = null;
         },
         clearConversation:(state, action) => {
-            const userId = action.payload;
+            const userId = normalizeObjectId(action.payload);
             // Clear messages (they'll be refetched or are already deleted)
             state.messages = [];
             // Clear unread messages for this user
