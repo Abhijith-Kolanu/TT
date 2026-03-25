@@ -10,7 +10,9 @@ import {
     Search,
     Plane,
     BookOpen,
-    Zap
+    Zap,
+    Compass,
+    DollarSign
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
