@@ -22,7 +22,12 @@ import {
 
 const router = express.Router();
 
-router.route("/addpost").post(isAuthenticated, upload.single('image'), handleMulterError, addNewPost);
+router.route("/addpost").post(
+    isAuthenticated,
+    upload.any(),
+    handleMulterError,
+    addNewPost
+);
 router.route("/all").get(isAuthenticated, getAllPost);
 router.route("/userpost/all").get(isAuthenticated, getUserPost);
 router.route("/footsteps").get(isAuthenticated, getFootstepsPosts);

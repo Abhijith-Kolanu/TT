@@ -444,14 +444,15 @@ export const removeProfilePicture = async (req, res) => {
 export const getSuggestedUsers = async (req, res) => {
     try {
         // Get current user to check deletedChats
-        const currentUser = await User.findById(req.user._id);
+        const currentUser = await User.findById(req.user._id).select('deletedChats following');
         const deletedChatIds = currentUser?.deletedChats || [];
+        const followingIds = currentUser?.following || [];
         
-        // Exclude current user and users with deleted chats
+        // Exclude current user, already-followed users, and users with deleted chats
         const suggestedUsers = await User.find({ 
             _id: { 
                 $ne: req.user._id,
-                $nin: deletedChatIds 
+                $nin: [...deletedChatIds, ...followingIds] 
             } 
         }).select("-password");
         
@@ -682,5 +683,39 @@ export const getFollowersFollowing = async (req, res) => {
             success: false,
             message: "Internal server error"
         });
+    }
+};
+
+export const removeFollower = async (req, res) => {
+    try {
+        const currentUserId = req.user._id;
+        const followerId = req.params.id;
+
+        if (!followerId) {
+            return res.status(400).json({ success: false, message: 'Follower id is required' });
+        }
+
+        if (String(currentUserId) === String(followerId)) {
+            return res.status(400).json({ success: false, message: 'You cannot remove yourself' });
+        }
+
+        const [currentUser, followerUser] = await Promise.all([
+            User.findById(currentUserId).select('_id'),
+            User.findById(followerId).select('_id')
+        ]);
+
+        if (!currentUser || !followerUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        await Promise.all([
+            User.updateOne({ _id: currentUserId }, { $pull: { followers: followerId } }),
+            User.updateOne({ _id: followerId }, { $pull: { following: currentUserId } })
+        ]);
+
+        return res.status(200).json({ success: true, message: 'Follower removed successfully' });
+    } catch (error) {
+        console.log('Error in removeFollower:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };

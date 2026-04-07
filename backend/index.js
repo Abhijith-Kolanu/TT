@@ -1,7 +1,7 @@
+import "dotenv/config";
 import express, { urlencoded } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import connectDB from "./utils/db.js";
 import userRoute from "./routes/user.route.js";
 import postRoute from "./routes/post.route.js";
@@ -23,9 +23,6 @@ import {
 } from "./controllers/journal.controller.js";
 import { app, server } from "./socket/socket.js";
 import path from "path";
-
-dotenv.config();
-
 
 const PORT = process.env.PORT || 8001;
 
@@ -85,7 +82,17 @@ app.use("/api/v1/booking", bookingRoute);
 
 // HEALTH CHECK ENDPOINT
 app.get("/api/v1/health", (req, res) => {
-    res.json({ message: "Server is running", success: true });
+    const geminiModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const geminiApiKeyConfigured = Boolean(process.env.GEMINI_API_KEY);
+
+    res.json({
+        message: "Server is running",
+        success: true,
+        gemini: {
+            configured: geminiApiKeyConfigured,
+            model: geminiModel
+        }
+    });
 });
 
 // Handle preflight OPTIONS requests for all API routes
@@ -109,6 +116,16 @@ app.delete("/api/v1/journal/:id", isAuthenticated, deleteJournal);
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+});
+
+server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Stop the existing server process or change PORT in your .env file.`);
+        process.exit(1);
+    }
+
+    console.error('Server startup error:', error.message);
+    process.exit(1);
 });
 
 server.listen(PORT, () => {

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { setSelectedUser, removeFromSuggestedUsers } from '@/redux/authSlice';
+import { setSelectedUser } from '@/redux/authSlice';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { MessageCircleCode, MessageCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, MessageCircleCode, MessageCircle, Trash2 } from 'lucide-react';
 import Messages from './Messages';
 import axios from 'axios';
 import { setMessages, markMessagesAsRead, addNewMessage, replaceOptimisticMessage, clearConversation } from '@/redux/chatSlice';
@@ -26,7 +26,10 @@ const ChatPage = () => {
     const [sendError, setSendError] = useState("");
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
-    const { user, suggestedUsers, selectedUser } = useSelector(store => store.auth);
+    const [chatContacts, setChatContacts] = useState([]);
+    const [followingSuggestions, setFollowingSuggestions] = useState([]);
+    const [sidebarLoading, setSidebarLoading] = useState(false);
+    const { user, selectedUser } = useSelector(store => store.auth);
     const { onlineUsers, messages, unreadMessages } = useSelector(store => store.chat);
     const dispatch = useDispatch();
     const location = useLocation();
@@ -53,6 +56,36 @@ const ChatPage = () => {
         return String(value);
     };
 
+    const fetchSidebarUsers = async () => {
+        if (!user?._id) return;
+        try {
+            setSidebarLoading(true);
+            const [contactsRes, followingRes] = await Promise.all([
+                axios.get(`${import.meta.env.VITE_API_URL}/api/v1/message/contacts`, { withCredentials: true }),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/v1/user/${user._id}/followers-following`, { withCredentials: true })
+            ]);
+
+            const contacts = contactsRes.data?.success ? (contactsRes.data.users || []) : [];
+            const followingUsers = followingRes.data?.success ? (followingRes.data.following || []) : [];
+
+            const filteredFollowing = followingUsers.filter((u) => {
+                const id = normalizeObjectId(u?._id);
+                return id && id !== normalizeObjectId(user?._id);
+            });
+
+            setChatContacts(contacts);
+            setFollowingSuggestions(filteredFollowing);
+        } catch (error) {
+            console.log('Failed to load chat sidebar users:', error);
+        } finally {
+            setSidebarLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSidebarUsers();
+    }, [user?._id]);
+
     // Delete conversation handler
     const handleDeleteChat = async () => {
         if (!selectedUser || deleting) return;
@@ -65,8 +98,8 @@ const ChatPage = () => {
             );
             if (res.data.success) {
                 dispatch(clearConversation(selectedUser._id));
-                dispatch(removeFromSuggestedUsers(selectedUser._id));
                 dispatch(setSelectedUser(null));
+                await fetchSidebarUsers();
                 setDeleteDialogOpen(false);
                 toast.success('Chat deleted successfully');
             }
@@ -113,6 +146,7 @@ const ChatPage = () => {
                     optimisticId,
                     realMessage: res.data.newMessage
                 }));
+                await fetchSidebarUsers();
             } else {
                 setSendError("Failed to send message.");
             }
@@ -154,14 +188,66 @@ const ChatPage = () => {
                     <hr className='mb-6 border-blue-200/30 dark:border-blue-700/30' />
                     
                     <div className='flex-1 overflow-y-auto adventure-scroll'>
-                        {
-                            suggestedUsers.map((suggestedUser) => {
+                        {sidebarLoading ? (
+                            <div className='text-sm text-gray-500 dark:text-gray-400'>Loading chats...</div>
+                        ) : (
+                            <>
+                            <div className='mb-2'>
+                                {chatContacts.map((contactUser) => {
+                                const isOnline = onlineUsers.includes(contactUser?._id);
+                                const contactId = normalizeObjectId(contactUser?._id);
+                                const unreadCount = unreadMessages?.[contactId] || 0;
+                                const isSelected = normalizeObjectId(selectedUser?._id) === contactId;
+                                return (
+                                    <div key={`chat-${contactUser._id}`} onClick={() => {
+                                        dispatch(setSelectedUser(contactUser));
+                                        dispatch(markMessagesAsRead(contactId));
+                                    }} className={`group relative p-4 mb-3 rounded-2xl cursor-pointer transition-all duration-300 border ${
+                                        isSelected
+                                            ? 'bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 border-blue-300/50 dark:border-blue-600/50 shadow-lg transform scale-[1.02]'
+                                            : 'hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-green-50/50 dark:hover:from-blue-900/20 dark:hover:to-green-900/20 border-transparent hover:border-blue-200/30 dark:hover:border-blue-700/30 hover:shadow-md hover:transform hover:scale-[1.01]'
+                                    }`}>
+                                        {isSelected && (
+                                            <div className='absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-500 to-green-500 rounded-r-full'></div>
+                                        )}
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative">
+                                                <Avatar className='w-12 h-12 ring-2 ring-white dark:ring-gray-800 shadow-md'>
+                                                    <AvatarImage src={contactUser?.profilePicture} />
+                                                    <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-semibold">
+                                                        {getUserInitials(contactUser?.username)}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                {isOnline && (
+                                                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-500 border-2 border-white dark:border-gray-800 rounded-full shadow-sm pulse-adventure"></div>
+                                                )}
+                                            </div>
+                                            <div className='flex flex-col flex-1 min-w-0'>
+                                                <span className='font-semibold text-gray-900 dark:text-white truncate'>{contactUser?.username}</span>
+                                                <span className={`text-xs font-medium flex items-center gap-1 ${isOnline ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'} `}>
+                                                    <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                                                    {isOnline ? 'Active now' : 'Offline'}
+                                                </span>
+                                            </div>
+                                            {unreadCount > 0 && (
+                                                <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs rounded-full min-w-[24px] h-6 px-2 flex items-center justify-center font-bold shadow-lg transform transition-transform duration-200 pulse-adventure">
+                                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                                })}
+                            </div>
+
+                            <div>
+                                {followingSuggestions.map((suggestedUser) => {
                                 const isOnline = onlineUsers.includes(suggestedUser?._id);
                                 const suggestedUserId = normalizeObjectId(suggestedUser?._id);
                                 const unreadCount = unreadMessages?.[suggestedUserId] || 0;
                                 const isSelected = normalizeObjectId(selectedUser?._id) === suggestedUserId;
                                 return (
-                                    <div key={suggestedUser._id} onClick={() => {
+                                    <div key={`suggest-${suggestedUser._id}`} onClick={() => {
                                         dispatch(setSelectedUser(suggestedUser));
                                         // Mark messages from this user as read
                                         dispatch(markMessagesAsRead(suggestedUserId));
@@ -203,8 +289,14 @@ const ChatPage = () => {
                                         </div>
                                     </div>
                                 )
-                            })
-                        }
+                            })}
+                            </div>
+
+                            {chatContacts.length === 0 && followingSuggestions.length === 0 && (
+                                <div className='text-xs text-gray-500 dark:text-gray-400 p-2'>No conversations yet</div>
+                            )}
+                            </>
+                        )}
                     </div>
                 </div>
             </section>
@@ -218,6 +310,16 @@ const ChatPage = () => {
                             
                             {/* Header */}
                             <div className='relative z-10 flex gap-4 items-center p-6 border-b border-blue-200/30 dark:border-blue-700/30'>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => dispatch(setSelectedUser(null))}
+                                    className="h-10 w-10 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-600 dark:text-gray-300"
+                                    title="Back to messages"
+                                >
+                                    <ArrowLeft className="h-5 w-5" />
+                                </Button>
+
                                 <div className='flex-1 flex items-center gap-4 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors duration-200 rounded-lg p-2 -m-2'
                                      onClick={() => navigate(`/profile/${selectedUser?._id}`)}>
                                     <Avatar className='w-12 h-12 ring-2 ring-blue-200 dark:ring-blue-700'>

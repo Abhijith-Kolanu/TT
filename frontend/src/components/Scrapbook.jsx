@@ -72,7 +72,8 @@ const DEFAULT_IMAGES = [
     category: 'forest'
   },
   {
-    url: 'https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=400&h=300&fit=crop',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Angkor_Wat_temple.jpg/640px-Angkor_Wat_temple.jpg',
+    fallbackUrl: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&h=300&fit=crop',
     title: 'Ancient Temple',
     category: 'culture'
   }
@@ -1247,7 +1248,11 @@ const Scrapbook = () => {
       {/* Default Images Panel */}
       {showDefaultImages && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+          <div
+            className="gallery-scroll bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            <style>{`.gallery-scroll::-webkit-scrollbar { display: none; }`}</style>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">Travel Image Gallery</h3>
@@ -1275,6 +1280,13 @@ const Scrapbook = () => {
                       src={image.url}
                       alt={image.title}
                       className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        if (image.fallbackUrl && e.currentTarget.src !== image.fallbackUrl) {
+                          e.currentTarget.src = image.fallbackUrl;
+                          return;
+                        }
+                        e.currentTarget.src = DEFAULT_IMAGES[0].url;
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-2 left-2 right-2">

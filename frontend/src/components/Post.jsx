@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Bookmark, MessageCircle, MoreHorizontal, Send } from 'lucide-react'
+import { Bookmark, ChevronLeft, ChevronRight, MessageCircle, MoreHorizontal, Send } from 'lucide-react'
 import { Button } from './ui/button'
 import { FaHeart, FaRegHeart, FaBookmark, FaRegBookmark } from "react-icons/fa";
 import { Dialog, DialogContent, DialogHeader } from './ui/dialog'
@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { setPosts, setSelectedPost } from '@/redux/postSlice'
-import { setAuthUser } from '@/redux/authSlice'
+import { removeUserProfilePostById, updateFollowing, updateUserProfilePostCaption } from '@/redux/authSlice'
 import { useNavigate } from 'react-router-dom'
 
 const Post = ({ post }) => {
@@ -34,14 +34,47 @@ const Post = ({ post }) => {
     const [postLike, setPostLike] = useState(post.likes.length);
     const [comment, setComment] = useState(post.comments);
     const [bookmarked, setBookmarked] = useState(user?.bookmarks?.includes(post._id) || false);
+    const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
     // Sync comment count whenever the post in Redux store is updated (e.g. from CommentDialog)
     useEffect(() => {
         const updated = posts.find(p => p._id === post._id);
         if (updated) setComment(updated.comments);
     }, [posts]);
-    const isOwnPost = post?.author?._id === user?._id;
-    const [isFollowing, setIsFollowing] = useState(user?.following?.includes(post?.author?._id) || false);
+
+    const normalizeId = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        if (typeof value === 'object' && value._id) return String(value._id);
+        return String(value);
+    };
+
+    const authorId = normalizeId(post?.author?._id);
+    const isOwnPost = authorId === normalizeId(user?._id);
+    const isFollowing = (user?.following || []).some(id => normalizeId(id) === authorId);
+
+    const mediaItems = (Array.isArray(post?.medias) && post.medias.length > 0)
+        ? post.medias
+        : (
+            post?.mediaType === 'video' && post?.video
+                ? [{ url: post.video, mediaType: 'video' }]
+                : (post?.image ? [{ url: post.image, mediaType: 'image' }] : [])
+        );
+
+    const hasMultipleMedia = mediaItems.length > 1;
+    const activeMedia = mediaItems[activeMediaIndex] || null;
+
+    useEffect(() => {
+        setActiveMediaIndex(0);
+    }, [post?._id, mediaItems.length]);
+
+    const goToPrevMedia = () => {
+        setActiveMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1));
+    };
+
+    const goToNextMedia = () => {
+        setActiveMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1));
+    };
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -129,6 +162,7 @@ const Post = ({ post }) => {
             if (res.data.success) {
                 const updatedPostData = posts.filter((postItem) => postItem?._id !== post?._id);
                 dispatch(setPosts(updatedPostData));
+                dispatch(removeUserProfilePostById(post?._id));
                 toast.success(res.data.message);
             }
         } catch (error) {
@@ -145,6 +179,7 @@ const Post = ({ post }) => {
             );
             if (res.data.success) {
                 dispatch(setPosts(posts.map(p => p._id === post._id ? { ...p, caption: editCaption } : p)));
+                dispatch(updateUserProfilePostCaption({ postId: post._id, caption: editCaption }));
                 toast.success('Post updated');
                 setEditOpen(false);
             }
@@ -179,18 +214,13 @@ const Post = ({ post }) => {
     const followHandler = async () => {
         try {
             const res = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/v1/user/followorunfollow/${post?.author?._id}`,
+                `${import.meta.env.VITE_API_URL}/api/v1/user/followorunfollow/${authorId}`,
                 {},
                 { withCredentials: true }
             );
             if (res.data.success) {
                 const nowFollowing = !isFollowing;
-                setIsFollowing(nowFollowing);
-                // Update the auth user's following list in redux
-                const updatedFollowing = nowFollowing
-                    ? [...(user.following || []), post?.author?._id]
-                    : (user.following || []).filter(id => id !== post?.author?._id);
-                dispatch(setAuthUser({ ...user, following: updatedFollowing }));
+                dispatch(updateFollowing({ targetId: authorId, follow: nowFollowing }));
                 toast.success(res.data.message);
             }
         } catch (error) {
@@ -302,24 +332,55 @@ const Post = ({ post }) => {
 
                 {/* Image/Video */}
                 <div className='relative z-10 mx-4 mb-4 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300 bg-black dark:bg-black'>
-                    {post.mediaType === 'video' && post.video ? (
+                    {activeMedia?.mediaType === 'video' ? (
                         <video
+                            key={`video-${post?._id}-${activeMediaIndex}-${activeMedia?.url || ''}`}
+                            src={activeMedia.url}
                             className='w-full h-auto max-h-[600px] object-contain transition-all duration-700 bg-black'
                             controls
                             controlsList='nodownload noremoteplayback'
                             playsInline
                             preload='metadata'
                         >
-                            <source src={post.video} />
                             Your browser does not support the video tag.
                         </video>
-                    ) : post.image ? (
+                    ) : activeMedia?.url ? (
                         <img
                             className='w-full h-auto max-h-[600px] object-contain transition-all duration-700 bg-black'
-                            src={post.image}
+                            src={activeMedia.url}
                             alt="post_img"
                         />
                     ) : null}
+
+                    {hasMultipleMedia && (
+                        <>
+                            <button
+                                type='button'
+                                onClick={goToPrevMedia}
+                                className='absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors'
+                                aria-label='Previous media'
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <button
+                                type='button'
+                                onClick={goToNextMedia}
+                                className='absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors'
+                                aria-label='Next media'
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+
+                            <div className='absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/40 px-2 py-1 rounded-full'>
+                                {mediaItems.map((_, idx) => (
+                                    <span
+                                        key={idx}
+                                        className={`w-1.5 h-1.5 rounded-full ${idx === activeMediaIndex ? 'bg-white' : 'bg-white/50'}`}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
                     {/* Overlay gradient */}
                     <div className='absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
                 </div>

@@ -15,6 +15,7 @@ const FollowersFollowingModal = ({ open, setOpen, userId, activeTab = 'followers
     const [currentTab, setCurrentTab] = useState(activeTab);
     const { user } = useSelector(store => store.auth);
     const navigate = useNavigate();
+    const isOwnProfile = String(userId) === String(user?._id);
 
     useEffect(() => {
         if (open && userId) {
@@ -70,12 +71,30 @@ const FollowersFollowingModal = ({ open, setOpen, userId, activeTab = 'followers
         navigate(`/profile/${clickedUserId}`);
     };
 
+    const handleRemoveFollower = async (targetUserId) => {
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/v1/user/remove-follower/${targetUserId}`,
+                {},
+                { withCredentials: true }
+            );
+
+            if (response.data.success) {
+                toast.success(response.data.message || 'Follower removed');
+                setFollowers((prev) => prev.filter((follower) => follower._id !== targetUserId));
+            }
+        } catch (error) {
+            console.error('Error removing follower:', error);
+            toast.error(error.response?.data?.message || 'Failed to remove follower');
+        }
+    };
+
     const isFollowing = (targetUserId) => {
         // Check if current user is following the target user
         return following.some(followedUser => followedUser._id === targetUserId);
     };
 
-    const UserItem = ({ userData, showFollowButton = true }) => (
+    const UserItem = ({ userData, showFollowButton = true, showRemoveFollowerButton = false, followBackMode = false }) => (
         <div className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => handleUserClick(userData._id)}>
                 <Avatar className="h-12 w-12">
@@ -89,16 +108,30 @@ const FollowersFollowingModal = ({ open, setOpen, userId, activeTab = 'followers
                     <p className="text-sm text-gray-500 dark:text-gray-400">{userData.bio || 'No bio available'}</p>
                 </div>
             </div>
+            <div className="ml-2 flex items-center gap-2">
             {showFollowButton && userData._id !== user?._id && (
                 <Button
                     variant={isFollowing(userData._id) ? "outline" : "default"}
                     size="sm"
                     onClick={() => handleFollow(userData._id)}
-                    className="ml-2"
+                    className="min-w-[76px]"
                 >
-                    {isFollowing(userData._id) ? 'Unfollow' : 'Follow'}
+                    {isFollowing(userData._id)
+                        ? 'Unfollow'
+                        : (followBackMode ? 'Follow Back' : 'Follow')}
                 </Button>
             )}
+            {showRemoveFollowerButton && userData._id !== user?._id && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRemoveFollower(userData._id)}
+                    className="min-w-[76px] border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                >
+                    Remove
+                </Button>
+            )}
+            </div>
         </div>
     );
 
@@ -145,7 +178,13 @@ const FollowersFollowingModal = ({ open, setOpen, userId, activeTab = 'followers
                         followers.length > 0 ? (
                             <div className="space-y-1">
                                 {followers.map((follower) => (
-                                    <UserItem key={follower._id} userData={follower} />
+                                    <UserItem
+                                        key={follower._id}
+                                        userData={follower}
+                                        showFollowButton={isOwnProfile}
+                                        showRemoveFollowerButton={isOwnProfile}
+                                        followBackMode={isOwnProfile}
+                                    />
                                 ))}
                             </div>
                         ) : (

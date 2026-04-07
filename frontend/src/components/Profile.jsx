@@ -276,16 +276,15 @@ const Profile = () => {
                         <div className='w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin' />
                       ) : isFollowing ? 'Following' : 'Follow'}
                     </Button>
-                    {isFollowing && (
-                      <Button 
-                        size='sm'
-                        variant='outline'
-                        onClick={handleMessageClick}
-                        className='text-xs h-8 px-3 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      >
-                        <MessageCircle className='w-3.5 h-3.5' />
-                      </Button>
-                    )}
+                    <Button 
+                      size='sm'
+                      variant='outline'
+                      onClick={handleMessageClick}
+                      className='text-xs h-8 px-3 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    >
+                      <MessageCircle className='w-3.5 h-3.5 mr-1.5' />
+                      Message
+                    </Button>
                     <Button 
                       variant='ghost' 
                       size='sm'
@@ -377,15 +376,26 @@ const Profile = () => {
         {displayedPost?.length > 0 ? (
           <div className='grid grid-cols-3 gap-0.5 sm:gap-1'>
             {displayedPost.map((post) => (
+              (() => {
+                const mediaItems = Array.isArray(post?.medias) && post.medias.length > 0
+                  ? post.medias
+                  : (post?.mediaType === 'video' && post?.video
+                      ? [{ mediaType: 'video', url: post.video }]
+                      : (post?.image ? [{ mediaType: 'image', url: post.image }] : []));
+
+                const firstMedia = mediaItems[0];
+                const isVideoPost = firstMedia?.mediaType === 'video';
+
+                return (
               <div 
                 key={post?._id} 
                 className='relative aspect-square group cursor-pointer overflow-hidden'
                 onClick={() => handlePostClick(post?._id)}
               >
-                {post.mediaType === 'video' ? (
+                {isVideoPost ? (
                   <>
                     <video 
-                      src={post.video} 
+                      src={firstMedia?.url} 
                       alt='post' 
                       className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 bg-gray-200' 
                     />
@@ -397,10 +407,16 @@ const Profile = () => {
                   </>
                 ) : (
                   <img 
-                    src={post.image} 
+                    src={firstMedia?.url} 
                     alt='post' 
                     className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105' 
                   />
+                )}
+
+                {mediaItems.length > 1 && (
+                  <div className='absolute top-2 right-2 bg-black/55 text-white text-[10px] px-1.5 py-0.5 rounded-md'>
+                    {mediaItems.length}
+                  </div>
                 )}
                 
                 {/* Overlay on hover */}
@@ -417,6 +433,8 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
+                );
+              })()
             ))}
           </div>
         ) : (

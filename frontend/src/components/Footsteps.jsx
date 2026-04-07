@@ -1,5 +1,5 @@
 // src/pages/Footsteps.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -21,11 +21,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// small helper to create thumbnail icon
-const createThumbnailIcon = (imageUrl) =>
+// Small helper to create marker icon with optional count badge.
+const createThumbnailIcon = (imageUrl, count = 1) =>
   L.divIcon({
-    html: `<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.25)">
-             <img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover"/>
+    html: `<div style="position:relative;width:44px;height:44px;">
+             <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.25)">
+               <img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover"/>
+             </div>
+             ${count > 1 ? `<div style="position:absolute;right:-6px;top:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#1d4ed8;color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;line-height:1;">${count}</div>` : ""}
            </div>`,
     className: "",
     iconSize: [44, 44],
@@ -55,6 +58,30 @@ const Footsteps = () => {
   const { user } = useSelector(store => store.auth);
   const navigate = useNavigate();
   const boundsRef = useRef([]);
+
+  const groupedPosts = useMemo(() => {
+    const groups = new Map();
+
+    for (const post of posts) {
+      if (!post?.coordinates || post.coordinates.length !== 2) continue;
+
+      const [lon, lat] = post.coordinates;
+      const coordKey = `${Number(lon).toFixed(5)}:${Number(lat).toFixed(5)}`;
+
+      if (!groups.has(coordKey)) {
+        groups.set(coordKey, {
+          key: coordKey,
+          coordinates: [lon, lat],
+          locationName: post.locationName || post.location?.name || "Unknown place",
+          posts: [],
+        });
+      }
+
+      groups.get(coordKey).posts.push(post);
+    }
+
+    return Array.from(groups.values());
+  }, [posts]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -96,8 +123,8 @@ const Footsteps = () => {
   }, [isPublicMode, user]);
 
   // build bounds from returned coordinates
-  boundsRef.current = posts
-    .map((p) => p.coordinates)
+  boundsRef.current = groupedPosts
+    .map((g) => g.coordinates)
     .filter(Boolean)
     .map(([lon, lat]) => [lat, lon]); // leaflet expects [lat, lon]
 
@@ -127,39 +154,41 @@ const Footsteps = () => {
 
   return (
     <div className="fixed inset-0 lg:left-64 bg-white dark:bg-gray-900 transition-colors duration-200">
-      {/* Toggle Button - Bottom-left, completely safe from map controls */}
+      {/* Mode selector - Bottom-left, explicit state selection */}
       <div className="absolute bottom-4 left-4 z-[1000] flex flex-col gap-2">
-        <Button
-          onClick={() => {
-            console.log('🔄 Toggle clicked! Switching from', isPublicMode ? 'PUBLIC' : 'PRIVATE', 'to', isPublicMode ? 'PRIVATE' : 'PUBLIC');
-            setIsPublicMode(prev => !prev);
-          }}
-          variant={isPublicMode ? "default" : "outline"}
-          size="lg"
-          className={`flex items-center gap-2 transition-all duration-200 shadow-xl font-semibold ${
-            isPublicMode 
-              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xl border-2 border-blue-600' 
-              : 'bg-red-600 hover:bg-red-700 text-white shadow-xl border-2 border-red-600'
-          }`}
-        >
-          {isPublicMode ? (
-            <>
-              <Globe size={18} />
-              Public
-            </>
-          ) : (
-            <>
-              <Lock size={18} />
-              Private
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2 bg-white/95 dark:bg-gray-800/95 p-2 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+          <Button
+            onClick={() => setIsPublicMode(true)}
+            size="sm"
+            className={`flex items-center gap-2 font-semibold transition-all duration-200 ${
+              isPublicMode
+                ? 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-600'
+                : 'bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 dark:bg-gray-900 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-900/20'
+            }`}
+          >
+            <Globe size={16} />
+            Public
+          </Button>
+
+          <Button
+            onClick={() => setIsPublicMode(false)}
+            size="sm"
+            className={`flex items-center gap-2 font-semibold transition-all duration-200 ${
+              !isPublicMode
+                ? 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
+                : 'bg-white hover:bg-red-50 text-red-700 border border-red-200 dark:bg-gray-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-900/20'
+            }`}
+          >
+            <Lock size={16} />
+            Private
+          </Button>
+        </div>
         
         {/* Posts Counter - Above toggle button */}
         <div className="bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 order-first">
           <span className="text-sm font-medium text-gray-900 dark:text-white">
             {posts.length} {posts.length === 1 ? 'footstep' : 'footsteps'} 
-            {isPublicMode ? ' (Everyone)' : ' (Your posts)'}
+            {isPublicMode ? ' (Following + you)' : ' (Your posts)'}
           </span>
         </div>
       </div>
@@ -167,79 +196,133 @@ const Footsteps = () => {
       <MapContainer center={[20, 0]} zoom={2} style={{ width: "100%", height: "100%" }} scrollWheelZoom>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
 
-        <MarkerClusterGroup chunkedLoading spiderfyOnMaxZoom showCoverageOnHover={false} maxClusterRadius={60}>
-          {posts.map((post) => {
-            if (!post?.coordinates || post.coordinates.length !== 2) return null;
-            const [lon, lat] = post.coordinates;
-            // fallback image URL handling (in case backend returned imageUrl or video)
-            const img = post.imageUrl || post.image || post.video || "";
+        <MarkerClusterGroup
+          chunkedLoading
+          spiderfyOnMaxZoom
+          showCoverageOnHover={false}
+          maxClusterRadius={35}
+          disableClusteringAtZoom={4}
+        >
+          {groupedPosts.map((group) => {
+            const [lon, lat] = group.coordinates;
+            const primaryPost = group.posts[0];
+            const primaryImg = primaryPost?.imageUrl || primaryPost?.image || primaryPost?.video || "";
+
             return (
-              <Marker key={post._id} position={[lat, lon]} icon={createThumbnailIcon(img)}>
-                <Popup minWidth={260}>
-                  <div style={{ width: 260 }} className="bg-white dark:bg-gray-800 rounded-lg p-2">
-                    <div 
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/post/${post._id}`);
-                      }}
-                    >
-                      <img 
-                        src={img} 
-                        alt={post.caption || "post"} 
-                        style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 8 }} 
-                        className="hover:scale-105 transition-transform duration-200"
-                      />
-                    </div>
-                    <div style={{ marginTop: 8 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }} className="text-gray-900 dark:text-white">
-                        {post.locationName || post.location?.name || "Unknown place"}
+              <Marker
+                key={group.key}
+                position={[lat, lon]}
+                icon={createThumbnailIcon(primaryImg, group.posts.length)}
+              >
+                <Popup minWidth={group.posts.length > 1 ? 320 : 260}>
+                  {group.posts.length === 1 ? (
+                    <div style={{ width: 260 }} className="bg-white dark:bg-gray-800 rounded-lg p-2">
+                      <div
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/post/${primaryPost._id}`);
+                        }}
+                      >
+                        <img
+                          src={primaryImg}
+                          alt={primaryPost.caption || "post"}
+                          style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 8 }}
+                          className="hover:scale-105 transition-transform duration-200"
+                        />
                       </div>
-                      {post.caption && (
-                        <div style={{ fontSize: 13, marginTop: 6 }} className="text-gray-700 dark:text-gray-300 line-clamp-2">
-                          {post.caption}
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13 }} className="text-gray-900 dark:text-white">
+                          {group.locationName}
                         </div>
-                      )}
-                      {post.author && (
-                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #e5e7eb" }} className="flex items-center justify-between dark:border-gray-600">
-                          <div className="flex items-center gap-2">
-                            <img 
-                              src={post.author.profilePicture || "/default-avatar.png"} 
-                              alt={post.author.username}
-                              style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover" }}
-                              className="border border-gray-200 dark:border-gray-600 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all duration-200"
+                        {primaryPost.caption && (
+                          <div style={{ fontSize: 13, marginTop: 6 }} className="text-gray-700 dark:text-gray-300 line-clamp-2">
+                            {primaryPost.caption}
+                          </div>
+                        )}
+                        {primaryPost.author && (
+                          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #e5e7eb" }} className="flex items-center justify-between dark:border-gray-600">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={primaryPost.author.profilePicture || "/default-avatar.png"}
+                                alt={primaryPost.author.username}
+                                style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover" }}
+                                className="border border-gray-200 dark:border-gray-600 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all duration-200"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/profile/${primaryPost.author._id}`);
+                                }}
+                              />
+                              <span
+                                style={{ fontSize: 12, fontWeight: 600 }}
+                                className="text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/profile/${primaryPost.author._id}`);
+                                }}
+                              >
+                                {primaryPost.author.username}
+                              </span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/profile/${post.author._id}`);
+                                navigate(`/post/${primaryPost._id}`);
                               }}
-                            />
-                            <span 
-                              style={{ fontSize: 12, fontWeight: 600 }} 
-                              className="text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+                              className="h-6 px-2 text-xs flex items-center gap-1 hover:bg-blue-50 hover:border-blue-300 dark:hover:bg-blue-900/20"
+                            >
+                              <ExternalLink size={10} />
+                              View Post
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ width: 320 }} className="bg-white dark:bg-gray-800 rounded-lg p-2">
+                      <div className="mb-2">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {group.locationName}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300">
+                          {group.posts.length} posts at this location
+                        </div>
+                      </div>
+
+                      <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+                        {group.posts.map((post) => {
+                          const img = post.imageUrl || post.image || post.video || "";
+                          return (
+                            <div
+                              key={post._id}
+                              className="flex items-center gap-2 p-2 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40 cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/profile/${post.author._id}`);
+                                navigate(`/post/${post._id}`);
                               }}
                             >
-                              {post.author.username}
-                            </span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/post/${post._id}`);
-                            }}
-                            className="h-6 px-2 text-xs flex items-center gap-1 hover:bg-blue-50 hover:border-blue-300 dark:hover:bg-blue-900/20"
-                          >
-                            <ExternalLink size={10} />
-                            View Post
-                          </Button>
-                        </div>
-                      )}
+                              <img
+                                src={img}
+                                alt={post.caption || "post"}
+                                className="w-12 h-12 rounded-md object-cover"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                                  {post.author?.username || "Unknown user"}
+                                </div>
+                                <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                                  {post.caption || "No caption"}
+                                </div>
+                              </div>
+                              <ExternalLink size={12} className="text-gray-500" />
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </Popup>
               </Marker>
             );

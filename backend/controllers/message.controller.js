@@ -147,3 +147,46 @@ export const deleteChat = async (req, res) => {
         });
     }
 }
+
+// Get users with whom current user has an existing conversation
+export const getChatContacts = async (req, res) => {
+    try {
+        const currentUserId = req.user._id;
+        const currentUser = await User.findById(currentUserId).select('deletedChats');
+        const deletedChatIds = (currentUser?.deletedChats || []).map((id) => String(id));
+
+        const conversations = await Conversation.find({
+            participants: currentUserId
+        }).populate({
+            path: 'participants',
+            select: 'username profilePicture bio'
+        });
+
+        const contactsMap = new Map();
+
+        for (const conversation of conversations) {
+            const participants = Array.isArray(conversation?.participants) ? conversation.participants : [];
+            for (const participant of participants) {
+                if (!participant?._id) continue;
+                const participantId = String(participant._id);
+                if (participantId === String(currentUserId)) continue;
+                if (deletedChatIds.includes(participantId)) continue;
+
+                if (!contactsMap.has(participantId)) {
+                    contactsMap.set(participantId, participant);
+                }
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            users: Array.from(contactsMap.values())
+        });
+    } catch (error) {
+        console.error('getChatContacts error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to load chat contacts'
+        });
+    }
+}

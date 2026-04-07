@@ -12,6 +12,7 @@ import {
     resetPassword,
     searchUsers,
     getFollowersFollowing,
+    removeFollower,
     getCurrentUser,
     removeProfilePicture,
     deleteAccount
@@ -32,6 +33,7 @@ router.route('/profile/remove-picture').delete(isAuthenticated, removeProfilePic
 router.route('/delete-account').post(isAuthenticated, deleteAccount);
 router.route('/suggested').get(isAuthenticated, getSuggestedUsers);
 router.route('/followorunfollow/:id').post(isAuthenticated, followOrUnfollow);
+router.route('/remove-follower/:id').post(isAuthenticated, removeFollower);
 router.route('/:id/profile').get(isAuthenticated, getProfile);
 
 // 2. THIS LINE WILL NOW WORK CORRECTLY

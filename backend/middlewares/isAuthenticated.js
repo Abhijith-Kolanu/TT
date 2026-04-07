@@ -15,9 +15,7 @@ const isAuthenticated = async (req,res,next)=>{
                 success:false
             });
         }
-        // Only log successful authentications
-        console.log('✅ User authenticated:', decode.userId);
-    req.user = { _id: decode.userId };
+        req.user = { _id: decode.userId };
         next();
     } catch (error) {
         console.log('Authentication error:', error.message);

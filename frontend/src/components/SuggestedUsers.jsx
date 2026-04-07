@@ -36,7 +36,10 @@ const SuggestedUsers = () => {
         }
     };
 
-    const visibleUsers = suggestedUsers.filter(su => !hiddenIds.has(su._id)).slice(0, 5);
+    const followingSet = new Set((user?.following || []).map((id) => String(id)));
+    const visibleUsers = suggestedUsers
+        .filter((su) => !hiddenIds.has(su._id) && !followingSet.has(String(su._id)))
+        .slice(0, 5);
 
     return (
         <div className='space-y-1.5'>

@@ -9,23 +9,14 @@ import { Notification } from "../models/notification.model.js";
 export const addNewPost = async (req, res) => {
     try {
         const { caption, coordinates, locationName } = req.body;
-        const file = req.file;
+        const mediaFiles = Array.isArray(req.files)
+            ? req.files
+            : [...(req.files?.media || []), ...(req.files?.image || [])];
         const authorId = req.user._id;
 
-        if (!file) return res.status(400).json({ message: 'Image or video required' });
-
-        // Check file size (max 50MB)
-        const maxFileSize = 50 * 1024 * 1024;
-        if (file.size > maxFileSize) {
-            return res.status(400).json({ message: 'File size too large. Maximum 50MB allowed.' });
-        }
-
-        // Determine file type
-        const isVideo = file.mimetype.startsWith('video/');
-        const isImage = file.mimetype.startsWith('image/');
-
-        if (!isVideo && !isImage) {
-            return res.status(400).json({ message: 'Only image and video files are allowed' });
+        if (!mediaFiles.length) return res.status(400).json({ message: 'Image or video required' });
+        if (mediaFiles.length > 10) {
+            return res.status(400).json({ message: 'Maximum 10 files allowed per post creation.' });
         }
 
         // Parse coordinates safely (make it optional)
@@ -50,57 +41,69 @@ export const addNewPost = async (req, res) => {
             }
         }
 
-        let cloudResponse;
+        const uploadedMedias = [];
 
-        if (isImage) {
-            const optimizedImageBuffer = await sharp(file.buffer)
-                .resize({ width: 800, height: 800, fit: 'inside' })
-                .toFormat('jpeg', { quality: 80 })
-                .toBuffer();
+        for (const file of mediaFiles) {
+            const maxFileSize = 50 * 1024 * 1024;
+            if (file.size > maxFileSize) {
+                return res.status(400).json({ message: 'File size too large. Maximum 50MB allowed.' });
+            }
 
-            const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString('base64')}`;
-            cloudResponse = await cloudinary.uploader.upload(fileUri);
-        } else if (isVideo) {
-            const fileUri = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-            cloudResponse = await cloudinary.uploader.upload(fileUri, {
-                resource_type: 'video',
-                folder: 'travel_app/videos',
-                timeout: 600000
-            });
+            const isVideo = file.mimetype.startsWith('video/');
+            const isImage = file.mimetype.startsWith('image/');
+
+            if (!isVideo && !isImage) {
+                return res.status(400).json({ message: 'Only image and video files are allowed' });
+            }
+
+            if (isImage) {
+                const optimizedImageBuffer = await sharp(file.buffer)
+                    .resize({ width: 800, height: 800, fit: 'inside' })
+                    .toFormat('jpeg', { quality: 80 })
+                    .toBuffer();
+
+                const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString('base64')}`;
+                const cloudResponse = await cloudinary.uploader.upload(fileUri);
+                uploadedMedias.push({ url: cloudResponse.secure_url, mediaType: 'image' });
+            } else {
+                const fileUri = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+                const cloudResponse = await cloudinary.uploader.upload(fileUri, {
+                    resource_type: 'video',
+                    folder: 'travel_app/videos',
+                    timeout: 600000
+                });
+                const playableVideoUrl = cloudinary.url(cloudResponse.public_id, {
+                    resource_type: 'video',
+                    secure: true,
+                    format: 'mp4'
+                });
+                uploadedMedias.push({
+                    url: playableVideoUrl || cloudResponse.secure_url,
+                    mediaType: 'video'
+                });
+            }
         }
 
-        // Create the post with optional location
+        const firstMedia = uploadedMedias[0];
         const postData = {
             caption,
-            mediaType: isImage ? 'image' : 'video',
             author: authorId,
+            medias: uploadedMedias,
+            mediaType: firstMedia?.mediaType || 'image',
+            image: firstMedia?.mediaType === 'image' ? firstMedia.url : null,
+            video: firstMedia?.mediaType === 'video' ? firstMedia.url : null,
         };
 
-        if (isImage) {
-            postData.image = cloudResponse.secure_url;
-        } else {
-            const playableVideoUrl = cloudinary.url(cloudResponse.public_id, {
-                resource_type: 'video',
-                secure: true,
-                format: 'mp4'
-            });
-            postData.video = playableVideoUrl || cloudResponse.secure_url;
-        }
-        
         if (locationData) {
             postData.location = locationData;
         }
 
         const post = await Post.create(postData);
-
-        // Link post to user
-        const user = await User.findById(authorId);
-        if (user) {
-            user.posts.push(post._id);
-            await user.save();
-        }
-
         await post.populate({ path: 'author', select: '-password' });
+
+        await User.findByIdAndUpdate(authorId, {
+            $push: { posts: post._id }
+        });
 
         return res.status(201).json({
             message: 'New post added',
@@ -501,10 +504,13 @@ export const getFootstepsPosts = async (req, res) => {
     try {
         const { mode } = req.query; // 'public' or 'private'
         const userId = req.user._id; // from authentication middleware
+
+        const currentUser = await User.findById(userId).select('following');
+        if (!currentUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
         
-        console.log('Footsteps API called with mode:', mode, 'by user:', userId);
-        
-        let query = {
+        const baseQuery = {
             "location.coordinates": {
                 $exists: true,
                 $type: "array",
@@ -512,51 +518,69 @@ export const getFootstepsPosts = async (req, res) => {
             }
         };
 
-        // If private mode, only show current user's posts
+        const followingIds = currentUser.following || [];
+        const authorAllowList = Array.from(
+            new Set([...followingIds.map((id) => String(id)), String(userId)])
+        );
+
+        let filter = { ...baseQuery };
         if (mode === 'private') {
-            query.author = userId;
-            console.log('Private mode: filtering for user', userId);
+            filter.author = userId;
         } else {
-            console.log('Public mode: showing all posts');
+            filter.author = { $in: authorAllowList };
         }
 
-        console.log('Query:', JSON.stringify(query, null, 2));
+        let posts = await Post.find(filter)
+            .populate({ path: 'author', select: 'username profilePicture' })
+            .select("caption image video medias mediaType location author createdAt")
+            .sort({ createdAt: -1 });
 
-        const posts = await Post.find(query)
-            .populate({
-                path: 'author',
-                select: 'username profilePicture'
+        // Hard safeguard: if public mode misses own posts for any reason, append them.
+        if (mode !== 'private') {
+            const hasOwnPost = posts.some((post) => String(post.author?._id || post.author) === String(userId));
+            if (!hasOwnPost) {
+                const ownPosts = await Post.find({ ...baseQuery, author: userId })
+                    .populate({ path: 'author', select: 'username profilePicture' })
+                    .select("caption image video medias mediaType location author createdAt")
+                    .sort({ createdAt: -1 });
+
+                if (ownPosts.length > 0) {
+                    const merged = new Map();
+                    [...ownPosts, ...posts].forEach((post) => merged.set(String(post._id), post));
+                    posts = Array.from(merged.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                }
+            }
+        }
+
+        const formatted = posts
+            .filter((post) => {
+                const coords = post?.location?.coordinates;
+                return (
+                    Array.isArray(coords) &&
+                    coords.length === 2 &&
+                    Number.isFinite(coords[0]) &&
+                    Number.isFinite(coords[1])
+                );
             })
-            .select("caption image location author");
-
-        console.log('Found', posts.length, 'footsteps posts');
-
-        // Also check total posts with any location data for debugging
-        const totalWithLocation = await Post.countDocuments({
-            "location": { $exists: true }
-        });
-        console.log('Total posts with any location data:', totalWithLocation);
-
-        const formatted = posts.map(post => ({
+            .map(post => ({
             _id: post._id,
             caption: post.caption,
-            imageUrl: post.image?.startsWith("http")
-                ? post.image
-                : `${process.env.BASE_URL || ""}/${post.image}`,
+            imageUrl: post.image
+                ? (post.image.startsWith("http") ? post.image : `${process.env.BASE_URL || ""}/${post.image}`)
+                : (post.video || post.medias?.[0]?.url || null),
+            videoUrl: post.video || null,
+            mediaType: post.mediaType || (post.video ? 'video' : 'image'),
+            medias: post.medias || [],
             coordinates: post.location.coordinates, // [lon, lat]
             locationName: post.location.name || null,
-            author: post.author
+            author: post.author,
+            createdAt: post.createdAt
         }));
 
         res.status(200).json({ 
             posts: formatted,
             mode: mode || 'public',
-            totalPosts: formatted.length,
-            debug: {
-                userId,
-                totalWithLocation,
-                query
-            }
+            totalPosts: formatted.length
         });
     } catch (err) {
         console.error("Error fetching footsteps posts:", err);

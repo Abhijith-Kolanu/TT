@@ -4,6 +4,10 @@ const postSchema = new mongoose.Schema({
     image:{type:String, default:null},
     video:{type:String, default:null},
     mediaType:{type:String, enum:['image', 'video'], default:'image'},
+    medias:[{
+        url:{type:String, required:true},
+        mediaType:{type:String, enum:['image', 'video'], required:true}
+    }],
     author:{type:mongoose.Schema.Types.ObjectId, ref:'User', required:true},
     likes:[{type:mongoose.Schema.Types.ObjectId, ref:'User'}],
     comments:[{type:mongoose.Schema.Types.ObjectId, ref:'Comment'}],

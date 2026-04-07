@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useLayoutEffect } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import useGetAllMessage from '@/hooks/useGetAllMessage'
 import { getUserInitials } from '@/lib/utils'
@@ -87,7 +87,7 @@ const Messages = ({ selectedUser }) => {
     }, [messages]);
 
     return (    
-        <div ref={messagesContainerRef} className='min-h-full p-4 bg-transparent'>
+        <div ref={messagesContainerRef} className='min-h-full p-5 bg-gradient-to-b from-transparent to-blue-50/20 dark:to-blue-900/10'>
             <div className='flex flex-col gap-3'>
                 {
                                      messages && messages.map((msg, idx) => {
@@ -111,34 +111,16 @@ const Messages = ({ selectedUser }) => {
                     }
                     const userIdStr = (user?._id && user._id.toString) ? user._id.toString() : String(user?._id || '');
                     const isCurrentUserSender = senderIdStr === userIdStr;
-                                        // Enhanced debug output (console only)
-                                        if (!msg.senderId) {
-                                            console.warn('[Message Alignment Warning] senderId missing for message:', msg);
-                                        }
-                                        const debugInfo = {
-                                            msgSenderId: msg.senderId,
-                                            currentUserId: user?._id,
-                                            senderIdStr,
-                                            userIdStr,
-                                            isCurrentUserSender
-                                        };
-                                        if (window && window.console) {
-                                            if (isCurrentUserSender) {
-                                                console.log('%c[SENDER]', 'color: green; font-weight: bold;', debugInfo);
-                                            } else {
-                                                console.log('%c[RECEIVER]', 'color: blue; font-weight: bold;', debugInfo);
-                                            }
-                                        }
                                         return (
                                                 <div key={key}>
                                                     <div className={`flex ${isCurrentUserSender ? 'justify-end' : 'justify-start'}`}>
-                                                        <div className={`p-2 rounded-lg ${msg.messageType === 'post' ? 'max-w-sm' : 'max-w-xs'} break-words ${isCurrentUserSender ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-black dark:text-white'}`}>
+                                                        <div className={`px-3 py-2 rounded-2xl shadow-sm border ${msg.messageType === 'post' ? 'max-w-sm' : 'max-w-xs'} break-words ${isCurrentUserSender ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-400/60' : 'bg-white/95 dark:bg-gray-800/95 text-gray-900 dark:text-gray-100 border-blue-100 dark:border-gray-700'}`}>
                                                                                                     {msg.messageType === 'post' && msg.sharedPost ? (
                                                                                                         <div className="flex flex-col space-y-2">
-                                                                                                            <div className="text-sm opacity-80">
+                                                                                                            <div className="text-sm opacity-90 font-medium">
                                                                                                                 {msg.senderId === user?._id ? 'You shared a post' : 'Shared a post'}
                                                                                                             </div>
-                                                                                                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border">
+                                                                                                            <div className="bg-white dark:bg-gray-900 rounded-xl p-2.5 border border-blue-100 dark:border-gray-700">
                                                                                                                 <div className="flex items-center space-x-2 mb-2">
                                                                                                                     <Avatar className="h-6 w-6">
                                                                                                                         <AvatarImage src={msg.sharedPost.author?.profilePicture} alt="profile" />
@@ -175,14 +157,14 @@ const Messages = ({ selectedUser }) => {
                                                                                                                     </div>
                                                                                                                 )}
                                                                                                                 {msg.sharedPost.caption && (
-                                                                                                                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                                                                                    <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
                                                                                                                         {msg.sharedPost.caption}
                                                                                                                     </p>
                                                                                                                 )}
                                                                                                                 <Button 
                                                                                                                     size="sm" 
                                                                                                                     variant="outline" 
-                                                                                                                    className="mt-2 text-xs"
+                                                                                                                    className="mt-2 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20"
                                                                                                                     onClick={() => navigate(`/post/${msg.sharedPost._id}`)}
                                                                                                                 >
                                                                                                                     View Post
