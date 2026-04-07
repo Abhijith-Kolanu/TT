@@ -3,6 +3,9 @@ import axios from 'axios';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { getUserInitials } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setSelectedUser } from '@/redux/authSlice';
 import { Calendar, MessageSquare, Check, X, Loader2, Inbox, ClipboardCheck } from 'lucide-react';
 
 const formatMoney = (value, currency = 'INR') => {
@@ -58,6 +61,8 @@ const canCancelBeforeTwoDays = (startDate) => {
 };
 
 const GuideBookingRequests = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [requests, setRequests] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
   const [ownCostPerDay, setOwnCostPerDay] = useState(0);
@@ -255,7 +260,18 @@ const GuideBookingRequests = () => {
                   <p className="text-xs text-gray-700 dark:text-gray-200 font-medium mt-1">
                     {formatMoney(costPerDay, booking.currency)} / day • Total {formatMoney(totalCost, booking.currency)}
                   </p>
-                  <div className="mt-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                      onClick={() => {
+                        if (!booking?.traveller?._id) return;
+                        dispatch(setSelectedUser(booking.traveller));
+                        navigate('/chat', { state: { selectedUser: booking.traveller } });
+                      }}
+                    >
+                      Message
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
